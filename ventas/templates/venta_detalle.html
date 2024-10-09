@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle de la Venta{% endblock %}
+
+{% block content %}
+<h1>Detalle de la Venta {{ venta.id }}</h1>
+<p>Fecha y hora: {{ venta.fecha_hora }}</p>
+<p>Usuario: {{ venta.usuario.username }}</p>
+<p>Total: ${{ venta.total }}</p>
+
+<h2>Productos Vendidos</h2>
+<ul>
+    {% for detalle in venta.detalles.all %}
+        <li>
+            {{ detalle.producto.nombre }} - Cantidad: {{ detalle.cantidad }} - Precio Unitario: ${{ detalle.precio_unitario }} - Subtotal: ${{ detalle.subtotal }}
+        </li>
+    {% endfor %}
+</ul>
+{% endblock %}

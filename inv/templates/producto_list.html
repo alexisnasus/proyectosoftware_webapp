@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Lista de Productos{% endblock %}
+
+{% block content %}
+<h1>Lista de Productos</h1>
+<input type="text" id="search-field" placeholder="Buscar por nombre o código de barras...">
+
+<div id="product-list">
+    {% for producto in productos %}
+        <div class="product-item">
+            <strong>{{ producto.nombre }}</strong><br>
+            Código de barras: {{ producto.codigo_barras }}<br>
+            Precio: ${{ producto.precio }}
+        </div>
+    {% empty %}
+        <p>No hay productos disponibles.</p>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Incluye el JavaScript para la funcionalidad de búsqueda -->
+<script>
+    const searchField = document.getElementById('search-field');
+    const productList = document.getElementById('product-list');
+
+    let debounceTimer;
+    searchField.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            const query = this.value;
+
+            fetch(`{% url 'inv:buscar_productos' %}?term=${encodeURIComponent(query)}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Limpiar la lista actual de productos
+                    productList.innerHTML = '';
+
+                    if (data.length > 0) {
+                        data.forEach(producto => {
+                            const productItem = document.createElement('div');
+                            productItem.classList.add('product-item');
+                            productItem.innerHTML = `
+                                <strong>${producto.nombre}</strong><br>
+                                Código de barras: ${producto.codigo_barras}<br>
+                                Precio: $${producto.precio}
+                            `;
+                            productList.appendChild(productItem);
+                        });
+                    } else {
+                        productList.innerHTML = '<p>No se encontraron productos.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }, 300); // Retraso de 300 ms para el debounce
+    });
+</script>
+{% endblock %}

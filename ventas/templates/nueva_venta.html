@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Nueva Venta{% endblock %}
+
+{% block content %}
+<h1>Nueva Venta</h1>
+<form method="post">
+    {% csrf_token %}
+    <div id="productos-container">
+        <div class="producto-item">
+            <select name="producto">
+                {% for producto in productos %}
+                    <option value="{{ producto.id }}">{{ producto.nombre }} - ${{ producto.precio }}</option>
+                {% endfor %}
+            </select>
+            <input type="number" name="cantidad" min="1" value="1">
+            <select name="ubicacion">
+                {% for ubicacion in ubicaciones %}
+                    <option value="{{ ubicacion.id }}">{{ ubicacion.nombre }}</option>
+                {% endfor %}
+            </select>
+            <button type="button" class="remove-item">Eliminar</button>
+        </div>
+    </div>
+    <button type="button" id="add-producto">Añadir Producto</button>
+    <button type="submit">Procesar Venta</button>
+</form>
+
+<script>
+// JavaScript para añadir/eliminar productos dinámicamente
+document.getElementById('add-producto').addEventListener('click', function() {
+    const container = document.getElementById('productos-container');
+    const item = container.querySelector('.producto-item').cloneNode(true);
+    container.appendChild(item);
+});
+
+document.addEventListener('click', function(e) {
+    if (e.target && e.target.classList.contains('remove-item')) {
+        const item = e.target.closest('.producto-item');
+        item.remove();
+    }
+});
+</script>
+{% endblock %}
