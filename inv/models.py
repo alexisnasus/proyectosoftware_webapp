@@ -90,7 +90,11 @@ class DetalleVenta(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         # Actualizar el stock del producto en la ubicación al guardar el detalle de venta
-        inventario = Inventario.objects.get(producto=self.producto, ubicacion=self.ubicacion)
+        inventario, created = Inventario.objects.get_or_create(
+            producto=self.producto,
+            ubicacion=self.ubicacion,
+            defaults={'cantidad': 0, 'cantidad_minima': 0}
+        )
         inventario.cantidad -= self.cantidad
         inventario.save()
         inventario.check_stock()
@@ -120,3 +124,20 @@ class Reporte(models.Model):
 
     def __str__(self):
         return f"Reporte {self.tipo_reporte} - Generado el {self.fecha_generado}"
+    
+class Devolucion(models.Model):
+    venta = models.ForeignKey(Venta, on_delete=models.CASCADE, related_name='devoluciones')
+    detalle_venta = models.ForeignKey(DetalleVenta, on_delete=models.CASCADE)
+    cantidad = models.IntegerField()
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Actualizar el inventario
+        inventario, created = Inventario.objects.get_or_create(
+            producto=self.detalle_venta.producto,
+            ubicacion=self.detalle_venta.ubicacion,
+            defaults={'cantidad': 0, 'cantidad_minima': 0}
+        )
+        inventario.cantidad += self.cantidad
+        inventario.save()

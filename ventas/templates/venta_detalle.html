@@ -11,8 +11,10 @@
 <h2>Productos Vendidos</h2>
 <ul>
     {% for detalle in venta.detalles.all %}
+        <!-- Dentro del bucle de detalles de venta -->
         <li>
-            {{ detalle.producto.nombre }} - Cantidad: {{ detalle.cantidad }} - Precio Unitario: ${{ detalle.precio_unitario }} - Subtotal: ${{ detalle.subtotal }}
+            {{ detalle.producto.nombre }} - Cantidad: {{ detalle.cantidad }} - Subtotal: ${{ detalle.subtotal }}
+            <a href="{% url 'ventas:devolver_producto' detalle.id %}">Devolver</a>
         </li>
     {% endfor %}
 </ul>

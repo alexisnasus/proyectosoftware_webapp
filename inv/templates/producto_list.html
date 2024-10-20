@@ -4,62 +4,159 @@
 
 {% block content %}
 <h1>Lista de Productos</h1>
+<button id="add-product-btn">Añadir Producto</button>
 <input type="text" id="search-field" placeholder="Buscar por nombre o código de barras...">
 
 <div id="product-list">
     {% for producto in productos %}
-        <div class="product-item">
+        <div class="product-item" data-product-id="{{ producto.id }}">
             <strong>{{ producto.nombre }}</strong><br>
             Código de barras: {{ producto.codigo_barras }}<br>
-            Precio: ${{ producto.precio }}
+            Precio: ${{ producto.precio }}<br>
+            Existencias: {{ producto.total_stock }}<br>
+            Sección: {{ producto.seccion.nombre }}<br>
+            Subsección: {{ producto.subseccion.nombre }}<br>
+            Ubicaciones:
+            <ul>
+                {% for inventario in producto.inventarios.all %}
+                    <li>{{ inventario.ubicacion.nombre }} (Cantidad: {{ inventario.cantidad }})</li>
+                {% empty %}
+                    <li>No hay ubicaciones disponibles.</li>
+                {% endfor %}
+            </ul>
+            <!-- Botones de acción -->
+            <button class="edit-product-btn">Editar</button>
+            <button class="delete-product-btn">Eliminar</button>
+            <button class="move-product-btn">Mover</button>
         </div>
     {% empty %}
         <p>No hay productos disponibles.</p>
     {% endfor %}
 </div>
+
+<!-- Modales -->
+<div id="modal-container"></div>
+
 {% endblock %}
 
 {% block extra_js %}
-<!-- Incluye el JavaScript para la funcionalidad de búsqueda -->
+<!-- Incluye el JavaScript para la funcionalidad de búsqueda y CRUD -->
 <script>
-    const searchField = document.getElementById('search-field');
-    const productList = document.getElementById('product-list');
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchField = document.getElementById('search-field');
+        const productList = document.getElementById('product-list');
+        const modalContainer = document.getElementById('modal-container');
 
-    let debounceTimer;
-    searchField.addEventListener('input', function() {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-            const query = this.value;
-
-            fetch(`{% url 'inv:buscar_productos' %}?term=${encodeURIComponent(query)}`, {
+        // Función para cargar el modal
+        function loadModal(url) {
+            fetch(url, {
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
                 }
             })
-                .then(response => response.json())
-                .then(data => {
-                    // Limpiar la lista actual de productos
-                    productList.innerHTML = '';
+            .then(response => response.text())
+            .then(html => {
+                modalContainer.innerHTML = html;
+                // Mostrar el modal
+                const modal = modalContainer.querySelector('.modal');
+                modal.style.display = 'block';
 
-                    if (data.length > 0) {
-                        data.forEach(producto => {
-                            const productItem = document.createElement('div');
-                            productItem.classList.add('product-item');
-                            productItem.innerHTML = `
-                                <strong>${producto.nombre}</strong><br>
-                                Código de barras: ${producto.codigo_barras}<br>
-                                Precio: $${producto.precio}
-                            `;
-                            productList.appendChild(productItem);
-                        });
-                    } else {
-                        productList.innerHTML = '<p>No se encontraron productos.</p>';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
+                // Agregar eventos al formulario del modal
+                const form = modal.querySelector('form');
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const formData = new FormData(form);
+                    fetch(form.action, {
+                        method: form.method,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': '{{ csrf_token }}',
+                        },
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Cerrar el modal y recargar la lista de productos
+                            modal.style.display = 'none';
+                            modalContainer.innerHTML = '';
+                            loadProductList();
+                        } else {
+                            // Mostrar errores en el formulario
+                            const errorsDiv = modal.querySelector('.errors');
+                            errorsDiv.innerHTML = data.errors;
+                        }
+                    });
                 });
-        }, 300); // Retraso de 300 ms para el debounce
+
+                // Agregar evento para cerrar el modal
+                const closeModalBtn = modal.querySelector('.close-modal');
+                closeModalBtn.addEventListener('click', function() {
+                    modal.style.display = 'none';
+                    modalContainer.innerHTML = '';
+                });
+            });
+        }
+
+        // Función para cargar la lista de productos
+        function loadProductList(query = '') {
+            fetch(`{% url 'inv:producto_list_ajax' %}?term=${encodeURIComponent(query)}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                productList.innerHTML = html;
+                // Reasignar eventos a los nuevos botones
+                assignEventListeners();
+            });
+        }
+
+        // Asignar eventos a los botones
+        function assignEventListeners() {
+            // Botón "Añadir Producto"
+            document.getElementById('add-product-btn').addEventListener('click', function() {
+                loadModal('{% url "inv:producto_crear" %}');
+            });
+
+            // Botones "Editar"
+            document.querySelectorAll('.edit-product-btn').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    const productId = this.parentElement.getAttribute('data-product-id');
+                    loadModal(`{% url 'inv:producto_editar' 0 %}`.replace(0, productId));
+                });
+            });
+
+            // Botones "Eliminar"
+            document.querySelectorAll('.delete-product-btn').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    const productId = this.parentElement.getAttribute('data-product-id');
+                    loadModal(`{% url 'inv:producto_eliminar' 0 %}`.replace(0, productId));
+                });
+            });
+
+            // Botones "Mover"
+            document.querySelectorAll('.move-product-btn').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    const productId = this.parentElement.getAttribute('data-product-id');
+                    loadModal(`{% url 'inv:producto_mover' 0 %}`.replace(0, productId));
+                });
+            });
+        }
+
+        // Inicializar
+        assignEventListeners();
+
+        // Funcionalidad de búsqueda
+        let debounceTimer;
+        searchField.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                const query = this.value;
+                loadProductList(query);
+            }, 300);
+        });
     });
 </script>
 {% endblock %}

@@ -1,9 +1,14 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css" rel="stylesheet" />
     <meta charset="UTF-8">
     <title>{% block title %}Mi Aplicación{% endblock %}</title>
-    <!-- Incluir archivos CSS aquí -->
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+    {% block extra_css %}{% endblock %}
     <style>
         /* Estilos básicos para el menú de navegación */
         body {
@@ -33,6 +38,8 @@
     {% block extra_head %}{% endblock %}
 </head>
 <body>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/js/select2.min.js"></script>
     <div class="nav">
         <a href="{% url 'home' %}">Inicio</a>
         <a href="{% url 'inv:producto_list' %}">Productos</a>

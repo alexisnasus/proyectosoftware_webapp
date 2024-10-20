@@ -1,0 +1,76 @@
+<div class="modal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h2>{% if form.instance.pk %}Editar Producto{% else %}Nuevo Producto{% endif %}</h2>
+
+        <div class="errors">
+            {{ form.non_field_errors }}
+            {% for field in form %}
+                {% if field.errors %}
+                    <div>{{ field.label }}: {{ field.errors }}</div>
+                {% endif %}
+            {% endfor %}
+        
+            {% for form in inventario_formset.forms %}
+                {% if form.non_field_errors %}
+                    <div>Errores en inventario: {{ form.non_field_errors }}</div>
+                {% endif %}
+                {% for field in form %}
+                    {% if field.errors %}
+                        <div>{{ field.label }}: {{ field.errors }}</div>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+        </div>
+
+        <!-- Mueve el formulario dentro de modal-content -->
+        <form method="post" action="{% if form.instance.pk %}{% url 'inv:producto_editar' form.instance.pk %}{% else %}{% url 'inv:producto_crear' %}{% endif %}">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <h3>Inventario por Ubicación</h3>
+            {{ inventario_formset.management_form }}
+            <table>
+                <tr>
+                    <th>Ubicación</th>
+                    <th>Cantidad</th>
+                    <th>Cantidad Mínima</th>
+                    <th>Eliminar</th>
+                </tr>
+                {% for form in inventario_formset %}
+                <tr>
+                    <td>{{ form.ubicacion }}</td>
+                    <td>{{ form.cantidad }}</td>
+                    <td>{{ form.cantidad_minima }}</td>
+                    <td>{{ form.DELETE }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            <button type="button" id="add-inventario-row">Añadir Ubicación</button>
+            <div class="inventario-empty-form" style="display: none;">
+                {% with inventario_formset.empty_form as form %}
+                <tr>
+                    <td>{{ form.ubicacion }}</td>
+                    <td>{{ form.cantidad }}</td>
+                    <td>{{ form.cantidad_minima }}</td>
+                    <td>{{ form.DELETE }}</td>
+                </tr>
+                {% endwith %}
+            </div>
+            <button type="submit">Guardar</button>
+        </form>
+
+        <!-- JavaScript para añadir filas -->
+        <script>
+            document.getElementById('add-inventario-row').addEventListener('click', function() {
+                var totalForms = document.getElementById('id_inventario_set-TOTAL_FORMS');
+                var currentFormCount = parseInt(totalForms.value);
+                var emptyRow = document.querySelector('.inventario-empty-form').innerHTML.replace(/__prefix__/g, currentFormCount);
+                var table = document.querySelector('table');
+                var newRow = document.createElement('tr');
+                newRow.innerHTML = emptyRow;
+                table.appendChild(newRow);
+                totalForms.value = currentFormCount + 1;
+            });
+        </script>
+    </div> <!-- Cierre de modal-content -->
+</div> <!-- Cierre de modal -->

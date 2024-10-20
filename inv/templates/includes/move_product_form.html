@@ -1,0 +1,12 @@
+<div class="modal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h2>Mover Producto: {{ producto.nombre }}</h2>
+        <div class="errors"></div>
+        <form method="post" action="{% url 'inv:producto_mover' producto.pk %}">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Mover</button>
+        </form>
+    </div>
+</div>
