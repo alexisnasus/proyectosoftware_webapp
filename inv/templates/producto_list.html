@@ -11,7 +11,8 @@
         <div class="product-item">
             <strong>{{ producto.nombre }}</strong><br>
             Código de barras: {{ producto.codigo_barras }}<br>
-            Precio: ${{ producto.precio }}
+            Precio: ${{ producto.precio }}<br>
+            Existencias: {{ producto.total_stock }}
         </div>
     {% empty %}
         <p>No hay productos disponibles.</p>
@@ -48,7 +49,8 @@
                             productItem.innerHTML = `
                                 <strong>${producto.nombre}</strong><br>
                                 Código de barras: ${producto.codigo_barras}<br>
-                                Precio: $${producto.precio}
+                                Precio: $${producto.precio}<br>
+                                Existencias: ${producto.stock}
                             `;
                             productList.appendChild(productItem);
                         });
