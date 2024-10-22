@@ -8,11 +8,18 @@
 
 <div id="product-list">
     {% for producto in productos %}
-        <div class="product-item">
+        <div class="product-item" data-product-id="{{ producto.id }}">
             <strong>{{ producto.nombre }}</strong><br>
             Código de barras: {{ producto.codigo_barras }}<br>
             Precio: ${{ producto.precio }}<br>
-            Existencias: {{ producto.total_stock }}
+            Existencias Totales: {{ producto.total_stock|default:0 }}<br>
+            <!-- Mostrar las ubicaciones y cantidades -->
+            <ul>
+                {% for inventario in producto.inventarios.all %}
+                    <li>{{ inventario.ubicacion.nombre }}: {{ inventario.cantidad }}</li>
+                {% endfor %}
+            </ul>
+            <!-- Aquí puedes incluir los botones de agregar/quitar existencias si los tienes -->
         </div>
     {% empty %}
         <p>No hay productos disponibles.</p>
@@ -21,7 +28,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- Incluye el JavaScript para la funcionalidad de búsqueda -->
+<!-- Incluye el JavaScript para la funcionalidad de búsqueda y actualización de existencias -->
 <script>
     const searchField = document.getElementById('search-field');
     const productList = document.getElementById('product-list');
@@ -46,13 +53,21 @@
                         data.forEach(producto => {
                             const productItem = document.createElement('div');
                             productItem.classList.add('product-item');
+                            productItem.dataset.productId = producto.id;
                             productItem.innerHTML = `
                                 <strong>${producto.nombre}</strong><br>
                                 Código de barras: ${producto.codigo_barras}<br>
                                 Precio: $${producto.precio}<br>
-                                Existencias: ${producto.stock}
+                                Existencias Totales: ${producto.stock}<br>
+                                <ul>
+                                    ${producto.ubicaciones.map(function(ubicacion) {
+                                        return `<li>${ubicacion.ubicacion}: ${ubicacion.cantidad}</li>`;
+                                    }).join('')}
+                                </ul>
+                                <!-- Aquí puedes incluir los botones de agregar/quitar existencias si los tienes -->
                             `;
                             productList.appendChild(productItem);
+                            // Añadir event listeners si es necesario
                         });
                     } else {
                         productList.innerHTML = '<p>No se encontraron productos.</p>';
@@ -63,5 +78,73 @@
                 });
         }, 300); // Retraso de 300 ms para el debounce
     });
+
+    // Función para añadir event listeners a los botones
+    function addEventListeners() {
+        const agregarButtons = document.querySelectorAll('.btn-agregar');
+        const quitarButtons = document.querySelectorAll('.btn-quitar');
+
+        agregarButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const productItem = this.closest('.product-item');
+                const productId = productItem.dataset.productId;
+                const cantidadInput = productItem.querySelector('.cantidad');
+                const cantidad = parseInt(cantidadInput.value);
+                if (isNaN(cantidad) || cantidad <= 0) {
+                    alert('Por favor, ingresa una cantidad válida.');
+                    return;
+                }
+                actualizarExistencias(productId, cantidad, 'agregar', productItem);
+            });
+        });
+
+        quitarButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const productItem = this.closest('.product-item');
+                const productId = productItem.dataset.productId;
+                const cantidadInput = productItem.querySelector('.cantidad');
+                const cantidad = parseInt(cantidadInput.value);
+                if (isNaN(cantidad) || cantidad <= 0) {
+                    alert('Por favor, ingresa una cantidad válida.');
+                    return;
+                }
+                actualizarExistencias(productId, cantidad, 'quitar', productItem);
+            });
+        });
+    }
+
+    // Añadir event listeners a los botones al cargar la página
+    addEventListeners();
+
+    function actualizarExistencias(productId, cantidad, accion, productItem) {
+        fetch(`{% url 'inv:actualizar_existencias' %}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                'product_id': productId,
+                'cantidad': cantidad,
+                'accion': accion
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Actualizar la cantidad de existencias mostrada
+                const stockElement = productItem.querySelector('.stock');
+                stockElement.textContent = data.nuevo_stock;
+                // Limpiar el campo de cantidad
+                productItem.querySelector('.cantidad').value = '';
+            } else {
+                alert(data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
 </script>
 {% endblock %}
