@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  inventory:
+    build: ./inventory_service
+    command: python manage.py runserver 0.0.0.0:8000
+    networks:
+      - pos_network
+    ports:
+      - "8001:8000"
+
+  transactions:
+    build: ./transaction_service
+    command: python manage.py runserver 0.0.0.0:8000
+    networks:
+      - pos_network
+    ports:
+      - "8002:8000"
+
+  pos:
+    build: ./pos_service
+    command: python manage.py runserver 0.0.0.0:8000
+    networks:
+      - pos_network
+    ports:
+      - "8000:8000"
+
+networks:
+  pos_network:
+    driver: bridge
