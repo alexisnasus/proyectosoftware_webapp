@@ -1,27 +1,36 @@
 services:
-  web:
+  inventory_api:
     build: .
-    container_name: manumarket_web
-    command: python manage.py runserver 0.0.0.0:8000
+    container_name: inventory_api
+    command: python manage.py runserver 0.0.0.0:8001
     volumes:
       - .:/code
     ports:
-      - "8000:8000"
+      - "8001:8001"
     environment:
-      DJANGO_SECRET_KEY: "${DJANGO_SECRET_KEY}"
-      DEBUG: "${DEBUG}"
-      INVENTORY_DB_HOST: "${INVENTORY_DB_HOST}"
-      INVENTORY_DB_NAME: "${INVENTORY_DB_NAME}"
-      INVENTORY_DB_USER: "${INVENTORY_DB_USER}"
-      INVENTORY_DB_PASSWORD: "${INVENTORY_DB_PASSWORD}"
-      INVENTORY_DB_PORT: "${INVENTORY_DB_PORT}"
-      SALES_DB_HOST: "${SALES_DB_HOST}"
-      SALES_DB_NAME: "${SALES_DB_NAME}"
-      SALES_DB_USER: "${SALES_DB_USER}"
-      SALES_DB_PASSWORD: "${SALES_DB_PASSWORD}"
-      SALES_DB_PORT: "${SALES_DB_PORT}"
+      DATABASE_HOST: inventory_db
+      DATABASE_NAME: inventory_db
+      DATABASE_USER: inventory_user
+      DATABASE_PASSWORD: inventory_pass
+      DATABASE_PORT: "5432"
     depends_on:
       - inventory_db
+
+  sales_api:
+    build: .
+    container_name: sales_api
+    command: python manage.py runserver 0.0.0.0:8002
+    volumes:
+      - .:/code
+    ports:
+      - "8002:8002"
+    environment:
+      DATABASE_HOST: sales_db
+      DATABASE_NAME: sales_db
+      DATABASE_USER: sales_user
+      DATABASE_PASSWORD: sales_pass
+      DATABASE_PORT: "5432"
+    depends_on:
       - sales_db
 
   inventory_db:

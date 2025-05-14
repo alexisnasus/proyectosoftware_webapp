@@ -25,12 +25,12 @@ SECRET_KEY = 'django-insecure-(29p=&$s2u^i-0+s!+&)sy-#egvvfuliygsj$sr2q!gqj&4n_r
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '*']
 
 # Application definition
 
 INSTALLED_APPS = [
+    'rest_framework',
     'inventory',
     'sales',
     'django.contrib.admin',
@@ -75,12 +75,19 @@ WSGI_APPLICATION = 'manumarket.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+import os
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME':     os.environ['DATABASE_NAME'],
+        'USER':     os.environ['DATABASE_USER'],
+        'PASSWORD': os.environ['DATABASE_PASSWORD'],
+        'HOST':     os.environ['DATABASE_HOST'],
+        'PORT':     os.environ.get('DATABASE_PORT', '5432'),
     }
 }
+
 
 
 # Password validation
