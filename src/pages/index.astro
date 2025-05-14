@@ -1,0 +1,17 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Welcome">
+  <div class="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
+    <h1 class="text-4xl font-bold text-gray-900 mb-8">Bienvenido ¿Quién está utilizando este dispositivo?</h1>
+    <div class="space-x-4">
+      <a href="/admin/dashboard" class="inline-block bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600">
+        Un Administrador
+      </a>
+      <a href="/user/dashboard" class="inline-block bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600">
+        Un Trabajador
+      </a>
+    </div>
+  </div>
+</Layout>
