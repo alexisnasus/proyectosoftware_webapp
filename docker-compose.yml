@@ -1,30 +1,49 @@
-version: '3.8'
-
 services:
-  inventory:
-    build: ./inventory_service
+  web:
+    build: .
+    container_name: manumarket_web
     command: python manage.py runserver 0.0.0.0:8000
-    networks:
-      - pos_network
-    ports:
-      - "8001:8000"
-
-  transactions:
-    build: ./transaction_service
-    command: python manage.py runserver 0.0.0.0:8000
-    networks:
-      - pos_network
-    ports:
-      - "8002:8000"
-
-  pos:
-    build: ./pos_service
-    command: python manage.py runserver 0.0.0.0:8000
-    networks:
-      - pos_network
+    volumes:
+      - .:/code
     ports:
       - "8000:8000"
+    environment:
+      DJANGO_SECRET_KEY: "${DJANGO_SECRET_KEY}"
+      DEBUG: "${DEBUG}"
+      INVENTORY_DB_HOST: "${INVENTORY_DB_HOST}"
+      INVENTORY_DB_NAME: "${INVENTORY_DB_NAME}"
+      INVENTORY_DB_USER: "${INVENTORY_DB_USER}"
+      INVENTORY_DB_PASSWORD: "${INVENTORY_DB_PASSWORD}"
+      INVENTORY_DB_PORT: "${INVENTORY_DB_PORT}"
+      SALES_DB_HOST: "${SALES_DB_HOST}"
+      SALES_DB_NAME: "${SALES_DB_NAME}"
+      SALES_DB_USER: "${SALES_DB_USER}"
+      SALES_DB_PASSWORD: "${SALES_DB_PASSWORD}"
+      SALES_DB_PORT: "${SALES_DB_PORT}"
+    depends_on:
+      - inventory_db
+      - sales_db
 
-networks:
-  pos_network:
-    driver: bridge
+  inventory_db:
+    image: postgres:13
+    container_name: inventory_db
+    environment:
+      POSTGRES_DB: inventory_db
+      POSTGRES_USER: inventory_user
+      POSTGRES_PASSWORD: inventory_pass
+    volumes:
+      - inventory-data:/var/lib/postgresql/data
+
+  sales_db:
+    image: postgres:13
+    container_name: sales_db
+    environment:
+      POSTGRES_DB: sales_db
+      POSTGRES_USER: sales_user
+      POSTGRES_PASSWORD: sales_pass
+    volumes:
+      - sales-data:/var/lib/postgresql/data
+
+volumes:
+  inventory-data:
+  sales-data:
