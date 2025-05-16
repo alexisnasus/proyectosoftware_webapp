@@ -16,6 +16,21 @@ services:
     depends_on:
       - inventory_db
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - "4321:4321"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    
+    
+
   sales_api:
     build: .
     container_name: sales_api

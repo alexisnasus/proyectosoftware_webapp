@@ -17,5 +17,9 @@ if defined _OLD_VIRTUAL_PATH (
 set _OLD_VIRTUAL_PATH=
 
 set VIRTUAL_ENV=
+<<<<<<< HEAD
+=======
+set VIRTUAL_ENV_PROMPT=
+>>>>>>> 2a02e73d (Agrega el frontend con su container parcialmente funcional #1)
 
 :END

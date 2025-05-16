@@ -14,12 +14,18 @@ deactivate () {
         unset _OLD_VIRTUAL_PYTHONHOME
     fi
 
+<<<<<<< HEAD
     # This should detect bash and zsh, which have a hash command that must
     # be called to get it to forget past commands.  Without forgetting
     # past commands the $PATH changes we made may not be respected
     if [ -n "${BASH:-}" -o -n "${ZSH_VERSION:-}" ] ; then
         hash -r
     fi
+=======
+    # Call hash to forget past commands. Without forgetting
+    # past commands the $PATH changes we made may not be respected
+    hash -r 2> /dev/null
+>>>>>>> 2a02e73d (Agrega el frontend con su container parcialmente funcional #1)
 
     if [ -n "${_OLD_VIRTUAL_PS1:-}" ] ; then
         PS1="${_OLD_VIRTUAL_PS1:-}"
@@ -28,6 +34,10 @@ deactivate () {
     fi
 
     unset VIRTUAL_ENV
+<<<<<<< HEAD
+=======
+    unset VIRTUAL_ENV_PROMPT
+>>>>>>> 2a02e73d (Agrega el frontend con su container parcialmente funcional #1)
     if [ ! "${1:-}" = "nondestructive" ] ; then
     # Self destruct!
         unset -f deactivate
@@ -37,7 +47,11 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
+<<<<<<< HEAD
 VIRTUAL_ENV="C:\Users\lexis\OneDrive\Desktop\proyectosoftware_webapp\env"
+=======
+VIRTUAL_ENV="C:\Users\itzra\OneDrive\Escritorio\proyectosoftware_webapp-HU1\env"
+>>>>>>> 2a02e73d (Agrega el frontend con su container parcialmente funcional #1)
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"
@@ -54,6 +68,7 @@ fi
 
 if [ -z "${VIRTUAL_ENV_DISABLE_PROMPT:-}" ] ; then
     _OLD_VIRTUAL_PS1="${PS1:-}"
+<<<<<<< HEAD
     if [ "x(env) " != x ] ; then
 	PS1="(env) ${PS1:-}"
     else
@@ -74,3 +89,14 @@ fi
 if [ -n "${BASH:-}" -o -n "${ZSH_VERSION:-}" ] ; then
     hash -r
 fi
+=======
+    PS1="(env) ${PS1:-}"
+    export PS1
+    VIRTUAL_ENV_PROMPT="(env) "
+    export VIRTUAL_ENV_PROMPT
+fi
+
+# Call hash to forget past commands. Without forgetting
+# past commands the $PATH changes we made may not be respected
+hash -r 2> /dev/null
+>>>>>>> 2a02e73d (Agrega el frontend con su container parcialmente funcional #1)
