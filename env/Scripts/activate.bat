@@ -8,11 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-<<<<<<< HEAD
 set VIRTUAL_ENV=C:\Users\lexis\OneDrive\Desktop\proyectosoftware_webapp\env
-=======
-set VIRTUAL_ENV=C:\Users\itzra\OneDrive\Escritorio\proyectosoftware_webapp-HU1\env
->>>>>>> 2a02e73d (Agrega el frontend con su container parcialmente funcional #1)
 
 if not defined PROMPT set PROMPT=$P$G
 
@@ -29,10 +25,6 @@ if defined _OLD_VIRTUAL_PATH set PATH=%_OLD_VIRTUAL_PATH%
 if not defined _OLD_VIRTUAL_PATH set _OLD_VIRTUAL_PATH=%PATH%
 
 set PATH=%VIRTUAL_ENV%\Scripts;%PATH%
-<<<<<<< HEAD
-=======
-set VIRTUAL_ENV_PROMPT=(env) 
->>>>>>> 2a02e73d (Agrega el frontend con su container parcialmente funcional #1)
 
 :END
 if defined _OLD_CODEPAGE (
