@@ -1,17 +1,57 @@
 ---
 import Layout from '../layouts/Layout.astro';
+
+// Astro.url es una instancia de URL válida en páginas .astro
+const error = Astro.url.searchParams.get('error') || '';
 ---
 
-<Layout title="Welcome">
+<Layout title="Iniciar sesión">
   <div class="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
-    <h1 class="text-4xl font-bold text-gray-900 mb-8">Bienvenido ¿Quién está utilizando este dispositivo?</h1>
-    <div class="space-x-4">
-      <a href="/admin/dashboard" class="inline-block bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600">
-        Un Administrador
-      </a>
-      <a href="/user/dashboard" class="inline-block bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600">
-        Un Trabajador
-      </a>
-    </div>
+    <h1 class="text-4xl font-bold text-gray-900 mb-8">ManuMarket — Login</h1>
+
+    {error && (
+      <p class="text-red-500 text-xs italic mb-4">{error}</p>
+    )}
+
+    <form
+      class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
+      method="POST"
+      action="/api/login"
+    >
+      <div class="mb-4">
+        <label for="username" class="block text-gray-700 text-sm font-bold mb-2">
+          Usuario
+        </label>
+        <input
+          id="username"
+          name="username"
+          type="text"
+          required
+          placeholder="admin  o  trabajador"
+          class="shadow border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline"
+        />
+      </div>
+
+      <div class="mb-6">
+        <label for="password" class="block text-gray-700 text-sm font-bold mb-2">
+          Contraseña
+        </label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          required
+          placeholder="tu contraseña"
+          class="shadow border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline"
+        />
+      </div>
+
+      <button
+        type="submit"
+        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+      >
+        Iniciar sesión
+      </button>
+    </form>
   </div>
 </Layout>
