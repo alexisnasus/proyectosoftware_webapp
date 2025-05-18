@@ -1,4 +1,15 @@
 services:
+  db:
+    image: postgres:13
+    container_name: manumarket_db
+    environment:
+      POSTGRES_DB:       manumarket
+      POSTGRES_USER:     manumarket_user
+      POSTGRES_PASSWORD: manumarket_pass
+    volumes:
+      - manumarket-data:/var/lib/postgresql/data
+      - ./db_init/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+
   inventory_api:
     build: .
     container_name: inventory_api
@@ -8,13 +19,30 @@ services:
     ports:
       - "8001:8001"
     environment:
-      DATABASE_HOST: inventory_db
-      DATABASE_NAME: inventory_db
-      DATABASE_USER: inventory_user
-      DATABASE_PASSWORD: inventory_pass
+      DATABASE_HOST: db
+      DATABASE_NAME: manumarket
+      DATABASE_USER: manumarket_user
+      DATABASE_PASSWORD: manumarket_pass
       DATABASE_PORT: "5432"
     depends_on:
-      - inventory_db
+      - db
+
+  sales_api:
+    build: .
+    container_name: sales_api
+    command: python manage.py runserver 0.0.0.0:8002
+    volumes:
+      - .:/code
+    ports:
+      - "8002:8002"
+    environment:
+      DATABASE_HOST: db
+      DATABASE_NAME: manumarket
+      DATABASE_USER: manumarket_user
+      DATABASE_PASSWORD: manumarket_pass
+      DATABASE_PORT: "5432"
+    depends_on:
+      - db
 
   frontend:
     build:
@@ -28,46 +56,6 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=development
-    
-    
-
-  sales_api:
-    build: .
-    container_name: sales_api
-    command: python manage.py runserver 0.0.0.0:8002
-    volumes:
-      - .:/code
-    ports:
-      - "8002:8002"
-    environment:
-      DATABASE_HOST: sales_db
-      DATABASE_NAME: sales_db
-      DATABASE_USER: sales_user
-      DATABASE_PASSWORD: sales_pass
-      DATABASE_PORT: "5432"
-    depends_on:
-      - sales_db
-
-  inventory_db:
-    image: postgres:13
-    container_name: inventory_db
-    environment:
-      POSTGRES_DB: inventory_db
-      POSTGRES_USER: inventory_user
-      POSTGRES_PASSWORD: inventory_pass
-    volumes:
-      - inventory-data:/var/lib/postgresql/data
-
-  sales_db:
-    image: postgres:13
-    container_name: sales_db
-    environment:
-      POSTGRES_DB: sales_db
-      POSTGRES_USER: sales_user
-      POSTGRES_PASSWORD: sales_pass
-    volumes:
-      - sales-data:/var/lib/postgresql/data
 
 volumes:
-  inventory-data:
-  sales-data:
+  manumarket-data:

@@ -8,3 +8,5 @@ __pycache__/
 *.py[cod]
 *.sqlite3
 *.log
+.DS_Store
+Thumbs.db

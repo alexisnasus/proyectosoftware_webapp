@@ -1,7 +1,9 @@
 from rest_framework import serializers
-from .models import Item
+from .models import Product
 
-class ItemSerializer(serializers.ModelSerializer):
+class ProductSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Item
-        fields = '__all__'
+        model = Product
+        fields = ['id', 'code', 'name', 'quantity']
+        read_only_fields = ['id']
+

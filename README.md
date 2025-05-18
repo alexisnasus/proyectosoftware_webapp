@@ -25,6 +25,11 @@ docker volume prune -f
 # Construir imágenes y arrancar en segundo plano
 docker-compose up --build -d
 
+# otro
+docker compose build --no-cache
+docker compose up --force-recreate -d
+
+
 # Verificar estado de los contenedores
 docker ps
 
