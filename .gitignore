@@ -1,0 +1,14 @@
+# Ignorar virtualenv
+.venv/
+venv/
+env/
+
+# Ignorar base de datos SQLite
+db.sqlite3
+
+# Ignorar cachés y compilados
+__pycache__/
+*.py[cod]
+*.log
+*.pot
+*.py~
