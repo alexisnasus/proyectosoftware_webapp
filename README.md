@@ -6,7 +6,7 @@ Repositorio para el proyecto de punto de ventas y gestión de inventario de *Man
 ## 1. Configuración del entorno local
 
 ```powershell
-python -m venv env
+python -m venv env #en caso de error utilizar los siguientes comandos
 .\env\Scripts\Activate.ps1
 
 pip install --upgrade pip
@@ -53,4 +53,16 @@ docker-compose exec sales_api python manage.py migrate
 docker-compose down --volumes --remove-orphans
 
 ```
+## 5. Casos de errores y posibles soluciones
+
+``` Error en postman "socket hang up"
+
+docker compose down     # si las imagenes de docker se estan ejecutando.
+
+docker-compose up --build -d    # Para volver a iniciar las imagenes o contenedores de docker.
+
+docker ps    # revisar si los contenedores se estan ejecutando
+
+# En caso de que el error sea porque los contenedores o imagenes de docker estan apagados o el comando de encendido no funciona
+# Ejecutar docker de manera manual.
 
