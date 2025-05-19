@@ -46,3 +46,17 @@ All commands are run from the root of the project, from a terminal:
 ## 👀 Want to learn more?
 
 Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+
+ejecutar en .backend/
+    python -m venv env
+    .\env\Scripts\activate
+pip install django djangorestframework djangorestframework-simplejwt django-cors-headers psycopg2-binary
+
+npm install dotenv --save-dev
+
+
+username='admin'
+password='admin123'
+
+username='trabajador',
+password='worker123',
