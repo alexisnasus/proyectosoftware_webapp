@@ -1,73 +1,124 @@
-# ManuMarket  
+# ManuMarket
+
 Repositorio para el proyecto de punto de ventas y gestión de inventario de *ManuMarket*.
 
 ---
 
-## 1. Configuración del entorno local
+## HU1
+
+### 1. Configuración del entorno local
+
+Iniciamos una terminal, estando en la carpeta root del proyecto.
 
 ```powershell
-python -m venv env #en caso de error utilizar los siguientes comandos
+python -m venv env
 .\env\Scripts\Activate.ps1
 
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
----
-
-## 2. Preparar y levantar los contenedores Docker
+### 2. Preparar y levantar los contenedores Docker
 
 ```powershell
-# (Opcional) Limpiar restos de ejecuciones anteriores
+# Limpiar restos de ejecuciones anteriores
 docker-compose down --volumes --remove-orphans
-docker volume prune -f
 
-# Construir imágenes y arrancar en segundo plano
 docker-compose up --build -d
-
-# otro
-docker compose build --no-cache
-docker compose up --force-recreate -d
-
-
-# Verificar estado de los contenedores
 docker ps
 
 ```
 
----
-
-## 3. Ejecutar migraciones dentro de los microservicios
-
-```powershell
-# Migraciones para inventory_api
-docker-compose exec inventory_api python manage.py makemigrations
-docker-compose exec inventory_api python manage.py migrate
-
-# Migraciones para sales_api
-docker-compose exec sales_api python manage.py makemigrations
-docker-compose exec sales_api python manage.py migrate
-
-```
----
-
-## 4. Detener y limpiar todo
+### 3. Detener y limpiar todo
 
 ```powershell
 
 docker-compose down --volumes --remove-orphans
 
 ```
-## 5. Casos de errores y posibles soluciones
 
-``` Error en postman "socket hang up"
+### API en Swagger
 
-docker compose down     # si las imagenes de docker se estan ejecutando.
+<http://localhost:8001/swagger/>
 
-docker-compose up --build -d    # Para volver a iniciar las imagenes o contenedores de docker.
+---
 
-docker ps    # revisar si los contenedores se estan ejecutando
+## HU2
 
-# En caso de que el error sea porque los contenedores o imagenes de docker estan apagados o el comando de encendido no funciona
-# Ejecutar docker de manera manual.
+### 1
 
+---
+
+## **HU7**
+
+### Preparar el backend (Django + PostgreSQL)
+
+1. Posicionarse en el directorio de backend y activar entorno virtual  
+
+    ```powershell
+
+    cd backend
+    python -m venv env
+    .\env\Scripts\Activate.ps1
+
+    pip install -r requirements.txt
+
+    ```
+
+2. Crear el fichero *.env* con tus credenciales de conexión (junto a docker-compose.yml)
+
+    ```dotenv
+
+    SECRET_KEY=manumarket
+    DEBUG=True
+
+    DATABASE_ENGINE=django.db.backends.postgresql
+    DATABASE_NAME=manumarket
+    DATABASE_USER=postgres
+    DATABASE_PASSWORD=postgres
+    DATABASE_HOST=db
+    DATABASE_PORT=5432
+
+    ```
+
+3. Preparar y levantar los contenedores Docker
+
+    ```powershell
+    # Limpiar restos de ejecuciones anteriores
+    docker-compose down --volumes --remove-orphans
+
+    docker-compose up --build -d
+    docker ps
+
+    ```
+
+4. Comprobar endpoint de login
+
+    ```powershell
+
+    curl.exe -i -X POST http://127.0.0.1:8000/api/auth/login/ \
+    -H "Content-Type: application/json" \
+    -d "{\"username\":\"admin\",\"password\":\"admin123\"}"
+
+    ```
+
+### Preparar el frontend (Astro)
+
+1. Posicionamos en la raíz del proyecto e instalamos las dependencias.
+
+    ```powershell
+
+    cd ..
+    npm install
+
+    ```
+
+2. Arrancamos **Astro**
+
+    ```powershell
+
+    npm run dev
+
+    ```
+
+---
