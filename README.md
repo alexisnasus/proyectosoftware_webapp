@@ -121,16 +121,16 @@ docker-compose down --volumes --remove-orphans
 
 ---
 
-ejecutar en .backend/
-    python -m venv env
-    .\env\Scripts\activate
-pip install django djangorestframework djangorestframework-simplejwt django-cors-headers psycopg2-binary
+### Credenciales y comandos varios
+
+```bash
 
 npm install dotenv --save-dev
-
 
 username='admin'
 password='admin123'
 
 username='trabajador',
 password='worker123'
+
+```
