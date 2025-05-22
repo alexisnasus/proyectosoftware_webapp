@@ -45,9 +45,9 @@ services:
     depends_on:
       - db
 
-  sales_api:
+  ventas_api:
     build: .
-    container_name: sales_api
+    container_name: ventas_api
     command: python manage.py runserver 0.0.0.0:8002
     volumes:
       - .:/code
@@ -61,6 +61,7 @@ services:
       DATABASE_PORT: "5432"
     depends_on:
       - db
+
 
 volumes:
   manumarket-data:
