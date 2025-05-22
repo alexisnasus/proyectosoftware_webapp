@@ -1,18 +1,27 @@
-# Dockerfile
-FROM python:3.12
+# Dockerfile (en backend/)
+FROM python:3.10-slim
 
-# Set working directory
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      libpq-dev gcc && \
+    rm -rf /var/lib/apt/lists/*
+
+# no escriba pyc, output en streaming
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /app
 
-# Copiar requerimientos e instalar dependencias
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# copiamos solo requirements primero (para cache)
+COPY requirements.txt /app/
+RUN pip install --upgrade pip \
+ && pip install -r requirements.txt
 
-# Copiar el código fuente
-COPY . .
+# copiamos todo el código
+COPY . /app/
 
-# Exponer el puerto del servidor
+# exponemos el puerto Django
 EXPOSE 8000
 
-# Comando por defecto
+# comando por defecto
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

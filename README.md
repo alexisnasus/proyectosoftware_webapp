@@ -4,42 +4,89 @@ Repositorio para el proyecto de punto de ventas y gestión de inventario de *Man
 
 ---
 
-## HU1
+## Preparar el backend (Django + PostgreSQL)
 
-### 1. Configuración del entorno local
+1. Posicionarse en el directorio de backend y activar entorno virtual  
 
-Iniciamos una terminal, estando en la carpeta root del proyecto.
+    ```powershell
 
-```powershell
-python -m venv env
-.\env\Scripts\Activate.ps1
+    cd backend
+    python -m venv env
+    .\env\Scripts\Activate.ps1
 
-pip install --upgrade pip
-pip install -r requirements.txt
-```
+    pip install -r requirements.txt
 
-### 2. Preparar y levantar los contenedores Docker
+    ```
 
-```powershell
-# Limpiar restos de ejecuciones anteriores
-docker-compose down --volumes --remove-orphans
+2. Crear el fichero *.env* con tus credenciales de conexión (junto a docker-compose.yml en /backend)
 
-docker-compose up --build -d
-docker ps
+    ```dotenv
 
-```
+    ALLOWED_HOSTS=localhost,127.0.0.1
+    SECRET_KEY=manumarket
+    DEBUG=True
+    DATABASE_ENGINE=django.db.backends.postgresql
+    DATABASE_NAME=manumarket
+    DATABASE_USER=postgres
+    DATABASE_PASSWORD=postgres
+    DATABASE_HOST=db
+    DATABASE_PORT=5432
 
-### 3. Detener y limpiar todo
+    ```
 
-```powershell
+3. Levantar los contenedores
 
-docker-compose down --volumes --remove-orphans
+   ```powershell
+   # Limpiar restos de ejecuciones anteriores
+   docker-compose down --volumes --remove-orphans
 
-```
+   docker-compose up --build -d
+   docker ps
 
-### API en Swagger
+   ```
 
-<http://localhost:8001/swagger/>
+4. API en Swagger
+
+   - Ingresar a: <http://localhost:8001/swagger/>
+
+---
+
+## Preparar el frontend (Astro)
+
+1. Posicionamos en el directorio **/frontend** e instalamos las dependencias.
+
+    ```powershell
+
+    cd ..
+    cd frontend
+    npm install
+    npm install astro
+
+    ```
+
+2. Levantamos el servidor **Astro**
+
+    ```powershell
+
+    npm run dev
+
+    ```
+
+---
+
+### Credenciales y comandos varios
+
+  ```bash
+
+  npm install dotenv --save-dev
+
+  username='admin'
+  password='admin123'
+
+  username='trabajador',
+  password='worker123'
+
+  ```
 
 ---
 
@@ -48,10 +95,9 @@ docker-compose down --volumes --remove-orphans
 Este repositorio contiene la implementación de la Historia de Usuario HU02: un sistema de Punto de Venta que permite escanear productos mediante un lector de código de barras, agregar ítems a una transacción, mostrar lista de productos y total, y confirmar la venta.
 
 ## Tecnologías usadas
-
-* **Backend**: Django 5.2, Django REST Framework, django-cors-headers
-* **Frontend**: Astro, Tailwind CSS
-* **Entorno**: Python 3.12+, Node.js 18+
+- **Backend**: Django 5.2, Django REST Framework, django-cors-headers
+- **Frontend**: Astro, Tailwind CSS
+- **Entorno**: Python 3.12+, Node.js 18+
 
 ## Estructura del proyecto
 
@@ -127,9 +173,9 @@ Este repositorio contiene la implementación de la Historia de Usuario HU02: un 
 
 ### URL disponibles
 
-* Api django <http://localhost:8000/api/>
+- Api django <http://localhost:8000/api/>
 
-* front <http://localhost:3000/api/>
+- front <http://localhost:3000/api/>
 
 ### AGREGAR PRODUCTOS (estando dentro de env)
 
@@ -144,90 +190,16 @@ Este repositorio contiene la implementación de la Historia de Usuario HU02: un 
 
 ### Endpoints disponibles
 
-* `POST   /api/transacciones/` → crea nueva transacción (vacía)
-* `GET    /api/productos/`       → lista de productos
-* `GET    /api/productos/<codigo>/` → detalles de un producto
-* `POST   /api/transacciones/<id>/agregar_item/` → agrega un ítem (requiere JSON `{ "codigo": ..., "cantidad": ... }`)
-* `POST   /api/transacciones/<id>/confirmar/`   → confirma la venta (opcional JSON `{ "exito": true }`)
+- `POST   /api/transacciones/` → crea nueva transacción (vacía)
+- `GET    /api/productos/`       → lista de productos
+- `GET    /api/productos/<codigo>/` → detalles de un producto
+- `POST   /api/transacciones/<id>/agregar_item/` → agrega un ítem (requiere JSON `{ "codigo": ..., "cantidad": ... }`)
+- `POST   /api/transacciones/<id>/confirmar/`   → confirma la venta (opcional JSON `{ "exito": true }`)
 
 ## Uso local
 
 1. Levanta backend (`:8000`) y frontend (`:3000`).
 2. En el navegador, ve al front y usando un lector de código de barras (o manualmente) escanea productos.
 3. Verifica en Django admin o en `/api/transacciones/` que el estado cambie correctamente.
-
----
-
-## **HU7**
-
-### Preparar el backend (Django + PostgreSQL)
-
-1. Posicionarse en el directorio de backend y activar entorno virtual  
-
-    ```powershell
-
-    cd backend
-    python -m venv env
-    .\env\Scripts\Activate.ps1
-
-    pip install -r requirements.txt
-
-    ```
-
-2. Crear el fichero *.env* con tus credenciales de conexión (junto a docker-compose.yml)
-
-    ```dotenv
-
-    SECRET_KEY=manumarket
-    DEBUG=True
-
-    DATABASE_ENGINE=django.db.backends.postgresql
-    DATABASE_NAME=manumarket
-    DATABASE_USER=postgres
-    DATABASE_PASSWORD=postgres
-    DATABASE_HOST=db
-    DATABASE_PORT=5432
-
-    ```
-
-3. Preparar y levantar los contenedores Docker
-
-    ```powershell
-    # Limpiar restos de ejecuciones anteriores
-    docker-compose down --volumes --remove-orphans
-
-    docker-compose up --build -d
-    docker ps
-
-    ```
-
-4. Comprobar endpoint de login
-
-    ```powershell
-
-    curl.exe -i -X POST http://127.0.0.1:8000/api/auth/login/ \
-    -H "Content-Type: application/json" \
-    -d "{\"username\":\"admin\",\"password\":\"admin123\"}"
-
-    ```
-
-### Preparar el frontend (Astro)
-
-1. Posicionamos en la raíz del proyecto e instalamos las dependencias.
-
-    ```powershell
-
-    cd ..
-    npm install
-
-    ```
-
-2. Arrancamos **Astro**
-
-    ```powershell
-
-    npm run dev
-
-    ```
 
 ---

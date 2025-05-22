@@ -1,0 +1,66 @@
+services:
+  db:
+    image: postgres:15
+    container_name: manumarket_db
+    restart: always
+    environment:
+      POSTGRES_USER:     postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB:       manumarket
+    volumes:
+      - ./db_init:/docker-entrypoint-initdb.d
+      - manumarket-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  users_api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: users_api
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+    volumes:
+      - ./:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    env_file:
+      - .env
+
+  inventory_api:
+    build: .
+    container_name: inventory_api
+    command: python manage.py runserver 0.0.0.0:8001
+    volumes:
+      - .:/code
+    ports:
+      - "8001:8001"
+    environment:
+      DATABASE_HOST: db
+      DATABASE_NAME: manumarket
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgres
+      DATABASE_PORT: "5432"
+    depends_on:
+      - db
+
+  sales_api:
+    build: .
+    container_name: sales_api
+    command: python manage.py runserver 0.0.0.0:8002
+    volumes:
+      - .:/code
+    ports:
+      - "8002:8002"
+    environment:
+      DATABASE_HOST: db
+      DATABASE_NAME: manumarket
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgres
+      DATABASE_PORT: "5432"
+    depends_on:
+      - db
+
+volumes:
+  manumarket-data:
