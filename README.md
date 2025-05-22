@@ -2,6 +2,12 @@
 
 Repositorio para el proyecto de punto de ventas y gestión de inventario de *ManuMarket*.
 
+## Tecnologías usadas
+
+- **Backend**: Django 5.2, Django REST Framework, django-cors-headers
+- **Frontend**: Astro, Tailwind CSS
+- **Entorno**: Python 3.12+, Node.js 18+
+
 ---
 
 ## Preparar el backend (Django + PostgreSQL)
@@ -18,23 +24,7 @@ Repositorio para el proyecto de punto de ventas y gestión de inventario de *Man
 
     ```
 
-2. Crear el fichero *.env* con tus credenciales de conexión (junto a docker-compose.yml en /backend)
-
-    ```dotenv
-
-    ALLOWED_HOSTS=localhost,127.0.0.1
-    SECRET_KEY=manumarket
-    DEBUG=True
-    DATABASE_ENGINE=django.db.backends.postgresql
-    DATABASE_NAME=manumarket
-    DATABASE_USER=postgres
-    DATABASE_PASSWORD=postgres
-    DATABASE_HOST=db
-    DATABASE_PORT=5432
-
-    ```
-
-3. Levantar los contenedores
+2. Levantar los contenedores
 
    ```powershell
    # Limpiar restos de ejecuciones anteriores
@@ -45,7 +35,7 @@ Repositorio para el proyecto de punto de ventas y gestión de inventario de *Man
 
    ```
 
-4. API en Swagger
+3. API en Swagger
 
    - Ingresar a: <http://localhost:8001/swagger/>
 
@@ -89,34 +79,6 @@ Repositorio para el proyecto de punto de ventas y gestión de inventario de *Man
   ```
 
 ---
-
-## HU2
-
-Este repositorio contiene la implementación de la Historia de Usuario HU02: un sistema de Punto de Venta que permite escanear productos mediante un lector de código de barras, agregar ítems a una transacción, mostrar lista de productos y total, y confirmar la venta.
-
-## Tecnologías usadas
-- **Backend**: Django 5.2, Django REST Framework, django-cors-headers
-- **Frontend**: Astro, Tailwind CSS
-- **Entorno**: Python 3.12+, Node.js 18+
-
-## Estructura del proyecto
-
-```txt
-
-/ (raíz del repo)
-├─ env/                      # Entorno virtual de Python
-├─ backend/                    # Proyecto Django
-│  ├─ backend/                 # Configuración global (settings, urls)
-│  ├─ ventas/                  # App de ventas (modelos, views, serializers)
-│  ├─ manage.py
-│  └─ db.sqlite3
-└─ frontend/                   # Proyecto Astro + Tailwind
-   ├─ src/
-   ├─ public/
-   ├─ astro.config.mjs
-   └─ package.json
-
-```
 
 ## Configuración del backend (Django)
 
