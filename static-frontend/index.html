@@ -38,85 +38,93 @@
     <div id="mensajeEstado" class="mt-4"></div>
   </div>
 
-  <script>
-    // 1) Al cargar la página creamos una transacción vacía y guardamos su ID
-    let TX_ID = null;
-    window.addEventListener('load', () => {
-      fetch('http://127.0.0.1:8000/api/transacciones/', { method: 'POST' })
-        .then(r => r.json())
-        .then(tx => {
-          TX_ID = tx.id;
-          console.log('Transacción creada:', TX_ID);
-        });
+<script>
+  const backendURL = 'http://localhost:8000/api/productos/';
+
+  let carrito = [];
+
+async function buscarProducto() {
+  const codigo = document.getElementById('codigoBarras').value.trim();
+
+  try {
+    const response = await fetch(`${backendURL}${codigo}/`);
+    if (!response.ok) throw new Error('No encontrado');
+
+    const producto = await response.json();
+
+    const existente = carrito.find(p => p.codigo === codigo);
+    if (existente) {
+      existente.cantidad++;
+    } else {
+      carrito.push({ ...producto, precio: Number(producto.precio), cantidad: 1 });
+
+    }
+
+    actualizarTabla();
+    mostrarMensaje('', '');
+  } catch (error) {
+    mostrarMensaje('Producto no encontrado en el backend.', 'danger');
+  }
+
+  document.getElementById('codigoBarras').value = '';
+}
+
+
+  function actualizarTabla() {
+    const tbody = document.querySelector('#tablaProductos tbody');
+    tbody.innerHTML = '';
+    let total = 0;
+
+    carrito.forEach((p, index) => {
+      const subtotal = p.precio * p.cantidad;
+      total += subtotal;
+      tbody.innerHTML += `
+        <tr>
+          <td>${p.codigo}</td>
+          <td>${p.nombre}</td>
+          <td>$${p.precio.toFixed(2)}</td>
+          <td>${p.cantidad}</td>
+          <td>$${subtotal.toFixed(2)}</td>
+          <td><button class="btn btn-sm btn-danger" onclick="eliminarProducto(${index})">Eliminar</button></td>
+        </tr>
+      `;
     });
 
-    // 2) Función para escanear/agregar un producto
-    function buscarProducto() {
-      const codigo = document.getElementById('codigoBarras').value.trim();
-      if (!codigo || !TX_ID) return;
+    document.getElementById('totalVenta').innerText = `Total: $${total.toFixed(2)}`;
+    document.getElementById('btnConfirmar').disabled = carrito.length === 0;
 
-      fetch(`http://127.0.0.1:8000/api/transacciones/${TX_ID}/agregar_item/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ codigo: codigo, cantidad: 1 })
-      })
-      .then(r => {
-        if (!r.ok) throw new Error('No encontrado');
-        return r.json();
-      })
-      .then(tx => {
-        renderTabla(tx.lineas, tx.total);
-        mostrarMensaje('', '');
-        document.getElementById('btnConfirmar').disabled = false;
-      })
-      .catch(_ => mostrarMensaje('Producto no encontrado en el backend.', 'danger'))
-      .finally(() => document.getElementById('codigoBarras').value = '');
+  }
+
+  function eliminarProducto(index) {
+    carrito.splice(index, 1);
+    actualizarTabla();
+  }
+
+  function mostrarMensaje(texto, tipo) {
+    const contenedor = document.getElementById('mensajeEstado');
+    contenedor.innerHTML = texto
+      ? `<div class="alert alert-${tipo}">${texto}</div>`
+      : '';
+  }
+
+  function confirmarVenta() {
+    if (carrito.length === 0) {
+      mostrarMensaje('No hay productos para vender.', 'warning');
+      return;
     }
 
-    // 3) Pinta la tabla y total a partir del JSON de la transacción
-    function renderTabla(lineas, total) {
-      const tbody = document.querySelector('#tablaProductos tbody');
-      tbody.innerHTML = '';
-      lineas.forEach(lv => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${lv.producto.codigo}</td>
-          <td>${lv.producto.nombre}</td>
-          <td>$${parseFloat(lv.producto.precio).toFixed(2)}</td>
-          <td>${lv.cantidad}</td>
-          <td>$${parseFloat(lv.subtotal).toFixed(2)}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-      document.getElementById('totalVenta').innerText = `Total: $${parseFloat(total).toFixed(2)}`;
-    }
+    // Lógica para POST (puedes implementarla luego)
+    mostrarMensaje('Venta confirmada (simulada).', 'success');
+    carrito = [];
+    actualizarTabla();
+  }
 
-    // 4) Confirmar venta via API
-    function confirmarVenta() {
-      fetch(`http://127.0.0.1:8000/api/transacciones/${TX_ID}/confirmar/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ exito: true })
-      })
-      .then(r => r.json())
-      .then(tx => {
-        mostrarMensaje('Venta confirmada con éxito 🎉', 'success');
-        document.getElementById('btnConfirmar').disabled = true;
-      });
-    }
+  function cancelarVenta() {
+    carrito = [];
+    actualizarTabla();
+    mostrarMensaje('Venta cancelada.', 'secondary');
+  }
+</script>
 
-    // 5) Cancelar venta (simple: refresca página o crea nueva transacción)
-    function cancelarVenta() {
-      location.reload();
-    }
-
-    // 6) Mostrar alertas
-    function mostrarMensaje(texto, tipo) {
-      const cont = document.getElementById('mensajeEstado');
-      cont.innerHTML = texto
-        ? `<div class="alert alert-${tipo}">${texto}</div>`
-        : '';
-    }
-  </script>
 </body>
 </html>
