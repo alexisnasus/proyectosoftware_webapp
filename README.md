@@ -95,10 +95,8 @@ docker-compose down --volumes --remove-orphans
 4. Comprobar endpoint de login
 
     ```powershell
-
-    curl.exe -i -X POST http://127.0.0.1:8000/api/auth/login/ \
-    -H "Content-Type: application/json" \
-    -d "{\"username\":\"admin\",\"password\":\"admin123\"}"
+    
+    Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/auth/login/" -Method POST -Headers @{ "Content-Type" = "application/json" } -Body (@{ username = 'admin'; password = 'admin123' } | ConvertTo-Json)
 
     ```
 
@@ -122,3 +120,17 @@ docker-compose down --volumes --remove-orphans
     ```
 
 ---
+
+### Credenciales y comandos varios
+
+```bash
+
+npm install dotenv --save-dev
+
+username='admin'
+password='admin123'
+
+username='trabajador',
+password='worker123'
+
+```
