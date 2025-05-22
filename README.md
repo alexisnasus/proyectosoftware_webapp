@@ -95,7 +95,7 @@ docker-compose down --volumes --remove-orphans
 4. Comprobar endpoint de login
 
     ```powershell
-
+    
     Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/auth/login/" -Method POST -Headers @{ "Content-Type" = "application/json" } -Body (@{ username = 'admin'; password = 'admin123' } | ConvertTo-Json)
 
     ```
