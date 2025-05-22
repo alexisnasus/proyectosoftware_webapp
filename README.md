@@ -76,17 +76,17 @@ Repositorio para el proyecto de punto de ventas y gestión de inventario de *Man
 
 ### Credenciales y comandos varios
 
-```bash
+  ```bash
 
-npm install dotenv --save-dev
+  npm install dotenv --save-dev
 
-username='admin'
-password='admin123'
+  username='admin'
+  password='admin123'
 
-username='trabajador',
-password='worker123'
+  username='trabajador',
+  password='worker123'
 
-```
+  ```
 
 ---
 
@@ -95,7 +95,6 @@ password='worker123'
 Este repositorio contiene la implementación de la Historia de Usuario HU02: un sistema de Punto de Venta que permite escanear productos mediante un lector de código de barras, agregar ítems a una transacción, mostrar lista de productos y total, y confirmar la venta.
 
 ## Tecnologías usadas
-
 - **Backend**: Django 5.2, Django REST Framework, django-cors-headers
 - **Frontend**: Astro, Tailwind CSS
 - **Entorno**: Python 3.12+, Node.js 18+
