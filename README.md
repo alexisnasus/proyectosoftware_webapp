@@ -34,9 +34,20 @@ Repositorio para el proyecto de punto de ventas y gestión de inventario de *Man
 
     ```
 
-3. API en Swagger
+3. Levantar los contenedores
 
-    - <http://localhost:8001/swagger/>
+   ```powershell
+   # Limpiar restos de ejecuciones anteriores
+   docker-compose down --volumes --remove-orphans
+
+   docker-compose up --build -d
+   docker ps
+
+   ```
+
+4. API en Swagger
+
+   - Ingresar a: <http://localhost:8001/swagger/>
 
 ---
 
