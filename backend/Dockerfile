@@ -1,6 +1,11 @@
 # Dockerfile (en backend/)
 FROM python:3.10-slim
 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      libpq-dev gcc && \
+    rm -rf /var/lib/apt/lists/*
+
 # no escriba pyc, output en streaming
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1

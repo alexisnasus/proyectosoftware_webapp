@@ -1,5 +1,20 @@
 -- db_init/schema.sql
 
+CREATE TABLE IF NOT EXISTS products (
+  id SERIAL PRIMARY KEY,
+  code VARCHAR(64) UNIQUE NOT NULL,
+  name VARCHAR(200)      NOT NULL,
+  quantity INTEGER       NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS sales (
+  id SERIAL PRIMARY KEY,
+  product_id INTEGER NOT NULL REFERENCES products(id),
+  quantity   INTEGER NOT NULL,
+  sold_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+
 -- 1) Creamos la tabla de usuarios (custom AbstractUser)
 CREATE TABLE IF NOT EXISTS users_user (
     id SERIAL PRIMARY KEY,

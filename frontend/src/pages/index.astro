@@ -1,11 +1,100 @@
 ---
-import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+const error = Astro.url.searchParams.get('error') || '';
 ---
 
-<Layout>
-	<Welcome />
+<Layout title="Iniciar sesión">
+  <div class="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
+    <h1 class="text-4xl font-bold text-gray-900 mb-8">ManuMarket — Login</h1>
+
+    {error && (
+      <p class="text-red-500 text-xs italic mb-4">{error}</p>
+    )}
+
+    <!-- Formulario sin action ni method, para manejarlo con JS -->
+    <form id="loginForm" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+      <div class="mb-4">
+        <label for="username" class="block text-gray-700 text-sm font-bold mb-2">
+          Usuario
+        </label>
+        <input
+          id="username"
+          name="username"
+          type="text"
+          required
+          placeholder="admin  o  trabajador"
+          class="shadow border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline"
+        />
+      </div>
+
+      <div class="mb-6">
+        <label for="password" class="block text-gray-700 text-sm font-bold mb-2">
+          Contraseña
+        </label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          required
+          placeholder="tu contraseña"
+          class="shadow border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline"
+        />
+      </div>
+
+      <button
+        type="submit"
+        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+      >
+        Iniciar sesión
+      </button>
+
+      <p id="jsError" class="text-red-500 text-xs italic mt-4" style="display: none;"></p>
+    </form>
+  </div>
+
+  <!--
+    Este script se envía tal cual al navegador (is:inline) y no requiere importaciones de módulos.
+  -->
+  <script is:inline>
+    const form = document.getElementById('loginForm');
+    const jsError = document.getElementById('jsError');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      jsError.style.display = 'none';
+
+      const fd = new FormData(form);
+      const username = String(fd.get('username') || '').trim();
+      const password = String(fd.get('password') || '').trim();
+
+      try {
+        // Llama a tu API interna de Astro
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        });
+
+        if (!res.ok) {
+          throw new Error('Credenciales incorrectas');
+        }
+
+        const { access, refresh } = await res.json();
+
+        // Gestión de token sin authStore
+        localStorage.setItem('token', access);
+        localStorage.setItem('user', JSON.stringify({ username }));
+
+        // Redirige según rol básico (username)
+        if (username === 'admin') {
+          window.location.href = '/admin/dashboard';
+        } else {
+          window.location.href = '/user/dashboard';
+        }
+      } catch (err) {
+        jsError.textContent = err.message;
+        jsError.style.display = 'block';
+      }
+    });
+  </script>
 </Layout>

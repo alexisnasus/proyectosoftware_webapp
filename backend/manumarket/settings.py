@@ -21,10 +21,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-zmmmuihr9a7xl#-q+q=ok%5uri5cl)m(9nvv=*$%jk)dbuik18')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 # Application definition
 
@@ -38,11 +37,17 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'users',
-    # 'sales',
-    # 'inventory',
+    'sales',
+    'inventory',
+    'drf_yasg',
 ]
 
 AUTH_USER_MODEL = 'users.User'
+
+SWAGGER_SETTINGS = {
+    'USE_SESSION_AUTH': False,
+    'JSON_EDITOR': True,
+}
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -69,6 +74,7 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -83,14 +89,16 @@ WSGI_APPLICATION = 'manumarket.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+import os
+
 DATABASES = {
     'default': {
-        'ENGINE':   os.getenv('DATABASE_ENGINE',   'django.db.backends.sqlite3'),
-        'NAME':     os.getenv('DATABASE_NAME',     BASE_DIR / 'db.sqlite3'),
-        'USER':     os.getenv('DATABASE_USER',     ''),
-        'PASSWORD': os.getenv('DATABASE_PASSWORD', ''),
-        'HOST':     os.getenv('DATABASE_HOST',     ''),
-        'PORT':     os.getenv('DATABASE_PORT',     ''),
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('DATABASE_NAME', 'manumarket'),
+        'USER': os.environ.get('DATABASE_USER', 'postgres'),
+        'PASSWORD': os.environ.get('DATABASE_PASSWORD', 'postgres'),
+        'HOST': os.environ.get('DATABASE_HOST', 'db'),
+        'PORT': os.environ.get('DATABASE_PORT', '5432'),
     }
 }
 
