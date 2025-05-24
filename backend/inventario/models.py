@@ -17,3 +17,7 @@ class Stock(models.Model):
 
     class Meta:
         db_table = 'stock'
+        
+    def __str__(self):
+        return f"Stock({self.producto.codigo}): {self.cantidad}"
+
