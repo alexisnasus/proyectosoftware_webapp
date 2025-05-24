@@ -10,7 +10,7 @@ Repositorio para el proyecto de punto de ventas y gestión de inventario de *Man
 
 ---
 
-## Preparar el backend (Django + PostgreSQL)
+## Levantar app
 
 1. Activar entorno virtual 👻  
 
