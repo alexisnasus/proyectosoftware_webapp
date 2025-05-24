@@ -21,6 +21,7 @@ Repositorio para el proyecto de punto de ventas y gestión de inventario de *Man
     .\env\Scripts\Activate.ps1
 
     pip install -r requirements.txt
+     # source env/bin/activate (mac/linux)
 
     ```
 
