@@ -1,0 +1,22 @@
+# Dockerfile.frontend
+
+FROM node:18-alpine
+
+# Crear directorio de trabajo
+WORKDIR /app
+
+# Copiar archivos necesarios para instalación
+COPY frontend/package*.json ./
+
+# Instalar dependencias
+RUN npm install
+
+# Copiar el resto del código del frontend
+COPY frontend .
+
+# Exponer el puerto de desarrollo de Astro (4321 por defecto)
+EXPOSE 4321
+
+# Comando para levantar Astro en modo desarrollo
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+

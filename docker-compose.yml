@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   db:
     image: postgres:15
@@ -20,7 +22,7 @@ services:
     container_name: users_api
     command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
     volumes:
-      - ./:/app
+      - ./backend:/app
     ports:
       - "8000:8000"
     depends_on:
@@ -29,38 +31,49 @@ services:
       - .env
 
   inventory_api:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: inventory_api
-    command: python manage.py runserver 0.0.0.0:8001
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8001"]
     volumes:
-      - .:/code
+      - ./backend:/app
     ports:
       - "8001:8001"
-    environment:
-      DATABASE_HOST: db
-      DATABASE_NAME: manumarket
-      DATABASE_USER: postgres
-      DATABASE_PASSWORD: postgres
-      DATABASE_PORT: "5432"
     depends_on:
       - db
+    env_file:
+      - .env
 
   ventas_api:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: ventas_api
-    command: python manage.py runserver 0.0.0.0:8002
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8002"]
     volumes:
-      - .:/code
+      - ./backend:/app
     ports:
       - "8002:8002"
-    environment:
-      DATABASE_HOST: db
-      DATABASE_NAME: manumarket
-      DATABASE_USER: postgres
-      DATABASE_PASSWORD: postgres
-      DATABASE_PORT: "5432"
     depends_on:
       - db
+    env_file:
+      - .env
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "4321:4321"
+    environment:
+      - NODE_ENV=development
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 
 volumes:

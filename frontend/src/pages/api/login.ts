@@ -9,15 +9,18 @@ export const POST: APIRoute = async ({ request }) => {
   const user = String(username).trim();
   const pass = String(password).trim();
 
-  // URL absoluta de tu Django en Docker Compose
-  const BACKEND_URL = 'http://127.0.0.1:8000';
+const BACKEND_URL = 'http://host.docker.internal:8000';
 
   // Llamada real al endpoint de login de Django
-  const res = await fetch(`${BACKEND_URL}/api/auth/login/`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: user, password: pass }),
-  });
+const res = await fetch(`${BACKEND_URL}/api/auth/login/`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Host': 'users_api' // sobrescribe el Host con uno válido
+  },
+  body: JSON.stringify({ username: user, password: pass }),
+});
+
 
   // Si Django no devuelve 200, redirige al login con el error
   if (!res.ok) {

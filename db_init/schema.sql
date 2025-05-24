@@ -1,19 +1,35 @@
--- db_init/schema.sql
+-- Habilitar extensión para UUID
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-CREATE TABLE IF NOT EXISTS products (
-  id SERIAL PRIMARY KEY,
-  code VARCHAR(64) UNIQUE NOT NULL,
-  name VARCHAR(200)      NOT NULL,
-  quantity INTEGER       NOT NULL DEFAULT 0
+-- Tabla de productos
+CREATE TABLE IF NOT EXISTS producto (
+    id SERIAL PRIMARY KEY,
+    codigo VARCHAR(50) UNIQUE NOT NULL,
+    nombre VARCHAR(200) NOT NULL,
+    precio DECIMAL(10, 2) NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS sales (
-  id SERIAL PRIMARY KEY,
-  product_id INTEGER NOT NULL REFERENCES products(id),
-  quantity   INTEGER NOT NULL,
-  sold_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+-- Tabla de transacciones (ventas)
+CREATE TABLE IF NOT EXISTS transaccion (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    confirmado_en TIMESTAMP NULL,
+    estado VARCHAR(10) NOT NULL DEFAULT 'PENDIENTE'
+        CHECK (estado IN ('PENDIENTE', 'CONFIRMADA', 'FALLIDA'))
 );
 
+CREATE TABLE IF NOT EXISTS item (
+    id SERIAL PRIMARY KEY,
+    transaccion_id UUID NOT NULL REFERENCES transaccion(id) ON DELETE CASCADE,
+    producto_id INTEGER NOT NULL REFERENCES producto(id) ON DELETE RESTRICT,
+    cantidad INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS stock (
+    id SERIAL PRIMARY KEY,
+    producto_id INTEGER NOT NULL UNIQUE REFERENCES producto(id) ON DELETE CASCADE,
+    cantidad INTEGER NOT NULL DEFAULT 0
+);
 
 -- 1) Creamos la tabla de usuarios (custom AbstractUser)
 CREATE TABLE IF NOT EXISTS users_user (
@@ -87,31 +103,3 @@ INSERT INTO users_user (
     'EMPLOYEE'
 )
 ON CONFLICT (username) DO NOTHING;
-
--- Habilitar extensión para UUID
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
-
--- Tabla Producto
-CREATE TABLE IF NOT EXISTS ventas_producto (
-    id SERIAL PRIMARY KEY,
-    codigo VARCHAR(50) UNIQUE NOT NULL,
-    nombre VARCHAR(200) NOT NULL,
-    precio DECIMAL(10, 2) NOT NULL
-);
-
--- Tabla Transaccion
-CREATE TABLE IF NOT EXISTS ventas_transaccion (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    confirmado_en TIMESTAMP NULL,
-    estado VARCHAR(10) NOT NULL DEFAULT 'PENDIENTE'
-        CHECK (estado IN ('PENDIENTE', 'CONFIRMADA', 'FALLIDA'))
-);
-
--- Tabla LineaVenta
-CREATE TABLE IF NOT EXISTS ventas_lineaventa (
-    id SERIAL PRIMARY KEY,
-    transaccion_id UUID NOT NULL REFERENCES ventas_transaccion(id) ON DELETE CASCADE,
-    producto_id INTEGER NOT NULL REFERENCES ventas_producto(id) ON DELETE RESTRICT,
-    cantidad INTEGER NOT NULL DEFAULT 1
-);

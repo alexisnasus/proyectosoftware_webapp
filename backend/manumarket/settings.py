@@ -37,9 +37,8 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'users',
-    'sales',
     'ventas',
-    'inventory',
+    'inventario',
     'drf_yasg',
 ]
 

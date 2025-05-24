@@ -16,7 +16,6 @@ Repositorio para el proyecto de punto de ventas y gestión de inventario de *Man
 
     ```powershell
 
-    cd backend
     python -m venv env
     .\env\Scripts\Activate.ps1
 
@@ -35,32 +34,10 @@ Repositorio para el proyecto de punto de ventas y gestión de inventario de *Man
 
    ```
 
-3. API en Swagger
+3. URL´L
 
-   - Ingresar a: <http://localhost:8001/swagger/>
-
----
-
-## Preparar el frontend (Astro)
-
-1. Posicionamos en el directorio **/frontend** e instalamos las dependencias.
-
-    ```powershell
-
-    cd ..
-    cd frontend
-    npm install
-    npm install astro
-
-    ```
-
-2. Levantamos el servidor **Astro**
-
-    ```powershell
-
-    npm run dev
-
-    ```
+   - Test de API: <http://localhost:8001/swagger/>
+   - front: <http://localhost:4321/>
 
 ---
 
@@ -77,91 +54,5 @@ Repositorio para el proyecto de punto de ventas y gestión de inventario de *Man
   password='worker123'
 
   ```
-
----
-
-## Configuración del backend (Django)
-
-1. Abre un terminal en la raíz del repo y crea/activa el virtualenv:
-
-   ```powershell
-
-   python -m venv env
-   .\env\Scripts\Activate.ps1
-
-   ```
-
-2. Instala dependencias:
-
-   ```bash
-
-   pip install django djangorestframework django-cors-headers
-
-   ```
-
-3. Crea tablas en la base de datos:
-
-   ```bash
-
-   cd backend
-   python manage.py makemigrations ventas
-   python manage.py migrate
-
-   ```
-
-4. (Opcional) Crea superusuario:
-
-   ```bash
-
-   python manage.py createsuperuser
-
-   ```
-
-5. Arranca el servidor backend:
-
-   ```powershell
-
-   python manage.py runserver 8000
-
-   ```
-
-6. Levantar front
-
-   ```powershell
-
-   python -m http.server 3000
-
-   ```
-
-### URL disponibles
-
-- Api django <http://localhost:8000/api/>
-
-- front <http://localhost:3000/api/>
-
-### AGREGAR PRODUCTOS (estando dentro de env)
-
-   ```powershell
-
-   python manage.py shell
-   from ventas.models import Producto
-   Producto.objects.create(codigo='1234567890123', nombre='Coca-Cola 500ml', precio=1.25)
-   Producto.objects.create(codigo='9876543210987', nombre='Agua Mineral 1L', precio=0.95)
-
-   ```
-
-### Endpoints disponibles
-
-- `POST   /api/transacciones/` → crea nueva transacción (vacía)
-- `GET    /api/productos/`       → lista de productos
-- `GET    /api/productos/<codigo>/` → detalles de un producto
-- `POST   /api/transacciones/<id>/agregar_item/` → agrega un ítem (requiere JSON `{ "codigo": ..., "cantidad": ... }`)
-- `POST   /api/transacciones/<id>/confirmar/`   → confirma la venta (opcional JSON `{ "exito": true }`)
-
-## Uso local
-
-1. Levanta backend (`:8000`) y frontend (`:3000`).
-2. En el navegador, ve al front y usando un lector de código de barras (o manualmente) escanea productos.
-3. Verifica en Django admin o en `/api/transacciones/` que el estado cambie correctamente.
 
 ---

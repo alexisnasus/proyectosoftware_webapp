@@ -1,13 +1,6 @@
 from django.db import models
+from inventario.models import Producto  # usamos el modelo centralizado
 import uuid
-
-class Producto(models.Model):
-    codigo = models.CharField(max_length=50, unique=True)
-    nombre = models.CharField(max_length=200)
-    precio = models.DecimalField(max_digits=10, decimal_places=2)
-
-    def __str__(self):
-        return self.nombre
 
 class Transaccion(models.Model):
     ESTADOS = [
@@ -15,19 +8,25 @@ class Transaccion(models.Model):
         ('CONFIRMADA','Confirmada'),
         ('FALLIDA',   'Fallida'),
     ]
-    id          = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    creado_en   = models.DateTimeField(auto_now_add=True)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    creado_en = models.DateTimeField(auto_now_add=True)
     confirmado_en = models.DateTimeField(null=True, blank=True)
-    estado      = models.CharField(max_length=10, choices=ESTADOS, default='PENDIENTE')
+    estado = models.CharField(max_length=10, choices=ESTADOS, default='PENDIENTE')
+
+    class Meta:
+        db_table = 'transaccion'
 
     @property
     def total(self):
-        return sum(lv.subtotal for lv in self.lineaventa_set.all())
+        return sum(item.subtotal for item in self.item_set.all())
 
-class LineaVenta(models.Model):
+class Item(models.Model):
     transaccion = models.ForeignKey(Transaccion, on_delete=models.CASCADE)
-    producto    = models.ForeignKey(Producto, on_delete=models.PROTECT)
-    cantidad    = models.PositiveIntegerField(default=1)
+    producto = models.ForeignKey(Producto, on_delete=models.PROTECT)
+    cantidad = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        db_table = 'item'
 
     @property
     def subtotal(self):
