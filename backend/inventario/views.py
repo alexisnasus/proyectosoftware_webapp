@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from drf_yasg.utils import swagger_auto_schema
 from django.shortcuts import get_object_or_404
 from .models import Producto, Stock
+from .services import actualizar_stock
 from .serializers import ProductoSerializer, StockSerializer
 
 class ProductoViewSet(viewsets.ViewSet):
@@ -67,3 +68,57 @@ class StockViewSet(viewsets.ViewSet):
             return Response({'mensaje': 'Stock actualizado'}, status=200)
         except Stock.DoesNotExist:
             return Response({'error': 'Producto sin stock asociado'}, status=404)
+        
+class StockViewSet(viewsets.ViewSet):
+
+    @action(detail=False, methods=['get'], url_path='listar')
+    def listar(self, request):
+        stocks = Stock.objects.select_related('producto').all()
+        serializer = StockSerializer(stocks, many=True)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(request_body=StockSerializer)
+    @action(detail=False, methods=['post'], url_path='crear')
+    def crear(self, request):
+        producto_id = request.data.get('producto_id')
+        try:
+            cantidad = int(request.data.get('cantidad', 0))
+        except (TypeError, ValueError):
+            return Response({'error': 'Cantidad inválida'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            stock = Stock.objects.get(producto_id=producto_id)
+            stock.cantidad += cantidad
+            stock.save()
+            return Response({'mensaje': 'Stock actualizado'}, status=status.HTTP_200_OK)
+        except Stock.DoesNotExist:
+            return Response({'error': 'Producto sin stock asociado'}, status=status.HTTP_404_NOT_FOUND)
+
+
+    @swagger_auto_schema(request_body=StockSerializer)
+    @action(detail=False, methods=['post'], url_path='modificar')
+    def modificar(self, request):
+        producto_id = request.data.get('producto_id')
+        try:
+            cantidad = int(request.data.get('cantidad', 0))
+        except (TypeError, ValueError):
+            return Response({'error': 'Cantidad inválida'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            stock = actualizar_stock(producto_id, cantidad)
+            
+            if stock.cantidad == 0:
+                return Response({
+                    'mensaje': '⚠️ Producto sin stock.',
+                    'alerta': True,
+                    'nuevo_stock': stock.cantidad
+                }, status=status.HTTP_200_OK)
+
+            return Response({
+                'mensaje': 'Stock modificado correctamente',
+                'alerta': False,
+                'nuevo_stock': stock.cantidad
+            }, status=status.HTTP_200_OK)
+
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

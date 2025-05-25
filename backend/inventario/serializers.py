@@ -6,7 +6,10 @@ class ProductoSerializer(serializers.ModelSerializer):
         model = Producto
         fields = ['id', 'codigo', 'nombre', 'precio']
         ref_name = 'InventarioProducto'
-
+    def validate_precio(self, value):
+        if value < 0:
+            raise serializers.ValidationError("El precio no puede ser negativo.")
+        return value
 
 class StockSerializer(serializers.ModelSerializer):
     producto = ProductoSerializer(read_only=True)
@@ -20,3 +23,8 @@ class StockSerializer(serializers.ModelSerializer):
         model = Stock
         fields = ['producto', 'producto_id', 'cantidad']
         ref_name = 'InventarioStock'
+
+    def validate_cantidad(self, value):
+        if value < 0:
+            raise serializers.ValidationError("La cantidad no puede ser negativa.")
+        return value
