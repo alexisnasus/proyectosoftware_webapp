@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404
 from .models import Producto, Stock
 from .services import actualizar_stock
 from .serializers import ProductoSerializer, StockSerializer
+from drf_yasg import openapi
 
 class ProductoViewSet(viewsets.ViewSet):
 
@@ -69,6 +70,8 @@ class StockViewSet(viewsets.ViewSet):
         except Stock.DoesNotExist:
             return Response({'error': 'Producto sin stock asociado'}, status=404)
         
+
+
 class StockViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'], url_path='listar')
@@ -95,9 +98,13 @@ class StockViewSet(viewsets.ViewSet):
             return Response({'error': 'Producto sin stock asociado'}, status=status.HTTP_404_NOT_FOUND)
 
 
+    queryset = Stock.objects.select_related('producto')
+    serializer_class = StockSerializer
+    
+
     @swagger_auto_schema(request_body=StockSerializer)
-    @action(detail=False, methods=['post'], url_path='modificar')
-    def modificar(self, request):
+    @action(detail=False, methods=['post'], url_path='agregar-o-quitar-productos')
+    def modificar_stock(self, request):
         producto_id = request.data.get('producto_id')
         try:
             cantidad = int(request.data.get('cantidad', 0))
@@ -105,20 +112,16 @@ class StockViewSet(viewsets.ViewSet):
             return Response({'error': 'Cantidad inválida'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            stock = actualizar_stock(producto_id, cantidad)
+            stock = actualizar_stock(
+                producto_id=producto_id,
+                cantidad_alfa=cantidad
+            )
             
-            if stock.cantidad == 0:
-                return Response({
-                    'mensaje': '⚠️ Producto sin stock.',
-                    'alerta': True,
-                    'nuevo_stock': stock.cantidad
-                }, status=status.HTTP_200_OK)
-
             return Response({
-                'mensaje': 'Stock modificado correctamente',
-                'alerta': False,
-                'nuevo_stock': stock.cantidad
+                'mensaje': 'Stock modificado',
+                'nuevo_stock': stock.cantidad,
+                'alerta': stock.cantidad == 0
             }, status=status.HTTP_200_OK)
-
+            
         except ValueError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

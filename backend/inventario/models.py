@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.exceptions import ObjectDoesNotExist
+
 class Producto(models.Model):
     codigo = models.CharField(max_length=50, unique=True)
     nombre = models.CharField(max_length=200)
@@ -14,7 +15,7 @@ class Producto(models.Model):
 class Stock(models.Model):
     producto = models.OneToOneField(Producto, on_delete=models.CASCADE)
     cantidad = models.IntegerField(default=0)
-
+    
     class Meta:
         db_table = 'stock'
         
