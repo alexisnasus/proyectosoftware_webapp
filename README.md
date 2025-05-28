@@ -27,13 +27,18 @@ Repositorio para el proyecto de punto de ventas y gestión de inventario de *Man
 2. Levantar los contenedores
 
    ```powershell
-   # Limpiar restos de ejecuciones anteriores
+   # a) Limpiar restos de ejecuciones anteriores
    docker-compose down --volumes --remove-orphans
-
    docker-compose up --build -d
+   
+   # El problema más común es que se pueden tener contenedores repetidos (sin importar si están detenidos o no)
+   # Detener de forma manual: docker rm {nombre del contenedor}
+
+
+   # b) Chequee que están los contenedores corriendo:
    docker ps
 
-   #Hacer migraciones
+   # c) Hacer migraciones
    docker-compose exec users_api python manage.py migrate
    docker-compose exec users_api python manage.py makemigrations
    ```
