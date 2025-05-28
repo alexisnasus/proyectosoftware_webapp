@@ -4,9 +4,9 @@ from rest_framework.response import Response
 from drf_yasg.utils import swagger_auto_schema
 from django.shortcuts import get_object_or_404
 from .models import Producto, Stock
-from .services import actualizar_stock
-from .serializers import ProductoSerializer, StockSerializer
 from drf_yasg import openapi
+from .serializers import ProductoSerializer, StockSerializer
+from .services import agregar_stock, quitar_stock
 
 class ProductoViewSet(viewsets.ViewSet):
 
@@ -70,58 +70,86 @@ class StockViewSet(viewsets.ViewSet):
         except Stock.DoesNotExist:
             return Response({'error': 'Producto sin stock asociado'}, status=404)
         
-
-
-class StockViewSet(viewsets.ViewSet):
-
-    @action(detail=False, methods=['get'], url_path='listar')
-    def listar(self, request):
-        stocks = Stock.objects.select_related('producto').all()
-        serializer = StockSerializer(stocks, many=True)
-        return Response(serializer.data)
-
-    @swagger_auto_schema(request_body=StockSerializer)
-    @action(detail=False, methods=['post'], url_path='crear')
-    def crear(self, request):
-        producto_id = request.data.get('producto_id')
+    @swagger_auto_schema(
+        operation_description="Agrega cantidad al stock de un producto",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['producto_id', 'cantidad'],
+            properties={
+                'producto_id': openapi.Schema(type=openapi.TYPE_INTEGER),
+                'cantidad': openapi.Schema(type=openapi.TYPE_INTEGER, minimum=1),
+            },
+        ),
+        responses={200: StockSerializer, 400: "Error de validación", 404: "Producto no encontrado"}
+    )
+    @action(detail=False, methods=['post'], url_path='agregar')
+    def agregar_stock(self, request):
         try:
-            cantidad = int(request.data.get('cantidad', 0))
-        except (TypeError, ValueError):
-            return Response({'error': 'Cantidad inválida'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        try:
-            stock = Stock.objects.get(producto_id=producto_id)
-            stock.cantidad += cantidad
-            stock.save()
-            return Response({'mensaje': 'Stock actualizado'}, status=status.HTTP_200_OK)
-        except Stock.DoesNotExist:
-            return Response({'error': 'Producto sin stock asociado'}, status=status.HTTP_404_NOT_FOUND)
-
-
-    queryset = Stock.objects.select_related('producto')
-    serializer_class = StockSerializer
-    
-
-    @swagger_auto_schema(request_body=StockSerializer)
-    @action(detail=False, methods=['post'], url_path='agregar-o-quitar-productos')
-    def modificar_stock(self, request):
-        producto_id = request.data.get('producto_id')
-        try:
-            cantidad = int(request.data.get('cantidad', 0))
-        except (TypeError, ValueError):
-            return Response({'error': 'Cantidad inválida'}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            stock = actualizar_stock(
-                producto_id=producto_id,
-                cantidad_alfa=cantidad
-            )
+            producto_id = request.data['producto_id']
+            cantidad = int(request.data['cantidad'])
+            
+            stock = agregar_stock(producto_id, cantidad)
+            serializer = StockSerializer(stock)
             
             return Response({
-                'mensaje': 'Stock modificado',
-                'nuevo_stock': stock.cantidad,
-                'alerta': stock.cantidad == 0
+                'status': 'success',
+                'data': serializer.data
             }, status=status.HTTP_200_OK)
             
+        except KeyError as e:
+            return Response(
+                {'error': f'Falta el campo requerido: {str(e)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         except ValueError as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Stock.DoesNotExist:
+            return Response(
+                {'error': 'Producto no encontrado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+    @swagger_auto_schema(
+        operation_description="Quita cantidad del stock de un producto",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['producto_id', 'cantidad'],
+            properties={
+                'producto_id': openapi.Schema(type=openapi.TYPE_INTEGER),
+                'cantidad': openapi.Schema(type=openapi.TYPE_INTEGER, minimum=1),
+            },
+        ),
+        responses={200: StockSerializer, 400: "Error de validación", 404: "Producto no encontrado"}
+    )
+    @action(detail=False, methods=['post'], url_path='quitar')
+    def quitar_stock(self, request):
+        try:
+            producto_id = request.data['producto_id']
+            cantidad = int(request.data['cantidad'])
+            
+            stock = quitar_stock(producto_id, cantidad)
+            serializer = StockSerializer(stock)
+            
+            return Response({
+                'status': 'success',
+                'data': serializer.data
+            }, status=status.HTTP_200_OK)
+            
+        except KeyError as e:
+            return Response(
+                {'error': f'Falta el campo requerido: {str(e)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except ValueError as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Stock.DoesNotExist:
+            return Response(
+                {'error': 'Producto no encontrado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
