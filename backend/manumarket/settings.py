@@ -34,16 +34,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
-    'users',
     'ventas',
-    'inventario',
     'drf_yasg',
 ]
 
-AUTH_USER_MODEL = 'users.User'
+AUTH_USER_MODEL = 'ventas.User'
 
 from datetime import timedelta
 
@@ -62,6 +59,14 @@ SIMPLE_JWT = {
 SWAGGER_SETTINGS = {
     'USE_SESSION_AUTH': False,
     'JSON_EDITOR': True,
+    'SECURITY_DEFINITIONS': {
+    'Bearer': {
+        'type': 'apiKey',
+        'name': 'Authorization',
+        'in': 'header',
+        'description': 'JWT Authorization header usando el esquema Bearer. Ejemplo: "Bearer {token}"',
+    }
+}
 }
 
 REST_FRAMEWORK = {

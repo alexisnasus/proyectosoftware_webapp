@@ -1,23 +1,46 @@
 from rest_framework import serializers
-from inventario.models import Producto  # usa el modelo compartido
-from .models import Transaccion, Item
+from .models import Producto, Item, Stock
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.contrib.auth import get_user_model
 
-from inventario.serializers import ProductoSerializer  # usa el serializer oficial
+User = get_user_model()
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'first_name', 'last_name']
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token['role'] = getattr(user, 'role', '')
+        return token
+
+# Producto Serializer para CRUD
+class ProductoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Producto
+        fields = '__all__'  # o lista explícita de campos que quieres exponer
+
+# Item Serializer para CRUD
 class ItemSerializer(serializers.ModelSerializer):
-    producto = ProductoSerializer(read_only=True)
-    subtotal = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
-
     class Meta:
-        db_table = 'item'
         model = Item
-        fields = ['producto', 'cantidad', 'subtotal']
+        fields = '__all__'  # o lista explícita de campos
 
-class TransaccionSerializer(serializers.ModelSerializer):
-    items = ItemSerializer(source='item_set', many=True, read_only=True)
-    total = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
-
+class StockSerializer(serializers.ModelSerializer):
     class Meta:
-        db_table = 'transaccion'
-        model = Transaccion
-        fields = ['id', 'creado_en', 'confirmado_en', 'estado', 'items', 'total']
+        model = Stock
+        fields = '__all__'
+
+# DTO de entrada (inputCarrito)
+class InputItemDTO(serializers.Serializer):
+    codigo = serializers.CharField()
+    cantidad = serializers.IntegerField(min_value=1)
+
+# DTO de salida (outputCarrito)
+class OutputItemDTO(serializers.Serializer):
+    nombre = serializers.CharField()
+    cantidad = serializers.IntegerField()
+    estado = serializers.ChoiceField(choices=["CONFIRMADA", "FALLIDA"])
