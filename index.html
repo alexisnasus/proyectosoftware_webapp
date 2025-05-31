@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-gray-100">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Punto de Venta - Manu Market</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="h-full flex flex-col">
+
+  <!-- Barra superior -->
+    <header class="p-4 flex items-center justify-between" style="background-color: #0F2E44; color: white;">
+        <h1 class="text-xl font-semibold">Manu Market - Punto de Venta</h1>
+        <button class="md:hidden p-2 rounded hover:bg-[#0F2E44]" aria-label="Toggle Menu">
+            <!-- Icono hamburguesa -->
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color:white;">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/>
+            </svg>
+        </button>
+    </header>
+
+  <div class="flex flex-1 min-h-0">
+
+    <!-- Menu lateral -->
+    <nav class="hidden md:block w-64 bg-white border-r border-gray-300 p-4 flex flex-col">
+      <!-- Logo con clic -->
+      <div class="mb-6 flex items-center justify-center cursor-pointer" onclick="irInicio()">
+        <img src="ManuLogo_WIP.png" alt="Manu Market Logo" class="h-16 w-auto" />
+      </div>
+
+      <ul class="space-y-4 text-gray-700 flex-grow">
+        <li><a href="#" class="block px-3 py-2 rounded hover:bg-indigo-100">Punto de Venta</a></li>
+        <li><a href="#" class="block px-3 py-2 rounded hover:bg-indigo-100">Historial de Ventas</a></li>
+        <li><a href="#" class="block px-3 py-2 rounded hover:bg-indigo-100">Inventario</a></li>
+        <li><a href="#" class="block px-3 py-2 rounded hover:bg-indigo-100">Login</a></li>
+      </ul>
+    </nav>
+
+    <!-- Contenido principal -->
+    <main class="flex-1 p-6 overflow-auto">
+
+      <!-- Input código de barras -->
+      <div class="mb-6 flex max-w-lg">
+        <input id="codigoBarras" type="text" placeholder="Escanear o ingresar código de barras" 
+               class="flex-grow border border-gray-300 rounded-l-md p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        <button onclick="agregarProducto()" class="bg-[#0F2E44] text-white px-4 rounded-r-md hover:bg-[#0c2433]">Agregar</button>
+      </div>
+
+      <!-- Tabla productos -->
+      <div class="overflow-x-auto">
+        <table class="min-w-full bg-white rounded shadow">
+          <thead style="background-color: #0F2E44; color: white;">
+            <tr>
+              <th class="py-2 px-4 text-left">Código</th>
+              <th class="py-2 px-4 text-left">Producto</th>
+              <th class="py-2 px-4 text-right">Precio</th>
+              <th class="py-2 px-4 text-right">Cantidad</th>
+              <th class="py-2 px-4 text-right">Subtotal</th>
+              <th class="py-2 px-4">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!--
+            <tr>
+              <td class="py-2 px-4 border-b border-gray-200">1234567890123</td>
+              <td class="py-2 px-4 border-b border-gray-200">Coca-Cola 500ml</td>
+              <td class="py-2 px-4 border-b border-gray-200 text-right">$1.25</td>
+              <td class="py-2 px-4 border-b border-gray-200 text-right">1</td>
+              <td class="py-2 px-4 border-b border-gray-200 text-right">$1.25</td>
+              <td class="py-2 px-4 border-b border-gray-200 text-center">
+                <button class="text-red-600 hover:underline">Eliminar</button>
+              </td>
+            </tr>
+            -->
+            <!-- Más filas aquí -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Total y acciones -->
+      <div class="mt-6 flex items-center justify-between max-w-lg">
+        <div class="text-lg font-semibold">Total: $0.00</div>
+        <div class="space-x-3">
+          <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Confirmar Venta</button>
+          <button class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Cancelar</button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+
+    <script>
+    // Estado del carrito en memoria
+    let carrito = [];
+
+    function irInicio() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function agregarProducto() {
+        console.log('Función agregarProducto llamada');
+        const codigo = document.getElementById('codigoBarras').value.trim();
+        if (!codigo) {
+        alert('Por favor, ingresa un código de barras');
+        return;
+        }
+
+        // Buscar producto en carrito
+        const existente = carrito.find(p => p.codigo === codigo);
+        if (existente) {
+        existente.cantidad++;
+        } else {
+        // Para demo, agregamos producto con datos ficticios
+        carrito.push({
+            codigo: codigo,
+            nombre: 'Producto demo',
+            precio: 10.0,
+            cantidad: 1
+        });
+        }
+
+        actualizarTabla();
+        document.getElementById('codigoBarras').value = '';
+    }
+
+    function actualizarTabla() {
+        const tbody = document.querySelector('#tablaProductos tbody');
+        tbody.innerHTML = '';
+
+        let total = 0;
+
+        carrito.forEach((p, index) => {
+        const subtotal = p.precio * p.cantidad;
+        total += subtotal;
+
+        tbody.innerHTML += `
+            <tr>
+            <td class="py-2 px-4 border-b border-gray-200">${p.codigo}</td>
+            <td class="py-2 px-4 border-b border-gray-200">${p.nombre}</td>
+            <td class="py-2 px-4 border-b border-gray-200 text-right">$${p.precio.toFixed(2)}</td>
+            <td class="py-2 px-4 border-b border-gray-200 text-right">${p.cantidad}</td>
+            <td class="py-2 px-4 border-b border-gray-200 text-right">$${subtotal.toFixed(2)}</td>
+            <td class="py-2 px-4 border-b border-gray-200 text-center">
+                <button class="text-red-600 hover:underline" onclick="eliminarProducto(${index})">Eliminar</button>
+            </td>
+            </tr>
+        `;
+        });
+
+        document.getElementById('totalVenta').innerText = `Total: $${total.toFixed(2)}`;
+    }
+
+    function eliminarProducto(index) {
+        carrito.splice(index, 1);
+        actualizarTabla();
+    }
+    </script>
+
+
+</body>
+</html>

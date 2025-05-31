@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Inventario - Manu Market</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen text-sm">
+
+  <!-- Título -->
+  <header class="p-4 bg-[#0F2E44] text-white text-center text-2xl font-bold">
+    Inventario
+  </header>
+
+  <main class="p-4">
+    <!-- Botones -->
+    <div class="flex flex-wrap gap-2 mb-4">
+      <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">+ Nuevo Producto</button>
+      <button class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">✏️ Editar Producto</button>
+      <button class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">🗑️ Eliminar Producto</button>
+      <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">⬆ Importar</button>
+      <button class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">⬇ Exportar</button>
+    </div>
+
+    <!-- Filtro -->
+    <div class="flex items-center mb-4">
+      <input type="text" placeholder="🔍 Nombre del Producto" class="border p-2 flex-grow rounded-l-md border-gray-300" />
+      <span class="bg-gray-200 px-4 py-2 rounded-r-md border border-gray-300">🛒 Ctd. Prod: <strong>1034</strong></span>
+    </div>
+
+    <!-- Tabla -->
+    <div class="overflow-x-auto bg-white rounded shadow">
+      <table class="min-w-full border border-gray-300 text-left">
+        <thead class="bg-[#0F2E44] text-white">
+          <tr>
+            <th class="py-2 px-4 border-r">Código</th>
+            <th class="py-2 px-4 border-r">Nombre</th>
+            <th class="py-2 px-4 border-r">Barcode</th>
+            <th class="py-2 px-4">Precio</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Ejemplo -->
+          <tr class="hover:bg-gray-100">
+
+    <script>
+        async function cargarInventario() {
+        try {
+            const response = await fetch('http://localhost:8000/api/productos/');
+            const productos = await response.json();
+
+            const tbody = document.querySelector('tbody');
+            tbody.innerHTML = ''; // Limpiar
+
+            productos.forEach((p, i) => {
+            const row = `
+                <tr class="hover:bg-gray-100">
+                <td class="py-2 px-4 border-b border-r">${p.codigo}</td>
+                <td class="py-2 px-4 border-b border-r">${p.nombre}</td>
+                <td class="py-2 px-4 border-b border-r">—</td>
+                <td class="py-2 px-4 border-b">$${parseFloat(p.precio).toLocaleString()}</td>
+                </tr>
+            `;
+            tbody.innerHTML += row;
+            });
+
+            // Actualizar contador
+            document.querySelector('span strong').textContent = productos.length;
+
+        } catch (err) {
+            console.error('Error al cargar productos', err);
+        }
+        }
+
+        window.onload = cargarInventario;
+    </script>
