@@ -1,0 +1,381 @@
+<!-- frontend-node/public/inventario.html -->
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inventario – ManuMarket</title>
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  </head>
+  <body class="min-h-screen bg-gray-50">
+    <!-- Barra de navegación común -->
+    <nav class="bg-gray-900 text-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16 items-center">
+          <div class="flex-shrink-0">
+            <a href="/dashboard">
+              <img class="h-8 w-auto" src="/assets/logo.png" alt="Logo ManuMarket" />
+            </a>
+          </div>
+          <div class="hidden md:flex md:space-x-8">
+            <a href="/dashboard" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Dashboard</a>
+            <a href="/inventario" class="inline-flex items-center px-1 pt-1 border-b-2 border-blue-500 text-sm font-medium text-gray-100">Inventario</a>
+            <a href="/pos" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Punto de Venta</a>
+            <a href="/trabajadores" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Trabajadores</a>
+          </div>
+          <div class="flex items-center">
+            <a href="/logout" class="text-sm font-medium text-red-400 hover:text-red-300">Cerrar sesión</a>
+          </div>
+          <div class="-mr-2 flex md:hidden">
+            <button id="btnMenuInv" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-800">
+              <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                <path class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div id="menuResponsiveInv" class="md:hidden hidden bg-gray-800">
+        <div class="px-2 pt-2 pb-3 space-y-1">
+          <a href="/dashboard" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Dashboard</a>
+          <a href="/inventario" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Inventario</a>
+          <a href="/pos" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Punto de Venta</a>
+          <a href="/trabajadores" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Trabajadores</a>
+          <a href="/logout" class="block px-3 py-2 rounded-md text-base font-medium text-red-400 hover:bg-gray-700">Cerrar sesión</a>
+        </div>
+      </div>
+    </nav>
+    <script>
+      const btnMenuInv = document.getElementById("btnMenuInv");
+      const menuResponsiveInv = document.getElementById("menuResponsiveInv");
+      btnMenuInv && btnMenuInv.addEventListener("click", () => {
+        menuResponsiveInv.classList.toggle("hidden");
+      });
+    </script>
+    <!-- ================================ -->
+
+    <!-- CONTENIDO: LISTADO DE PRODUCTOS -->
+    <main class="max-w-7xl mx-auto p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-semibold text-gray-800">Inventario</h1>
+        <button
+          id="btnNuevoProducto"
+          class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+        >
+          + Nuevo Producto
+        </button>
+      </div>
+
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+              <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyInventario" class="bg-white divide-y divide-gray-200">
+            <!-- JS inyectará aquí las filas -->
+          </tbody>
+        </table>
+      </div>
+    </main>
+
+    <!-- Modal HTML para crear/editar producto (hidden por defecto) -->
+    <div id="modalProducto" class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 hidden">
+      <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+        <h2 id="modalTitle" class="text-xl font-semibold text-gray-800 mb-4">Nuevo Producto</h2>
+        <form id="formProducto" class="space-y-4">
+          <div>
+            <label for="codigoProd" class="block text-sm font-medium text-gray-700">Código</label>
+            <input
+              id="codigoProd"
+              type="text"
+              required
+              class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label for="nombreProd" class="block text-sm font-medium text-gray-700">Nombre</label>
+            <input
+              id="nombreProd"
+              type="text"
+              required
+              class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label for="precioProd" class="block text-sm font-medium text-gray-700">Precio</label>
+            <input
+              id="precioProd"
+              type="number"
+              step="0.01"
+              min="0"
+              required
+              class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label for="stockProd" class="block text-sm font-medium text-gray-700">Cantidad en Stock</label>
+            <input
+              id="stockProd"
+              type="number"
+              min="0"
+              required
+              class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div class="flex justify-end space-x-2">
+            <button type="button" id="btnCerrarModal" class="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400">
+              Cancelar
+            </button>
+            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+              Guardar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      // BASE URL de tu API Django (ventas_api)
+      const BACKEND_URL = "http://localhost:8000";
+      const token = localStorage.getItem("token");
+      // Agrega el header Authorization si hay token
+      const headers = token
+        ? { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
+        : { "Content-Type": "application/json" };
+
+      const tbodyInventario = document.getElementById("tbodyInventario");
+      const btnNuevoProducto = document.getElementById("btnNuevoProducto");
+      const modalProducto = document.getElementById("modalProducto");
+      const formProducto = document.getElementById("formProducto");
+      const modalTitle = document.getElementById("modalTitle");
+      const btnCerrarModal = document.getElementById("btnCerrarModal");
+
+      let editandoProductoId = null;
+
+      // Función para abrir modal (crear o editar)
+      function abrirModal(nuevo = true, producto = {}) {
+        modalProducto.classList.remove("hidden");
+        if (nuevo) {
+          modalTitle.textContent = "Nuevo Producto";
+          document.getElementById("codigoProd").value = "";
+          document.getElementById("nombreProd").value = "";
+          document.getElementById("precioProd").value = "";
+          document.getElementById("stockProd").value = "";
+          editandoProductoId = null;
+        } else {
+          modalTitle.textContent = "Editar Producto";
+          document.getElementById("codigoProd").value = producto.codigo;
+          document.getElementById("nombreProd").value = producto.nombre;
+          document.getElementById("precioProd").value = producto.precio;
+          document.getElementById("stockProd").value = producto.stock;
+          editandoProductoId = producto.id;
+        }
+      }
+
+      function cerrarModal() {
+        modalProducto.classList.add("hidden");
+      }
+
+      btnNuevoProducto.addEventListener("click", () => abrirModal());
+      btnCerrarModal.addEventListener("click", cerrarModal);
+
+      // Cargar lista de productos
+      async function cargarInventario() {
+        try {
+          const res = await fetch(`${BACKEND_URL}/ventas/productos/`, {
+            method: "GET",
+            headers,
+          });
+          if (!res.ok) throw new Error("Error al cargar inventario");
+          const productos = await res.json();
+          tbodyInventario.innerHTML = "";
+
+          productos.forEach((prod) => {
+            const tr = document.createElement("tr");
+            tr.className = "hover:bg-gray-50";
+
+            tr.innerHTML = `
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${prod.id}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${prod.codigo}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${prod.nombre}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                ${new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP" }).format(parseFloat(prod.precio))}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${prod.stock?.cantidad || 0}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-center">
+                <button data-id="${prod.id}" class="btnEditar inline-flex px-2 py-1 bg-yellow-400 text-white rounded hover:bg-yellow-500 text-xs mr-2">
+                  Editar
+                </button>
+                <button data-id="${prod.id}" class="btnEliminar inline-flex px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs">
+                  Eliminar
+                </button>
+              </td>
+            `;
+            tbodyInventario.appendChild(tr);
+          });
+
+          // Agregar listeners a los botones Editar y Eliminar
+          document.querySelectorAll(".btnEditar").forEach((btn) => {
+            btn.addEventListener("click", async (e) => {
+              const id = e.currentTarget.dataset.id;
+              try {
+                // 1) Obtener datos del producto
+                const r = await fetch(`${BACKEND_URL}/ventas/productos/${id}/`, {
+                  method: "GET",
+                  headers,
+                });
+                const producto = await r.json();
+                // 2) Obtener stock asociado (si existe)
+                const stocksR = await fetch(`${BACKEND_URL}/ventas/stocks/?producto=${id}`, { headers });
+                const stocksData = await stocksR.json();
+                const cantidadStock = stocksData.length > 0 ? stocksData[0].cantidad : 0;
+
+                // 3) Abrir modal con datos precargados
+                abrirModal(false, {
+                  id: producto.id,
+                  codigo: producto.codigo,
+                  nombre: producto.nombre,
+                  precio: producto.precio,
+                  stock: cantidadStock
+                });
+              } catch (err) {
+                console.error(err);
+                alert("Error al cargar datos del producto.");
+              }
+            });
+          });
+
+          document.querySelectorAll(".btnEliminar").forEach((btn) => {
+            btn.addEventListener("click", async (e) => {
+              const id = e.currentTarget.dataset.id;
+              if (!confirm("¿Eliminar este producto?")) return;
+              try {
+                // 1) Borrar stock primero (si existe)
+                const stocksR = await fetch(`${BACKEND_URL}/ventas/stocks/?producto=${id}`, {
+                  method: "GET",
+                  headers,
+                });
+                const stocksData = await stocksR.json();
+                if (stocksData.length > 0) {
+                  const stockId = stocksData[0].id;
+                  await fetch(`${BACKEND_URL}/ventas/stocks/${stockId}/`, {
+                    method: "DELETE",
+                    headers,
+                  });
+                }
+                // 2) Borrar producto
+                await fetch(`${BACKEND_URL}/ventas/productos/${id}/`, {
+                  method: "DELETE",
+                  headers,
+                });
+                cargarInventario();
+              } catch (err) {
+                console.error(err);
+                alert("Error al eliminar producto.");
+              }
+            });
+          });
+        } catch (err) {
+          console.error(err);
+          alert("Error al cargar inventario.");
+        }
+      }
+
+      // Al enviar el formulario del modal (crear o editar)
+      formProducto.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const codigo = document.getElementById("codigoProd").value.trim();
+        const nombre = document.getElementById("nombreProd").value.trim();
+        const precio = parseFloat(document.getElementById("precioProd").value);
+        const stockCantidad = parseInt(document.getElementById("stockProd").value, 10);
+
+        if (!codigo || !nombre || isNaN(precio) || isNaN(stockCantidad)) {
+          alert("Rellena todos los campos correctamente.");
+          return;
+        }
+
+        try {
+          let prodId = editandoProductoId;
+          let productoPayload = { codigo, nombre, precio };
+          let productoRes;
+
+          if (!prodId) {
+            // Crear nuevo producto
+            const r = await fetch(`${BACKEND_URL}/ventas/productos/`, {
+              method: "POST",
+              headers,
+              body: JSON.stringify(productoPayload),
+            });
+            if (!r.ok) {
+              const eJson = await r.json();
+              alert("Error al crear producto: " + JSON.stringify(eJson));
+              return;
+            }
+            productoRes = await r.json();
+            prodId = productoRes.id;
+          } else {
+            // Editar producto existente
+            const r = await fetch(`${BACKEND_URL}/ventas/productos/${prodId}/`, {
+              method: "PUT",
+              headers,
+              body: JSON.stringify(productoPayload),
+            });
+            if (!r.ok) {
+              const eJson = await r.json();
+              alert("Error al actualizar producto: " + JSON.stringify(eJson));
+              return;
+            }
+            productoRes = await r.json();
+          }
+
+          // Ahora manejamos el Stock asociado
+          //  - Si existía stock, actualizamos con PUT
+          //  - Si no existía, creamos con POST
+          const stocksR = await fetch(`${BACKEND_URL}/ventas/stocks/?producto=${prodId}`, {
+            method: "GET",
+            headers,
+          });
+          const stocksData = await stocksR.json();
+
+          if (stocksData.length > 0) {
+            // Actualizar stock
+            const stockId = stocksData[0].id;
+            await fetch(`${BACKEND_URL}/ventas/stocks/${stockId}/`, {
+              method: "PUT",
+              headers,
+              body: JSON.stringify({ producto: prodId, cantidad: stockCantidad }),
+            });
+          } else {
+            // Crear stock nuevo
+            await fetch(`${BACKEND_URL}/ventas/stocks/`, {
+              method: "POST",
+              headers,
+              body: JSON.stringify({ producto: prodId, cantidad: stockCantidad }),
+            });
+          }
+
+          // Cerrar modal y recargar lista
+          cerrarModal();
+          cargarInventario();
+        } catch (err) {
+          console.error(err);
+          alert("Error al guardar producto.");
+        }
+      });
+
+      // Al cargar la página, obtenemos el inventario
+      document.addEventListener("DOMContentLoaded", () => {
+        cargarInventario();
+      });
+    </script>
+  </body>
+</html>

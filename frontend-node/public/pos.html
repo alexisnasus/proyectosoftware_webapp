@@ -1,0 +1,429 @@
+<!-- frontend-node/public/pos.html -->
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Punto de Venta – ManuMarket</title>
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  </head>
+  <body class="min-h-screen bg-gray-50">
+    <!-- Barra de navegación común -->
+    <nav class="bg-gray-900 text-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16 items-center">
+          <div class="flex-shrink-0">
+            <a href="/dashboard">
+              <img class="h-8 w-auto" src="/assets/logo.png" alt="Logo ManuMarket" />
+            </a>
+          </div>
+          <div class="hidden md:flex md:space-x-8">
+            <a href="/dashboard" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Dashboard</a>
+            <a href="/inventario" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Inventario</a>
+            <a href="/pos" class="inline-flex items-center px-1 pt-1 border-b-2 border-blue-500 text-sm font-medium text-gray-100">Punto de Venta</a>
+            <a href="/trabajadores" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Trabajadores</a>
+          </div>
+          <div class="flex items-center">
+            <a href="/logout" class="text-sm font-medium text-red-400 hover:text-red-300">Cerrar sesión</a>
+          </div>
+          <div class="-mr-2 flex md:hidden">
+            <button id="btnMenuPos" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-800">
+              <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                <path class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div id="menuResponsivePos" class="md:hidden hidden bg-gray-800">
+        <div class="px-2 pt-2 pb-3 space-y-1">
+          <a href="/dashboard" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Dashboard</a>
+          <a href="/inventario" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Inventario</a>
+          <a href="/pos" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Punto de Venta</a>
+          <a href="/trabajadores" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Trabajadores</a>
+          <a href="/logout" class="block px-3 py-2 rounded-md text-base font-medium text-red-400 hover:bg-gray-700">Cerrar sesión</a>
+        </div>
+      </div>
+    </nav>
+    <script>
+      const btnMenuPos = document.getElementById("btnMenuPos");
+      const menuResponsivePos = document.getElementById("menuResponsivePos");
+      btnMenuPos && btnMenuPos.addEventListener("click", () => {
+        menuResponsivePos.classList.toggle("hidden");
+      });
+    </script>
+    <!-- ================================ -->
+
+    <!-- CONTENIDO: PUNTO DE VENTA / CARRITO -->
+    <main class="max-w-4xl mx-auto py-6">
+      <h1 class="text-2xl font-semibold text-gray-800 mb-4">Punto de Venta</h1>
+
+      <!-- BLOQUE DE AGREGAR PRODUCTO -->
+      <div class="flex items-center mb-4">
+        <div class="relative flex-grow">
+          <input
+            id="inputBuscar"
+            type="text"
+            placeholder="Código de producto"
+            class="w-full pl-10 pr-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg"
+          />
+          <svg
+            class="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-4.35-4.35M16.65 16.65A7 7 0 1110 3a7 7 0 016.65 13.65z"
+            />
+          </svg>
+        </div>
+        <button
+          id="btnAgregar"
+          class="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          Agregar
+        </button>
+      </div>
+
+      <!-- BLOQUE DE DESCUENTO GLOBAL -->
+      <div class="bg-white p-4 mb-4 rounded-lg shadow">
+        <label for="inputDescuento" class="block text-gray-700 font-medium mb-2">Descuento de la venta (en CLP):</label>
+        <input
+          id="inputDescuento"
+          type="number"
+          step="0.01"
+          value="0"
+          min="0"
+          class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <p class="text-sm text-gray-500 mt-1">Si no deseas descuento, deja en cero.</p>
+      </div>
+
+      <!-- TABLA DE ÍTEMS DEL CARRITO -->
+      <div id="contenedorTabla" class="border border-gray-200 rounded-lg overflow-hidden bg-white">
+        <!-- Encabezados -->
+        <div class="grid grid-cols-12 bg-gray-100 p-3 font-medium text-gray-700">
+          <div class="col-span-2">Código</div>
+          <div class="col-span-4">Producto</div>
+          <div class="col-span-2 text-right">Precio U.</div>
+          <div class="col-span-2 text-right">Subtotal</div>
+          <div class="col-span-2 text-center">Cantidad</div>
+          <div class="col-span-1"></div>
+        </div>
+        <!-- Cuerpo de tabla: inyectado por JS -->
+        <div id="cuerpoTabla"></div>
+      </div>
+
+      <!-- BLOQUE DE TOTALES -->
+      <div class="flex justify-end mt-4">
+        <div class="w-full md:w-1/2 lg:w-1/3 p-4">
+          <div class="flex justify-between mb-2">
+            <span class="font-medium text-gray-700">Total (sin descuento):</span>
+            <span id="spanTotal" class="font-semibold text-gray-900">₱0.00</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="font-medium text-gray-700">Total final (con descuento):</span>
+            <span id="spanTotalFinal" class="font-semibold text-gray-900">₱0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOTÓN COMPRAR -->
+      <div class="flex justify-end mb-8">
+        <button
+          id="btnComprar"
+          class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center"
+        >
+          <svg
+            class="w-5 h-5 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c
+                   -.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2
+                   2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+            />
+          </svg>
+          Comprar
+        </button>
+      </div>
+    </main>
+
+    <!-- SCRIPT DE INTERACTIVIDAD DEL CARRITO -->
+    <script>
+      // 1) Estado local del carrito
+      let carritoItems = [];
+
+      // 2) Referencias a elementos DOM
+      const inputBuscar = document.getElementById("inputBuscar");
+      const btnAgregar = document.getElementById("btnAgregar");
+      const cuerpoTabla = document.getElementById("cuerpoTabla");
+      const spanTotal = document.getElementById("spanTotal");
+      const spanTotalFinal = document.getElementById("spanTotalFinal");
+      const inputDescuento = document.getElementById("inputDescuento");
+      const btnComprar = document.getElementById("btnComprar");
+
+      // 3) URL base del backend Django
+      const BACKEND_URL = "http://localhost:8000";
+      const token = localStorage.getItem("token");
+      const headers = token
+        ? { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
+        : { "Content-Type": "application/json" };
+
+      // 4) Formatear moneda (CLP)
+      function formatearMoneda(valor) {
+        return new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP" }).format(valor);
+      }
+
+      // 5) Calcular totales y actualizar UI
+      function actualizarTotales() {
+        const total = carritoItems.reduce((acc, item) => acc + item.precio * item.cantidad, 0);
+        let descuento = parseFloat(inputDescuento.value) || 0;
+        let totalFinal = total - descuento;
+        if (totalFinal < 0) totalFinal = 0;
+
+        spanTotal.textContent = formatearMoneda(total);
+        spanTotalFinal.textContent = formatearMoneda(totalFinal);
+      }
+
+      // 6) Renderizar carrito
+      function renderizarCarrito() {
+        cuerpoTabla.innerHTML = "";
+
+        carritoItems.forEach((item, index) => {
+          const subtotal = item.precio * item.cantidad;
+
+          const fila = document.createElement("div");
+          fila.className = "grid grid-cols-12 p-3 items-center hover:bg-gray-50 border-t border-gray-200";
+
+          // Código
+          const divCodigo = document.createElement("div");
+          divCodigo.className = "col-span-2 font-mono text-sm";
+          divCodigo.textContent = item.codigo;
+          fila.appendChild(divCodigo);
+
+          // Nombre
+          const divNombre = document.createElement("div");
+          divNombre.className = "col-span-4";
+          divNombre.textContent = item.nombre;
+          fila.appendChild(divNombre);
+
+          // Precio unitario
+          const divPrecio = document.createElement("div");
+          divPrecio.className = "col-span-2 text-right font-medium";
+          divPrecio.textContent = formatearMoneda(item.precio);
+          fila.appendChild(divPrecio);
+
+          // Subtotal
+          const divSubtotal = document.createElement("div");
+          divSubtotal.className = "col-span-2 text-right font-medium";
+          divSubtotal.textContent = formatearMoneda(subtotal);
+          fila.appendChild(divSubtotal);
+
+          // Controles cantidad
+          const divCantCont = document.createElement("div");
+          divCantCont.className = "col-span-2 flex justify-center";
+          const divCantInner = document.createElement("div");
+          divCantInner.className = "flex items-center";
+
+          // Botón “–”
+          const btnMinus = document.createElement("button");
+          btnMinus.className = "w-8 h-8 bg-gray-100 hover:bg-gray-200 border rounded-l";
+          btnMinus.textContent = "-";
+          btnMinus.onclick = () => {
+            if (item.cantidad > 1) {
+              item.cantidad--;
+            } else {
+              carritoItems.splice(index, 1);
+            }
+            renderizarCarrito();
+            actualizarTotales();
+          };
+          divCantInner.appendChild(btnMinus);
+
+          // Cantidad
+          const divCantValor = document.createElement("div");
+          divCantValor.className = "w-10 h-8 border-t border-b flex items-center justify-center";
+          divCantValor.textContent = item.cantidad;
+          divCantInner.appendChild(divCantValor);
+
+          // Botón “+”
+          const btnPlus = document.createElement("button");
+          btnPlus.className = "w-8 h-8 bg-gray-100 hover:bg-gray-200 border rounded-r";
+          btnPlus.textContent = "+";
+          btnPlus.onclick = () => {
+            item.cantidad++;
+            renderizarCarrito();
+            actualizarTotales();
+          };
+          divCantInner.appendChild(btnPlus);
+
+          divCantCont.appendChild(divCantInner);
+          fila.appendChild(divCantCont);
+
+          // Botón eliminar
+          const divEliminar = document.createElement("div");
+          divEliminar.className = "col-span-1 flex justify-end";
+          const btnEliminar = document.createElement("button");
+          btnEliminar.className = "text-red-500 hover:text-red-700 p-1";
+          btnEliminar.innerHTML = `
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138
+                   21H7.862a2 2 0 01-1.995-1.858L5
+                   7m5 4v6m4-6v6m1-10V4a1 1 0
+                   00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              ></path>
+            </svg>`;
+          btnEliminar.onclick = () => {
+            carritoItems.splice(index, 1);
+            renderizarCarrito();
+            actualizarTotales();
+          };
+          divEliminar.appendChild(btnEliminar);
+          fila.appendChild(divEliminar);
+
+          cuerpoTabla.appendChild(fila);
+        });
+      }
+
+      // 7) Agregar producto al carrito
+      btnAgregar.onclick = async () => {
+        const codigoBuscado = inputBuscar.value.trim();
+        if (!codigoBuscado) {
+          alert("Ingresa un código de producto.");
+          return;
+        }
+
+        try {
+          // Llamar a GET /ventas/productos/?codigo=<…>
+          const resp = await fetch(
+            `${BACKEND_URL}/ventas/productos/?codigo=${codigoBuscado}`,
+            {
+              method: "GET",
+              headers,
+            }
+          );
+          if (!resp.ok) throw new Error("Error al buscar producto");
+
+          const productos = await resp.json();
+          if (productos.length === 0) {
+            alert("Producto no encontrado.");
+            return;
+          }
+
+          const prod = productos[0];
+          // Si ya existe, incrementamos cantidad
+          const existe = carritoItems.find((p) => p.codigo === prod.codigo);
+          if (existe) {
+            existe.cantidad++;
+          } else {
+            carritoItems.push({
+              codigo: prod.codigo,
+              nombre: prod.nombre,
+              precio: parseFloat(prod.precio),
+              cantidad: 1,
+            });
+          }
+
+          inputBuscar.value = "";
+          renderizarCarrito();
+          actualizarTotales();
+        } catch (err) {
+          console.error(err);
+          alert("Error al agregar producto.");
+        }
+      };
+
+      // 8) Comprar: crear y confirmar transacción
+      btnComprar.onclick = async () => {
+        if (carritoItems.length === 0) {
+          alert("Carrito vacío.");
+          return;
+        }
+
+        const itemsParaEnviar = carritoItems.map((item) => ({
+          codigo: item.codigo,
+          cantidad: item.cantidad,
+        }));
+        const descuentoValor = parseFloat(inputDescuento.value) || 0;
+
+        const body = {
+          descuento_carrito: descuentoValor,
+          items: itemsParaEnviar,
+        };
+
+        try {
+          // 8.1) Crear transacción
+          const respCrear = await fetch(`${BACKEND_URL}/ventas/transacciones/`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(body),
+          });
+          if (!respCrear.ok) {
+            const errorJson = await respCrear.json();
+            alert("Error al crear transacción:\n" + JSON.stringify(errorJson));
+            return;
+          }
+          const transaccionData = await respCrear.json();
+          const transaccionId = transaccionData.id;
+
+          // 8.2) Confirmar transacción
+          const respConfirm = await fetch(
+            `${BACKEND_URL}/ventas/transacciones/${transaccionId}/confirmar/`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          if (!respConfirm.ok) {
+            const errJson = await respConfirm.json();
+            alert("Error al confirmar transacción:\n" + JSON.stringify(errJson));
+            return;
+          }
+          const resultado = await respConfirm.json();
+
+          // 8.3) Mostrar resultado
+          if (resultado.estado === "CONFIRMADA") {
+            alert(`¡Venta confirmada (#${resultado.id})!`);
+          } else {
+            alert(`Venta fallida (#${resultado.id}). Stock insuficiente.`);
+          }
+
+          // Limpiar carrito
+          carritoItems = [];
+          inputDescuento.value = 0;
+          renderizarCarrito();
+          actualizarTotales();
+        } catch (err) {
+          console.error(err);
+          alert("Error en el proceso de compra.");
+        }
+      };
+
+      // 9) Inicializar al cargar
+      document.addEventListener("DOMContentLoaded", () => {
+        renderizarCarrito();
+        actualizarTotales();
+      });
+    </script>
+  </body>
+</html>

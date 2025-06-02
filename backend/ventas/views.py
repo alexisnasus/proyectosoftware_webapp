@@ -1,3 +1,5 @@
+# /backend/ventas/views.py
+
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -5,18 +7,26 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from django.db import transaction
 from django.shortcuts import get_object_or_404
+
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import Producto, Stock, Item, Transaccion
 from .serializers import (
     InputItemDTO,
-    UserSerializer,
-    MyTokenObtainPairSerializer,
+    InputTransaccionSerializer,
+    OutputItemDTO,
+    TransaccionDetailSerializer,
     ProductoSerializer,
     StockSerializer,
+    UserSerializer,
+    MyTokenObtainPairSerializer,
 )
 
+
+# ------------------------------
+# Vistas de autenticación (sin cambios)
+# ------------------------------
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
 
@@ -40,83 +50,207 @@ class LogoutView(APIView):
             return Response({"error": "Token inválido o ausente"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ConcretarVentaAPIView(APIView):
+# ------------------------------
+# 1) Crear Transacción con lista de Ítems y descuento global
+# ------------------------------
+class TransaccionCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        request_body=InputTransaccionSerializer,
+        responses={
+            201: TransaccionDetailSerializer,
+            400: "Error de validación"
+        }
+    )
+    def post(self, request):
+        """
+        Crea una nueva Transacción (estado=PENDIENTE), crea todos los Item asociados
+        y guarda el descuento global en Transaccion.descuento_carrito.
+        """
+        serializer = InputTransaccionSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        datos = serializer.validated_data
+        descuento_carrito = datos['descuento_carrito']
+        items_data = datos['items']
+
+        # 1) Crear la Transaccion en estado PENDIENTE
+        transaccion = Transaccion.objects.create(
+            estado='PENDIENTE',
+            descuento_carrito=descuento_carrito
+        )
+
+        # 2) Por cada item entrante, buscar el producto por código y crear el Item
+        errores = []
+        creados = []
+        for elemento in items_data:
+            codigo = elemento['codigo']
+            cantidad = elemento['cantidad']
+            try:
+                producto = Producto.objects.get(codigo=codigo)
+            except Producto.DoesNotExist:
+                errores.append(f"Producto con código '{codigo}' no encontrado.")
+                continue
+
+            item = Item.objects.create(
+                transaccion=transaccion,
+                producto=producto,
+                cantidad=cantidad
+            )
+            creados.append(item)
+
+        if errores:
+            # Si alguno de los códigos no se encontró, eliminamos la transacción completa para no
+            # dejar datos huérfanos en BD, y devolvemos 400 con los errores.
+            transaccion.delete()
+            return Response(
+                {"errors": errores},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 3) Si todo se creó bien, devolvemos el detalle completo de la transacción:
+        detalle = TransaccionDetailSerializer(transaccion)
+        return Response(detalle.data, status=status.HTTP_201_CREATED)
+
+
+# ------------------------------
+# 2) Obtener detalle de Transacción
+# ------------------------------
+class TransaccionDetailAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
         security=[{"Bearer": []}],
-        request_body=InputItemDTO(many=True),
-        responses={
-            200: "Transacción exitosa",
-            400: "Error de validación",
-            409: "Algunos productos sin stock suficiente",
-        },
+        responses={200: TransaccionDetailSerializer, 404: "Transacción no encontrada"}
     )
-    def post(self, request):
-        input_items = request.data  # Asume lista directa
+    def get(self, request, pk: int):
+        transaccion = get_object_or_404(Transaccion, pk=pk)
+        serializer = TransaccionDetailSerializer(transaccion)
+        return Response(serializer.data)
 
-        if not input_items:
-            return Response({"error": "Debe enviar la lista de items"}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = InputItemDTO(data=input_items, many=True)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+# ------------------------------
+# 3) Confirmar Transacción: verificar stock y descontar
+# ------------------------------
+class ConfirmarTransaccionAPIView(APIView):
+    permission_classes = [IsAuthenticated]
 
+    @swagger_auto_schema(
+        security=[{"Bearer": []}],
+        responses={
+            200: "Transacción confirmada",
+            400: "Error de validación",
+            404: "Transacción no existe",
+            409: "Stock insuficiente en alguno de los productos"
+        }
+    )
+    def post(self, request, pk):
+        """
+        Verifica stock para cada ítem de la transacción (que debe estar PENDIENTE),
+        descuenta si hay suficiente y cambia estado a CONFIRMADA o FALLIDA.
+        Devuelve, para cada ítem, su nombre, cantidad y “estado” (allá).
+        """
+        transaccion = get_object_or_404(Transaccion, pk=pk)
+
+        if transaccion.estado != 'PENDIENTE':
+            return Response(
+                {"error": "La transacción ya fue confirmada o está fallida."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        items = transaccion.item_set.select_related('producto').all()
+        if not items.exists():
+            return Response(
+                {"error": "La transacción no tiene ítems para confirmar."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        output_items = []
         with transaction.atomic():
-            transaccion = Transaccion.objects.create(estado='PENDIENTE')
-            output_items = []
-            all_confirmed = True
-
-            for item_data in serializer.validated_data:
-                codigo = item_data['codigo']
-                cantidad = item_data['cantidad']
-
+            # --- 1) Verificar stock de todos los ítems (sin descartar nada todavía) ---
+            faltantes = []
+            for item in items:
                 try:
-                    producto = Producto.objects.get(codigo=codigo)
-                    stock = Stock.objects.select_for_update().get(producto=producto)
-
-                    if stock.cantidad >= cantidad:
-                        stock.cantidad -= cantidad
-                        stock.save()
-                        Item.objects.create(transaccion=transaccion, producto=producto, cantidad=cantidad)
-                        output_items.append({"nombre": producto.nombre, "cantidad": cantidad, "estado": "CONFIRMADA"})
-                    else:
-                        all_confirmed = False
-                        output_items.append({"nombre": producto.nombre, "cantidad": cantidad, "estado": "FALLIDA"})
-                except Producto.DoesNotExist:
-                    all_confirmed = False
-                    output_items.append({"nombre": f"Producto con código {codigo} no encontrado", "cantidad": cantidad, "estado": "FALLIDA"})
+                    stock = Stock.objects.select_for_update().get(producto=item.producto)
                 except Stock.DoesNotExist:
-                    all_confirmed = False
-                    output_items.append({"nombre": producto.nombre if 'producto' in locals() else codigo, "cantidad": cantidad, "estado": "FALLIDA"})
+                    faltantes.append((item, "Sin registro de stock"))
+                    continue
 
-            transaccion.estado = 'CONFIRMADA' if all_confirmed else 'FALLIDA'
+                if stock.cantidad < item.cantidad:
+                    faltantes.append((item, "Stock insuficiente"))
+
+            # --- 2) Si existe al menos un ítem con stock insuficiente, marcamos FALLIDA ---
+            if faltantes:
+                transaccion.estado = 'FALLIDA'
+                transaccion.confirmado_en = None
+                transaccion.save()
+
+                # Construir output_items: todos los ítems salen en estado “FALLIDA”
+                for item in items:
+                    output_items.append({
+                        "nombre": item.producto.nombre,
+                        "cantidad": item.cantidad,
+                        "estado": "FALLIDA"
+                    })
+
+                return Response(
+                    {
+                        "transaccion_id": str(transaccion.id),
+                        "estado_transaccion": transaccion.estado,
+                        "descuento_carrito": transaccion.descuento_carrito,
+                        "items": output_items
+                    },
+                    status=status.HTTP_409_CONFLICT
+                )
+
+            # --- 3) Si todos los ítems tienen stock suficiente, se descuentan cantidades ---
+            for item in items:
+                stock = Stock.objects.select_for_update().get(producto=item.producto)
+                stock.cantidad -= item.cantidad
+                stock.save()
+                output_items.append({
+                    "nombre": item.producto.nombre,
+                    "cantidad": item.cantidad,
+                    "estado": "CONFIRMADA"
+                })
+
+            transaccion.estado = 'CONFIRMADA'
+            transaccion.confirmado_en = None  # Si deseas dejar fecha: timezone.now()
             transaccion.save()
 
-        return Response({
-            "transaccion_id": str(transaccion.id),
-            "estado_transaccion": transaccion.estado,
-            "items": output_items,
-            "usuario": UserSerializer(request.user).data,
-        }, status=status.HTTP_200_OK if all_confirmed else status.HTTP_409_CONFLICT)
+        # --- 4) Responder con los datos finales ---
+        return Response(
+            {
+                "transaccion_id": str(transaccion.id),
+                "estado_transaccion": transaccion.estado,
+                "descuento_carrito": transaccion.descuento_carrito,
+                "items": output_items
+            },
+            status=status.HTTP_200_OK
+        )
 
 
+# ------------------------------
+# CRUD de Productos
+# ------------------------------
 class ProductoListCreateAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
         security=[{"Bearer": []}],
-        responses={200: ProductoSerializer(many=True)},
+        responses={200: ProductoSerializer(many=True)}
     )
     def get(self, request):
         productos = Producto.objects.all()
         serializer = ProductoSerializer(productos, many=True)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @swagger_auto_schema(
         security=[{"Bearer": []}],
         request_body=ProductoSerializer,
-        responses={201: ProductoSerializer},
+        responses={201: ProductoSerializer, 400: "Error de validación"}
     )
     def post(self, request):
         serializer = ProductoSerializer(data=request.data)
@@ -131,17 +265,17 @@ class ProductoDetailAPIView(APIView):
 
     @swagger_auto_schema(
         security=[{"Bearer": []}],
-        responses={200: ProductoSerializer},
+        responses={200: ProductoSerializer, 404: "Producto no encontrado"}
     )
     def get(self, request, pk):
         producto = get_object_or_404(Producto, pk=pk)
         serializer = ProductoSerializer(producto)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @swagger_auto_schema(
         security=[{"Bearer": []}],
         request_body=ProductoSerializer,
-        responses={200: ProductoSerializer},
+        responses={200: ProductoSerializer, 400: "Error de validación", 404: "Producto no encontrado"}
     )
     def put(self, request, pk):
         producto = get_object_or_404(Producto, pk=pk)
@@ -153,7 +287,7 @@ class ProductoDetailAPIView(APIView):
 
     @swagger_auto_schema(
         security=[{"Bearer": []}],
-        responses={204: 'No Content'},
+        responses={204: 'No Content', 404: "Producto no encontrado"}
     )
     def delete(self, request, pk):
         producto = get_object_or_404(Producto, pk=pk)
@@ -161,79 +295,25 @@ class ProductoDetailAPIView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-    @action(detail=True, methods=['post'])
-    def agregar_item(self, request, pk=None):
-        transaccion = self.get_object()
-        codigo = request.data.get('codigo')
-        cantidad = int(request.data.get('cantidad', 1))
-        descuento = float(request.data.get('descuento', 0))
-    if descuento < 0 or descuento > producto.precio:
-        return Response({'error': 'Descuento inválido'}, status=status.HTTP_400_BAD_REQUEST)
-
-    Item.objects.create(
-        transaccion=transaccion,
-        producto=producto,
-        cantidad=cantidad,
-        descuento=descuento
-    )
-    return Response(self.get_serializer(transaccion).data)
-
-    @action(detail=True, methods=['post'])
-    def aplicar_descuento(self, request, pk=None):
-        transaccion = self.get_object()
-        serializer = AplicarDescuentoSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        tipo = serializer.validated_data['tipo']
-        valor = serializer.validated_data['valor']
-        producto_id = serializer.validated_data.get('producto_id')
-
-        items = transaccion.item_set.all()
-        if producto_id:
-            items = items.filter(producto_id=producto_id)
-
-        if tipo == 'porcentaje':
-            if valor > 100:
-                return Response({'error': 'El porcentaje no puede ser mayor a 100'}, status=400)
-            for item in items:
-                item.descuento = item.producto.precio * (valor / 100)
-                item.save()
-        else:
-            if valor <= 0:
-                return Response({'error': 'El monto debe ser positivo'}, status=400)
-            if producto_id and items.exists():
-                item = items.first()
-                if valor > item.producto.precio:
-                    return Response({'error': 'El descuento no puede ser mayor al precio'}, status=400)
-                item.descuento = valor
-                item.save()
-            elif not producto_id:
-                total_transaccion = sum(item.producto.precio * item.cantidad for item in items)
-                if valor > total_transaccion:
-                    return Response({'error': 'El descuento no puede ser mayor al total'}, status=400)
-                for item in items:
-                    proporcion = (item.producto.precio * item.cantidad) / total_transaccion
-                    item.descuento = (valor * proporcion) / item.cantidad
-                    item.save()
-
-        return Response(self.get_serializer(transaccion).data)
-      
+# ------------------------------
+# CRUD de Stocks
+# ------------------------------
 class StockListCreateAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
         security=[{"Bearer": []}],
-        responses={200: 'Lista de stocks'},
+        responses={200: StockSerializer(many=True)}
     )
     def get(self, request):
         stocks = Stock.objects.all()
         serializer = StockSerializer(stocks, many=True)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @swagger_auto_schema(
         security=[{"Bearer": []}],
         request_body=StockSerializer,
-        responses={201: StockSerializer},
+        responses={201: StockSerializer, 400: "Error de validación"}
     )
     def post(self, request):
         serializer = StockSerializer(data=request.data)
@@ -245,25 +325,20 @@ class StockListCreateAPIView(APIView):
 
 class StockDetailAPIView(APIView):
     permission_classes = [IsAuthenticated]
-        transaccion.item_set.all().delete()
-        transaccion.estado = 'FALLIDA'
-        transaccion.confirmado_en = timezone.now()
-        transaccion.save()
 
-        return Response({'mensaje': 'Transacción cancelada'}, status=200)
     @swagger_auto_schema(
         security=[{"Bearer": []}],
-        responses={200: StockSerializer},
+        responses={200: StockSerializer, 404: "Stock no encontrado"}
     )
     def get(self, request, pk):
         stock = get_object_or_404(Stock, pk=pk)
         serializer = StockSerializer(stock)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @swagger_auto_schema(
         security=[{"Bearer": []}],
         request_body=StockSerializer,
-        responses={200: StockSerializer},
+        responses={200: StockSerializer, 400: "Error de validación", 404: "Stock no encontrado"}
     )
     def put(self, request, pk):
         stock = get_object_or_404(Stock, pk=pk)
@@ -275,7 +350,7 @@ class StockDetailAPIView(APIView):
 
     @swagger_auto_schema(
         security=[{"Bearer": []}],
-        responses={204: 'No Content'},
+        responses={204: 'No Content', 404: "Stock no encontrado"}
     )
     def delete(self, request, pk):
         stock = get_object_or_404(Stock, pk=pk)

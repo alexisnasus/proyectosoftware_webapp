@@ -1,8 +1,11 @@
-from django.db import models
-import uuid
-from django.contrib.auth.models import AbstractUser
-from django.db import models
+# /backend/ventas/models.py
 
+from django.db import models
+from django.contrib.auth.models import AbstractUser
+
+#
+# --- Modelo de usuario personalizado (sin cambios) ---
+#
 class User(AbstractUser):
     ROLE_CHOICES = [
         ('ADMIN', 'Administrador'),
@@ -14,6 +17,9 @@ class User(AbstractUser):
         return f"{self.username} ({self.get_role_display()})"
 
 
+#
+# --- Producto y Stock (sin cambios) ---
+#
 class Producto(models.Model):
     codigo = models.CharField(max_length=50, unique=True)
     nombre = models.CharField(max_length=200)
@@ -25,6 +31,7 @@ class Producto(models.Model):
     def __str__(self):
         return f"{self.codigo} – {self.nombre}"
 
+
 class Stock(models.Model):
     producto = models.OneToOneField(Producto, on_delete=models.CASCADE)
     cantidad = models.IntegerField(default=0)
@@ -35,17 +42,23 @@ class Stock(models.Model):
     def __str__(self):
         return f"Stock({self.producto.codigo}): {self.cantidad}"
 
+
+#
+# --- Transacción (antes “carrito”) con DESCUENTO A NIVEL GLOBAL ---
+#
 class Transaccion(models.Model):
     ESTADOS = [
         ('PENDIENTE', 'Pendiente'),
-        ('CONFIRMADA','Confirmada'),
+        ('CONFIRMADA', 'Confirmada'),
         ('FALLIDA',   'Fallida'),
     ]
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    # ¡Elimina la definición de UUID! Django usará un AutoField por defecto.
+    # id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
     creado_en = models.DateTimeField(auto_now_add=True)
     confirmado_en = models.DateTimeField(null=True, blank=True)
     estado = models.CharField(max_length=10, choices=ESTADOS, default='PENDIENTE')
-    descuento_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    descuento_carrito = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
     class Meta:
         db_table = 'transaccion'
@@ -53,29 +66,31 @@ class Transaccion(models.Model):
     @property
     def total(self):
         return sum(item.subtotal for item in self.item_set.all())
-    
+
     @property
     def total_final(self):
-        return self.total - self.descuento_total
+        return self.total - self.descuento_carrito
 
+
+#
+# --- Ítem de la transacción (antes tenía campo 'descuento', que ahora removemos) ---
+#
 class Item(models.Model):
     transaccion = models.ForeignKey(Transaccion, on_delete=models.CASCADE)
     producto = models.ForeignKey(Producto, on_delete=models.PROTECT)
     cantidad = models.PositiveIntegerField(default=1)
-    descuento = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
     class Meta:
         db_table = 'item'
 
     @property
     def subtotal(self):
-        return (self.producto.precio - self.descuento) * self.cantidad
-    
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        self.actualizar_descuento_transaccion()
-    
-    def actualizar_descuento_transaccion(self):
-        transaccion = self.transaccion
-        transaccion.descuento_total = sum(item.descuento * item.cantidad for item in transaccion.item_set.all())
-        transaccion.save()
+        """
+        Precio a pagar por este ítem: (precio unitario * cantidad).
+        El descuento ya se aplica únicamente a nivel de Transaccion.descuento_carrito,
+        así que aquí no descontamos nada.
+        """
+        return self.producto.precio * self.cantidad
+
+    def __str__(self):
+        return f"{self.producto.codigo} x{self.cantidad} (Transacción {self.transaccion.id})"

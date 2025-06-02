@@ -1,0 +1,86 @@
+<!-- frontend-node/public/index.html -->
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Iniciar Sesión – ManuMarket</title>
+    <!-- Tailwind vía CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  </head>
+  <body class="min-h-screen flex items-center justify-center bg-gray-50">
+    <div class="max-w-md w-full bg-white p-8 rounded-lg shadow-lg">
+      <h2 class="text-center text-2xl font-semibold text-gray-800 mb-6">Iniciar Sesión</h2>
+      <form id="formLogin" class="space-y-4">
+        <div>
+          <label for="inputUsuario" class="block text-sm font-medium text-gray-700">Usuario</label>
+          <input
+            id="inputUsuario"
+            name="username"
+            type="text"
+            required
+            class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div>
+          <label for="inputPassword" class="block text-sm font-medium text-gray-700">Contraseña</label>
+          <input
+            id="inputPassword"
+            name="password"
+            type="password"
+            required
+            class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <button
+          type="submit"
+          class="w-full flex justify-center py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          Ingresar
+        </button>
+      </form>
+      <p class="mt-4 text-center text-sm text-gray-500">
+        &copy; 2025 ManuMarket. Todos los derechos reservados.
+      </p>
+    </div>
+
+    <script>
+      // Base URL de tu API Django (ventas_api)
+      const BACKEND_URL = "http://localhost:8000";
+
+      const formLogin = document.getElementById("formLogin");
+      formLogin.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const username = document.getElementById("inputUsuario").value.trim();
+        const password = document.getElementById("inputPassword").value;
+
+        if (!username || !password) {
+          alert("Complete ambos campos.");
+          return;
+        }
+
+        try {
+          const resp = await fetch(`${BACKEND_URL}/ventas/user/login/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password }),
+          });
+          if (!resp.ok) {
+            const errorJson = await resp.json();
+            alert("Error: " + (errorJson.detail || JSON.stringify(errorJson)));
+            return;
+          }
+          const data = await resp.json();
+          // Guardar el token en localStorage para usar en otras páginas
+          localStorage.setItem("token", data.access);
+          // Redirigir al dashboard
+          window.location.href = "/dashboard";
+        } catch (err) {
+          console.error(err);
+          alert("Error de conexión al servidor.");
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,100 @@
+<!-- frontend-node/public/trabajadores.html -->
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trabajadores – ManuMarket</title>
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  </head>
+  <body class="min-h-screen bg-gray-50">
+    <!-- Barra de navegación común -->
+    <nav class="bg-gray-900 text-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16 items-center">
+          <div class="flex-shrink-0">
+            <a href="/dashboard">
+              <img class="h-8 w-auto" src="/assets/logo.png" alt="Logo ManuMarket" />
+            </a>
+          </div>
+          <div class="hidden md:flex md:space-x-8">
+            <a href="/dashboard" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Dashboard</a>
+            <a href="/inventario" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Inventario</a>
+            <a href="/pos" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Punto de Venta</a>
+            <a href="/trabajadores" class="inline-flex items-center px-1 pt-1 border-b-2 border-blue-500 text-sm font-medium text-gray-100">Trabajadores</a>
+          </div>
+          <div class="flex items-center">
+            <a href="/logout" class="text-sm font-medium text-red-400 hover:text-red-300">Cerrar sesión</a>
+          </div>
+          <div class="-mr-2 flex md:hidden">
+            <button id="btnMenuTrab" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-800">
+              <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                <path class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div id="menuResponsiveTrab" class="md:hidden hidden bg-gray-800">
+        <div class="px-2 pt-2 pb-3 space-y-1">
+          <a href="/dashboard" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Dashboard</a>
+          <a href="/inventario" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Inventario</a>
+          <a href="/pos" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Punto de Venta</a>
+          <a href="/trabajadores" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Trabajadores</a>
+          <a href="/logout" class="block px-3 py-2 rounded-md text-base font-medium text-red-400 hover:bg-gray-700">Cerrar sesión</a>
+        </div>
+      </div>
+    </nav>
+    <script>
+      const btnMenuTrab = document.getElementById("btnMenuTrab");
+      const menuResponsiveTrab = document.getElementById("menuResponsiveTrab");
+      btnMenuTrab && btnMenuTrab.addEventListener("click", () => {
+        menuResponsiveTrab.classList.toggle("hidden");
+      });
+    </script>
+    <!-- ================================ -->
+
+    <!-- CONTENIDO: INFORMACIÓN DEL USUARIO ACTUAL -->
+    <main class="max-w-7xl mx-auto p-6">
+      <h1 class="text-2xl font-semibold text-gray-800 mb-4">Información de Usuario</h1>
+      <div id="infoUsuario" class="bg-white shadow rounded-lg p-6">
+        <p class="text-gray-600"><strong>ID:</strong> <span id="userId">—</span></p>
+        <p class="text-gray-600 mt-2"><strong>Nombre de Usuario:</strong> <span id="userName">—</span></p>
+        <p class="text-gray-600 mt-2"><strong>Correo Electrónico:</strong> <span id="userEmail">—</span></p>
+        <p class="text-gray-600 mt-2"><strong>Rol:</strong> <span id="userRole">—</span></p>
+      </div>
+      <p class="mt-6 text-sm text-gray-500">
+        * Actualmente, sólo mostramos al usuario autenticado (no hay listado completo en el backend).
+      </p>
+    </main>
+
+    <script>
+      // BASE URL de tu API Django (ventas_api)
+      const BACKEND_URL = "http://localhost:8000";
+      document.addEventListener("DOMContentLoaded", async () => {
+        const token = localStorage.getItem("token");
+        const headers = token
+          ? { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
+          : { "Content-Type": "application/json" };
+
+        try {
+          const resp = await fetch(`${BACKEND_URL}/ventas/user/me/`, { headers });
+          if (!resp.ok) {
+            document.getElementById("userName").textContent = "No autenticado";
+            return;
+          }
+          const user = await resp.json();
+          document.getElementById("userId").textContent = user.id;
+          document.getElementById("userName").textContent = user.username;
+          document.getElementById("userEmail").textContent = user.email;
+          document.getElementById("userRole").textContent = user.role;
+        } catch (err) {
+          console.error("Error al cargar datos del usuario:", err);
+          document.getElementById("userName").textContent = "Error de conexión";
+        }
+      });
+    </script>
+  </body>
+</html>

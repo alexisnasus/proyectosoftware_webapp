@@ -17,7 +17,7 @@ Repositorio para el proyecto de punto de ventas y gestión de inventario de *Man
     ```powershell
 
     python -m venv env
-    source env/bin/activate
+    .\env\Scripts\Activate.ps1
     pip install -r requirements.txt
      # source env/bin/activate (mac/linux)
 
@@ -35,12 +35,17 @@ Repositorio para el proyecto de punto de ventas y gestión de inventario de *Man
    #Hacer migraciones
    docker-compose exec ventas_api python manage.py makemigrations ventas
    docker-compose exec ventas_api python manage.py migrate
+   
+   #crear las credenciales
+   docker-compose exec ventas_api python manage.py createsuperuser
+
    ```
 
 3. URL´L
 
-   - Test de API: <http://localhost:8001/swagger/>
-   - front: <http://localhost:4321/>
+   - Test de API: <http://localhost:8000/swagger/>
+   - front-old: <http://localhost:4321/>
+   - front-node: <http://localhost:3000/>
 
 ---
 
