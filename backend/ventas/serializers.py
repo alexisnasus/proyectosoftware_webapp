@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from .models import Transaccion, Item
 from .models import Producto, Item, Stock
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
@@ -17,6 +18,19 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['role'] = getattr(user, 'role', '')
         return token
 
+class ItemSerializer(serializers.ModelSerializer):
+    producto = ProductoSerializer(read_only=True)
+    subtotal = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    descuento = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, default=0)
+
+
+    
+class TransaccionSerializer(serializers.ModelSerializer):
+    items = ItemSerializer(source='item_set', many=True, read_only=True)
+    total = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    descuento_total = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    total_final = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+
 # Producto Serializer para CRUD
 class ProductoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -34,6 +48,12 @@ class StockSerializer(serializers.ModelSerializer):
         model = Stock
         fields = '__all__'
 
+    
+class AplicarDescuentoSerializer(serializers.Serializer):
+    tipo = serializers.ChoiceField(choices=['porcentaje', 'monto_fijo'])
+    valor = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=0)
+    producto_id = serializers.CharField(required=False)
+    
 # DTO de entrada (inputCarrito)
 class InputItemDTO(serializers.Serializer):
     codigo = serializers.CharField()

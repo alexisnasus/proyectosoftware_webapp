@@ -17,8 +17,7 @@ Repositorio para el proyecto de punto de ventas y gestión de inventario de *Man
     ```powershell
 
     python -m venv env
-    .\env\Scripts\Activate.ps1
-
+    source env/bin/activate
     pip install -r requirements.txt
      # source env/bin/activate (mac/linux)
 
@@ -36,7 +35,6 @@ Repositorio para el proyecto de punto de ventas y gestión de inventario de *Man
    #Hacer migraciones
    docker-compose exec ventas_api python manage.py makemigrations ventas
    docker-compose exec ventas_api python manage.py migrate
-
    ```
 
 3. URL´L

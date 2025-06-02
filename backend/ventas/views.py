@@ -5,7 +5,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from django.db import transaction
 from django.shortcuts import get_object_or_404
-
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -17,7 +16,6 @@ from .serializers import (
     ProductoSerializer,
     StockSerializer,
 )
-
 
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
@@ -163,6 +161,63 @@ class ProductoDetailAPIView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+    @action(detail=True, methods=['post'])
+    def agregar_item(self, request, pk=None):
+        transaccion = self.get_object()
+        codigo = request.data.get('codigo')
+        cantidad = int(request.data.get('cantidad', 1))
+        descuento = float(request.data.get('descuento', 0))
+    if descuento < 0 or descuento > producto.precio:
+        return Response({'error': 'Descuento inválido'}, status=status.HTTP_400_BAD_REQUEST)
+
+    Item.objects.create(
+        transaccion=transaccion,
+        producto=producto,
+        cantidad=cantidad,
+        descuento=descuento
+    )
+    return Response(self.get_serializer(transaccion).data)
+
+    @action(detail=True, methods=['post'])
+    def aplicar_descuento(self, request, pk=None):
+        transaccion = self.get_object()
+        serializer = AplicarDescuentoSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        tipo = serializer.validated_data['tipo']
+        valor = serializer.validated_data['valor']
+        producto_id = serializer.validated_data.get('producto_id')
+
+        items = transaccion.item_set.all()
+        if producto_id:
+            items = items.filter(producto_id=producto_id)
+
+        if tipo == 'porcentaje':
+            if valor > 100:
+                return Response({'error': 'El porcentaje no puede ser mayor a 100'}, status=400)
+            for item in items:
+                item.descuento = item.producto.precio * (valor / 100)
+                item.save()
+        else:
+            if valor <= 0:
+                return Response({'error': 'El monto debe ser positivo'}, status=400)
+            if producto_id and items.exists():
+                item = items.first()
+                if valor > item.producto.precio:
+                    return Response({'error': 'El descuento no puede ser mayor al precio'}, status=400)
+                item.descuento = valor
+                item.save()
+            elif not producto_id:
+                total_transaccion = sum(item.producto.precio * item.cantidad for item in items)
+                if valor > total_transaccion:
+                    return Response({'error': 'El descuento no puede ser mayor al total'}, status=400)
+                for item in items:
+                    proporcion = (item.producto.precio * item.cantidad) / total_transaccion
+                    item.descuento = (valor * proporcion) / item.cantidad
+                    item.save()
+
+        return Response(self.get_serializer(transaccion).data)
+      
 class StockListCreateAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -190,7 +245,12 @@ class StockListCreateAPIView(APIView):
 
 class StockDetailAPIView(APIView):
     permission_classes = [IsAuthenticated]
+        transaccion.item_set.all().delete()
+        transaccion.estado = 'FALLIDA'
+        transaccion.confirmado_en = timezone.now()
+        transaccion.save()
 
+        return Response({'mensaje': 'Transacción cancelada'}, status=200)
     @swagger_auto_schema(
         security=[{"Bearer": []}],
         responses={200: StockSerializer},
