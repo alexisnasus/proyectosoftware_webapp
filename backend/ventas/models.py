@@ -1,6 +1,39 @@
 from django.db import models
-from inventario.models import Producto
 import uuid
+from django.contrib.auth.models import AbstractUser
+from django.db import models
+
+class User(AbstractUser):
+    ROLE_CHOICES = [
+        ('ADMIN', 'Administrador'),
+        ('EMPLOYEE', 'Empleado'),
+    ]
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, null=False, blank=False)
+
+    def __str__(self):
+        return f"{self.username} ({self.get_role_display()})"
+
+
+class Producto(models.Model):
+    codigo = models.CharField(max_length=50, unique=True)
+    nombre = models.CharField(max_length=200)
+    precio = models.DecimalField(max_digits=10, decimal_places=2)
+
+    class Meta:
+        db_table = 'producto'
+
+    def __str__(self):
+        return f"{self.codigo} – {self.nombre}"
+
+class Stock(models.Model):
+    producto = models.OneToOneField(Producto, on_delete=models.CASCADE)
+    cantidad = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = 'stock'
+
+    def __str__(self):
+        return f"Stock({self.producto.codigo}): {self.cantidad}"
 
 class Transaccion(models.Model):
     ESTADOS = [

@@ -10,51 +10,21 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB:       manumarket
     volumes:
-      - ./db_init:/docker-entrypoint-initdb.d
       - manumarket-data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
 
-  users_api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: users_api
-    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
-    volumes:
-      - ./backend:/app
-    ports:
-      - "8000:8000"
-    depends_on:
-      - db
-    env_file:
-      - .env
-
-  inventory_api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: inventory_api
-    command: ["python", "manage.py", "runserver", "0.0.0.0:8001"]
-    volumes:
-      - ./backend:/app
-    ports:
-      - "8001:8001"
-    depends_on:
-      - db
-    env_file:
-      - .env
 
   ventas_api:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: ventas_api
-    command: ["python", "manage.py", "runserver", "0.0.0.0:8002"]
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
     volumes:
       - ./backend:/app
     ports:
-      - "8002:8002"
+      - "8000:8000"
     depends_on:
       - db
     env_file:
@@ -74,7 +44,6 @@ services:
       - NODE_ENV=development
     extra_hosts:
       - "host.docker.internal:host-gateway"
-
 
 volumes:
   manumarket-data:

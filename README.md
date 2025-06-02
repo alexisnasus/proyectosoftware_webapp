@@ -33,8 +33,8 @@ Repositorio para el proyecto de punto de ventas y gestión de inventario de *Man
    docker ps
 
    #Hacer migraciones
-   sudo docker-compose exec users_api python manage.py migrate
-   sudo docker-compose exec users_api python manage.py makemigrations
+   docker-compose exec ventas_api python manage.py makemigrations ventas
+   docker-compose exec ventas_api python manage.py migrate
    ```
 
 3. URL´L
