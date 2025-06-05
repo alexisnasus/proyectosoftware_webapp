@@ -19,13 +19,23 @@
             </a>
           </div>
           <div class="hidden md:flex md:space-x-8">
-            <a href="/dashboard" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Dashboard</a>
-            <a href="/inventario" class="inline-flex items-center px-1 pt-1 border-b-2 border-blue-500 text-sm font-medium text-gray-100">Inventario</a>
-            <a href="/pos" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Punto de Venta</a>
-            <a href="/trabajadores" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Trabajadores</a>
+            <a href="/dashboard" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">
+              Dashboard
+            </a>
+            <a href="/inventario" class="inline-flex items-center px-1 pt-1 border-b-2 border-blue-500 text-sm font-medium text-gray-100">
+              Inventario
+            </a>
+            <a href="/pos" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">
+              Punto de Venta
+            </a>
+            <a href="/trabajadores" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">
+              Trabajadores
+            </a>
           </div>
           <div class="flex items-center">
-            <a href="/logout" class="text-sm font-medium text-red-400 hover:text-red-300">Cerrar sesión</a>
+            <a href="/logout" class="text-sm font-medium text-red-400 hover:text-red-300">
+              Cerrar sesión
+            </a>
           </div>
           <div class="-mr-2 flex md:hidden">
             <button id="btnMenuInv" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-800">
@@ -58,14 +68,22 @@
 
     <!-- CONTENIDO: LISTADO DE PRODUCTOS -->
     <main class="max-w-7xl mx-auto p-6">
-      <div class="flex justify-between items-center mb-6">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
         <h1 class="text-2xl font-semibold text-gray-800">Inventario</h1>
-        <button
-          id="btnNuevoProducto"
-          class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-        >
-          + Nuevo Producto
-        </button>
+        <div class="flex space-x-2 w-full sm:w-auto">
+          <input
+            id="searchInput"
+            type="text"
+            placeholder="Buscar producto..."
+            class="flex-1 border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            id="btnNuevoProducto"
+            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+          >
+            + Nuevo Producto
+          </button>
+        </div>
       </div>
 
       <div class="bg-white shadow rounded-lg overflow-hidden">
@@ -97,10 +115,9 @@
             <input
               id="codigoProd"
               type="text"
-              
-              class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-            /> 
-          </div> 
+              class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
           <div>
             <label for="nombreProd" class="block text-sm font-medium text-gray-700">Nombre</label>
             <input
@@ -117,7 +134,6 @@
               type="number"
               step="10"
               min="0"
-              
               class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -187,6 +203,17 @@
       btnNuevoProducto.addEventListener("click", () => abrirModal());
       btnCerrarModal.addEventListener("click", cerrarModal);
 
+      // Función para filtrar filas en la tabla según el texto de búsqueda
+      function filterTable() {
+        const term = document.getElementById("searchInput").value.toLowerCase();
+        document.querySelectorAll("#tbodyInventario tr").forEach((row) => {
+          const codigo = row.children[1].textContent.toLowerCase();
+          const nombre = row.children[2].textContent.toLowerCase();
+          row.style.display =
+            codigo.includes(term) || nombre.includes(term) ? "" : "none";
+        });
+      }
+
       // Cargar lista de productos
       async function cargarInventario() {
         try {
@@ -221,6 +248,9 @@
             `;
             tbodyInventario.appendChild(tr);
           });
+
+          // Aplicar filtro después de rellenar la tabla
+          filterTable();
 
           // Agregar listeners a los botones Editar y Eliminar
           document.querySelectorAll(".btnEditar").forEach((btn) => {
@@ -297,9 +327,7 @@
         const precio = parseFloat(document.getElementById("precioProd").value);
         const stockCantidad = parseInt(document.getElementById("stockProd").value, 10);
 
-
         /*
-
         if (!codigo || !nombre || isNaN(precio) || isNaN(stockCantidad)) {
           alert("Rellena todos los campos correctamente.");
           return;
@@ -378,6 +406,8 @@
       // Al cargar la página, obtenemos el inventario
       document.addEventListener("DOMContentLoaded", () => {
         cargarInventario();
+        // Escuchar el input de búsqueda para filtrar en tiempo real
+        document.getElementById("searchInput").addEventListener("input", filterTable);
       });
     </script>
   </body>
