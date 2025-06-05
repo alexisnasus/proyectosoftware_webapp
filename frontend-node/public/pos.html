@@ -551,7 +551,7 @@
             actualizarTotales();
           } else {
             // Si falla por stock insuficiente:
-            alert(`Venta fallida (#${resultado.id}). Stock insuficiente.`);
+            alert("Venta fallida. Stock insuficiente.");
             // REFRESCAMOS el stock de cada producto que aún esté en carrito:
             await refrescarStockDeCarrito();
             actualizarTotales();
