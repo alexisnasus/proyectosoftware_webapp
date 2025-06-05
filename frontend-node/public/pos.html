@@ -319,6 +319,11 @@
           btnPlus.className = "w-8 h-8 bg-gray-100 hover:bg-gray-200 border rounded-r";
           btnPlus.textContent = "+";
           btnPlus.onclick = () => {
+            // Validación: no permitir superar el stock mostrado
+            if (item.cantidad + 1 > item.stock) {
+              alert(`No hay suficiente stock. Solo quedan ${item.stock}.`);
+              return;
+            }
             item.cantidad++;
             renderizarCarrito();
             actualizarTotales();
@@ -355,7 +360,7 @@
         });
       }
 
-      // 7) Agregar producto al carrito (ahora buscamos por coincidencia exacta)
+      // 7) Agregar producto al carrito (ahora obtenemos stock real desde /ventas/stocks/)
       btnAgregar.onclick = async () => {
         const codigoBuscado = inputBuscar.value.trim();
         if (!codigoBuscado) {
@@ -364,41 +369,70 @@
         }
 
         try {
-          const resp = await fetch(
+          // 7.1) Pedimos al endpoint de productos (ventas) para nombre, precio e id
+          const respVentas = await fetch(
             `${BACKEND_URL}/ventas/productos/?codigo=${encodeURIComponent(codigoBuscado)}`,
             {
               method: "GET",
               headers,
             }
           );
-          if (!resp.ok) throw new Error("Error al buscar producto");
+          if (!respVentas.ok) throw new Error("Error al buscar producto en ventas");
 
-          const productos = await resp.json();
-          if (productos.length === 0) {
+          const productosVentas = await respVentas.json();
+          if (productosVentas.length === 0) {
             alert("Producto no encontrado.");
             return;
           }
 
-          // ———> BUSCAR COINCIDENCIA EXACTA (por código o por nombre)
-          let prod = productos.find(
+          // Elegimos coincidencia exacta por código o por nombre; si no, el primero
+          let prodVentas = productosVentas.find(
             (p) =>
               p.codigo.toString() === codigoBuscado ||
               p.nombre.toLowerCase() === codigoBuscado.toLowerCase()
           );
-          // Si no hay coincidencia exacta, tomar el primero como fallback
-          if (!prod) {
-            prod = productos[0];
+          if (!prodVentas) {
+            prodVentas = productosVentas[0];
           }
 
-          const existe = carritoItems.find((p) => p.codigo === prod.codigo);
+          // 7.2) Ahora pedimos al endpoint de stocks en ventas para obtener la cantidad actual
+          const respStock = await fetch(
+            `${BACKEND_URL}/ventas/stocks/?producto=${encodeURIComponent(prodVentas.id)}`,
+            {
+              method: "GET",
+              headers,
+            }
+          );
+          if (!respStock.ok) throw new Error("Error al buscar stock");
+
+          const stocksArray = await respStock.json();
+          if (stocksArray.length === 0) {
+            alert("No se obtuvo stock del inventario para este producto.");
+            return;
+          }
+
+          // Tomamos stocksArray[0].cantidad como stock actual
+          const stockActual = parseInt(stocksArray[0].cantidad) || 0;
+
+          // 7.3) Agregamos al carritoItems, guardando stockActual en item.stock
+          const existe = carritoItems.find((p) => p.codigo === prodVentas.codigo);
           if (existe) {
+            // Si ya existía, intentamos incrementar sin pasarnos del stock
+            if (existe.cantidad + 1 > stockActual) {
+              alert(`No hay suficiente stock. Solo quedan ${stockActual}.`);
+              return;
+            }
             existe.cantidad++;
           } else {
+            if (stockActual < 1) {
+              alert("No hay stock disponible para este producto.");
+              return;
+            }
             carritoItems.push({
-              codigo: prod.codigo,
-              nombre: prod.nombre,
-              precio: parseFloat(prod.precio),
-              stock: prod.stock,      // mantenemos stock
+              codigo: prodVentas.codigo,
+              nombre: prodVentas.nombre,
+              precio: parseFloat(prodVentas.precio),
+              stock: stockActual,
               cantidad: 1,
             });
           }
@@ -419,6 +453,14 @@
           return;
         }
 
+        // 8.1) Validación final de stock en el frontend
+        for (const item of carritoItems) {
+          if (item.cantidad > item.stock) {
+            alert(`No puedes comprar ${item.cantidad} unidades de "${item.nombre}". Solo hay ${item.stock}.`);
+            return;
+          }
+        }
+
         const itemsParaEnviar = carritoItems.map((item) => ({
           codigo: item.codigo,
           cantidad: item.cantidad,
@@ -433,7 +475,7 @@
         };
 
         try {
-          // 8.1) Crear transacción
+          // 8.2) Crear transacción
           const respCrear = await fetch(`${BACKEND_URL}/ventas/transacciones/`, {
             method: "POST",
             headers: {
@@ -450,7 +492,7 @@
           const transaccionData = await respCrear.json();
           const transaccionId = transaccionData.id;
 
-          // 8.2) Confirmar transacción
+          // 8.3) Confirmar transacción
           const respConfirm = await fetch(
             `${BACKEND_URL}/ventas/transacciones/${transaccionId}/confirmar/`,
             {
@@ -468,14 +510,14 @@
           }
           const resultado = await respConfirm.json();
 
-          // 8.3) Mostrar resultado
+          // 8.4) Mostrar resultado
           if (resultado.estado === "CONFIRMADA") {
             alert(`¡Venta confirmada (#${resultado.id})!`);
           } else {
             alert(`Venta fallida (#${resultado.id}). Stock insuficiente.`);
           }
 
-          // Limpiar carrito
+          // 8.5) Limpiar carrito
           carritoItems = [];
           inputDescuentoClp.value = 0;
           inputDescuentoPct.value = 0;
@@ -533,7 +575,7 @@
 
           renderizarSugerencias(filtrados);
         } catch (err) {
-          console.error("Error en buscarSugerencias:", err);
+          console.error("Error en buscar sugerencias:", err);
           contenedorSugerencias.innerHTML = "";
           contenedorSugerencias.classList.add("hidden");
         }
@@ -556,7 +598,7 @@
             <span class="text-gray-500 font-mono">${prod.codigo}</span>
           `;
           item.addEventListener("click", () => {
-            // Ahora inyectamos el CÓDIGO en el input
+            // Inyectamos el CÓDIGO en el input para que btnAgregar traiga el prod correcto
             inputBuscar.value = prod.codigo.toString();
             contenedorSugerencias.classList.add("hidden");
           });
