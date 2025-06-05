@@ -188,6 +188,32 @@
       </div>
     </main>
 
+<!-- Modal de confirmación -->
+<div id="miModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-xl font-semibold text-gray-800" id="modalTitulo">Resultado de la Venta</h3>
+      <button onclick="cerrarModal()" class="text-gray-500 hover:text-gray-700">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+    <p class="text-gray-700 mb-4" id="modalMensaje"></p>
+    <div class="flex justify-end">
+      <button onclick="cerrarModal()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+        Aceptar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Spinner de carga -->
+<div id="spinner" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+  <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
+</div>
+
+
     <!-- SCRIPT DE INTERACTIVIDAD DEL CARRITO -->
     <script>
       // 1) Estado local del carrito
@@ -319,11 +345,6 @@
           btnPlus.className = "w-8 h-8 bg-gray-100 hover:bg-gray-200 border rounded-r";
           btnPlus.textContent = "+";
           btnPlus.onclick = () => {
-            // Validación: no permitir superar el stock mostrado
-            if (item.cantidad + 1 > item.stock) {
-              alert(`No hay suficiente stock. Solo quedan ${item.stock}.`);
-              return;
-            }
             item.cantidad++;
             renderizarCarrito();
             actualizarTotales();
@@ -360,7 +381,7 @@
         });
       }
 
-      // 7) Agregar producto al carrito (hace dos fetch: uno para producto y otro para stock)
+      // 7) Agregar producto al carrito (ahora buscamos por coincidencia exacta)
       btnAgregar.onclick = async () => {
         const codigoBuscado = inputBuscar.value.trim();
         if (!codigoBuscado) {
@@ -369,75 +390,42 @@
         }
 
         try {
-          // 7.1) Pedimos al endpoint de productos para nombre, precio e id
-          const respVentas = await fetch(
+          const resp = await fetch(
             `${BACKEND_URL}/ventas/productos/?codigo=${encodeURIComponent(codigoBuscado)}`,
             {
               method: "GET",
               headers,
             }
           );
-          if (!respVentas.ok) throw new Error("Error al buscar producto en ventas");
+          if (!resp.ok) throw new Error("Error al buscar producto");
 
-          const productosVentas = await respVentas.json();
-          if (productosVentas.length === 0) {
+          const productos = await resp.json();
+          if (productos.length === 0) {
             alert("Producto no encontrado.");
             return;
           }
 
-          // Elegimos coincidencia exacta por código o por nombre; si no, el primero
-          let prodVentas = productosVentas.find(
+          // ———> BUSCAR COINCIDENCIA EXACTA (por código o por nombre)
+          let prod = productos.find(
             (p) =>
               p.codigo.toString() === codigoBuscado ||
               p.nombre.toLowerCase() === codigoBuscado.toLowerCase()
           );
-          if (!prodVentas) {
-            prodVentas = productosVentas[0];
+          // Si no hay coincidencia exacta, tomar el primero como fallback
+          if (!prod) {
+            prod = productos[0];
           }
 
-          // 7.2) Pedimos al endpoint de stocks para obtener la cantidad actual
-          const respStock = await fetch(
-            `${BACKEND_URL}/ventas/stocks/?producto=${encodeURIComponent(prodVentas.id)}`,
-            {
-              method: "GET",
-              headers,
-            }
-          );
-          if (!respStock.ok) throw new Error("Error al buscar stock");
-
-          const stocksArray = await respStock.json();
-          if (stocksArray.length === 0) {
-            alert("No se obtuvo stock del inventario para este producto.");
-            return;
-          }
-
-          // Filtramos para encontrar el objeto cuyo campo producto === prodVentas.id
-          const stockObj = stocksArray.find((s) => s.producto === prodVentas.id);
-          const stockActual = stockObj ? parseInt(stockObj.cantidad) : 0;
-
-          // 7.3) Agregamos al carritoItems, guardando stockActual e id_producto
-          const existe = carritoItems.find((p) => p.codigo === prodVentas.codigo);
+          const existe = carritoItems.find((p) => p.codigo === prod.codigo);
           if (existe) {
-            // Si ya existía, intentamos incrementar sin pasarnos del nuevo stock
-            if (existe.cantidad + 1 > stockActual) {
-              alert(`No hay suficiente stock. Solo quedan ${stockActual}.`);
-              return;
-            }
             existe.cantidad++;
-            // Actualizamos el stock para ese elemento en caso que haya cambiado
-            existe.stock = stockActual;
           } else {
-            if (stockActual < 1) {
-              alert("No hay stock disponible para este producto.");
-              return;
-            }
             carritoItems.push({
-              codigo: prodVentas.codigo,
-              nombre: prodVentas.nombre,
-              precio: parseFloat(prodVentas.precio),
-              stock: stockActual,
+              codigo: prod.codigo,
+              nombre: prod.nombre,
+              precio: parseFloat(prod.precio),
+              stock: prod.stock,      // mantenemos stock
               cantidad: 1,
-              id_producto: prodVentas.id   // <--- guardamos el id real para el stock
             });
           }
 
@@ -450,46 +438,15 @@
         }
       };
 
-      // Función auxiliar para refrescar stock de todos los items que hoy estén en carrito
-      async function refrescarStockDeCarrito() {
-        for (let i = 0; i < carritoItems.length; i++) {
-          const item = carritoItems[i];
-          try {
-            const respStock = await fetch(
-              `${BACKEND_URL}/ventas/stocks/?producto=${encodeURIComponent(item.id_producto)}`,
-              {
-                method: "GET",
-                headers,
-              }
-            );
-            if (!respStock.ok) continue;
-            const stocksArray = await respStock.json();
-            if (stocksArray.length > 0) {
-              // Filtramos para el que coincida con item.id_producto
-              const stockObj = stocksArray.find((s) => s.producto === item.id_producto);
-              item.stock = stockObj ? parseInt(stockObj.cantidad) : 0;
-            }
-          } catch (e) {
-            console.error("Error refrescando stock para producto", item.codigo, e);
-          }
-        }
-        renderizarCarrito();
-      }
-
       // 8) Comprar: crear y confirmar transacción
       btnComprar.onclick = async () => {
         if (carritoItems.length === 0) {
-          alert("Carrito vacío.");
+          mostrarModal("Carrito vacío","Nohay existencias para vender");
           return;
         }
 
-        // 8.1) Validación final de stock en el frontend
-        for (const item of carritoItems) {
-          if (item.cantidad > item.stock) {
-            alert(`No puedes comprar ${item.cantidad} unidades de "${item.nombre}". Solo hay ${item.stock}.`);
-            return;
-          }
-        }
+        AbrirModal();
+
 
         const itemsParaEnviar = carritoItems.map((item) => ({
           codigo: item.codigo,
@@ -505,7 +462,7 @@
         };
 
         try {
-          // 8.2) Crear transacción
+          // 8.1) Crear transacción
           const respCrear = await fetch(`${BACKEND_URL}/ventas/transacciones/`, {
             method: "POST",
             headers: {
@@ -522,7 +479,7 @@
           const transaccionData = await respCrear.json();
           const transaccionId = transaccionData.id;
 
-          // 8.3) Confirmar transacción
+          // 8.2) Confirmar transacción
           const respConfirm = await fetch(
             `${BACKEND_URL}/ventas/transacciones/${transaccionId}/confirmar/`,
             {
@@ -540,27 +497,43 @@
           }
           const resultado = await respConfirm.json();
 
-          // 8.4) Mostrar resultado
+          // 8.3) Mostrar resultado
           if (resultado.estado === "CONFIRMADA") {
-            alert(`¡Venta confirmada (#${resultado.id})!`);
-            // Si se confirmó, limpiamos el carrito completamente:
-            carritoItems = [];
-            inputDescuentoClp.value = 0;
-            inputDescuentoPct.value = 0;
-            renderizarCarrito();
-            actualizarTotales();
+            mostrarModal("¡Venta exitosa", `Transacción confirmada correctamente!`);
           } else {
-            // Si falla por stock insuficiente:
-            alert("Venta fallida. Stock insuficiente.");
-            // REFRESCAMOS el stock de cada producto que aún esté en carrito:
-            await refrescarStockDeCarrito();
-            actualizarTotales();
+            mostrarModal("¡Venta exitosa", `Transacción confirmada correctamente!`);
           }
+
+          // Limpiar carrito
+          carritoItems = [];
+          inputDescuentoClp.value = 0;
+          inputDescuentoPct.value = 0;
+          renderizarCarrito();
+          actualizarTotales();
         } catch (err) {
           console.error(err);
-          alert("Error en el proceso de compra.");
-        }
+          mostrarModal("Error en el proceso de compra.");
+        }finally {
+    // Ocultar spinner (por si acaso)
+    document.getElementById("spinner").classList.add("hidden");
+  }
       };
+      // Función para mostrar el modal con mensajes personalizados
+function mostrarModal(titulo, mensaje) {
+  document.getElementById("modalTitulo").textContent = titulo;
+  document.getElementById("modalMensaje").textContent = mensaje;
+  document.getElementById("miModal").classList.remove("hidden");
+}
+
+// Tus funciones existentes de modal
+function AbrirModal() {
+  document.getElementById("spinner").classList.remove("hidden");
+  document.getElementById("miModal").classList.add("hidden");
+}
+
+function cerrarModal() {
+  document.getElementById("miModal").classList.add("hidden");
+}
 
       // 9) Inicializar al cargar
       document.addEventListener("DOMContentLoaded", () => {
@@ -608,7 +581,7 @@
 
           renderizarSugerencias(filtrados);
         } catch (err) {
-          console.error("Error en buscar sugerencias:", err);
+          console.error("Error en buscarSugerencias:", err);
           contenedorSugerencias.innerHTML = "";
           contenedorSugerencias.classList.add("hidden");
         }
@@ -631,7 +604,7 @@
             <span class="text-gray-500 font-mono">${prod.codigo}</span>
           `;
           item.addEventListener("click", () => {
-            // Inyectamos el CÓDIGO en el input para que btnAgregar traiga el prod correcto
+            // Ahora inyectamos el CÓDIGO en el input
             inputBuscar.value = prod.codigo.toString();
             contenedorSugerencias.classList.add("hidden");
           });
