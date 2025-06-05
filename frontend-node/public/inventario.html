@@ -70,6 +70,7 @@
     <main class="max-w-7xl mx-auto p-6">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
         <h1 class="text-2xl font-semibold text-gray-800">Inventario</h1>
+<<<<<<< HEAD
         <div class="flex space-x-2 w-full sm:w-auto">
           <input
             id="searchInput"
@@ -77,12 +78,36 @@
             placeholder="Buscar producto..."
             class="flex-1 border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+=======
+        <!-- Contenedor flex para botones Importar, Exportar y + Nuevo Producto -->
+        <div class="flex items-center space-x-2">
+          <!-- Botón Importar -->
+          <button
+            id="btnImportar"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            Importar
+          </button>
+          <!-- Botón Exportar -->
+          <button
+            id="btnExportar"
+            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+          >
+            Exportar
+          </button>
+          <!-- Botón + Nuevo Producto -->
+>>>>>>> 50aa39d3ff35cd87556784f8f940aad648b1e0bf
           <button
             id="btnNuevoProducto"
             class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
           >
             + Nuevo Producto
           </button>
+<<<<<<< HEAD
+=======
+          <!-- Input oculto para seleccionar CSV -->
+          <input id="inputImportCsv" type="file" accept=".csv" class="hidden" />
+>>>>>>> 50aa39d3ff35cd87556784f8f940aad648b1e0bf
         </div>
       </div>
 
@@ -94,7 +119,6 @@
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código de Barra</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
               <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
             </tr>
           </thead>
@@ -115,9 +139,15 @@
             <input
               id="codigoProd"
               type="text"
+<<<<<<< HEAD
               class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+=======
+              class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+            /> 
+          </div> 
+>>>>>>> 50aa39d3ff35cd87556784f8f940aad648b1e0bf
           <div>
             <label for="nombreProd" class="block text-sm font-medium text-gray-700">Nombre</label>
             <input
@@ -134,6 +164,7 @@
               type="number"
               step="10"
               min="0"
+<<<<<<< HEAD
               class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -143,6 +174,8 @@
               id="stockProd"
               type="number"
               min="0"
+=======
+>>>>>>> 50aa39d3ff35cd87556784f8f940aad648b1e0bf
               class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -174,6 +207,11 @@
       const modalTitle = document.getElementById("modalTitle");
       const btnCerrarModal = document.getElementById("btnCerrarModal");
 
+      // Botones Importar / Exportar
+      const btnImportar = document.getElementById("btnImportar");
+      const btnExportar = document.getElementById("btnExportar");
+      const inputImportCsv = document.getElementById("inputImportCsv");
+
       let editandoProductoId = null;
 
       // Función para abrir modal (crear o editar)
@@ -203,6 +241,7 @@
       btnNuevoProducto.addEventListener("click", () => abrirModal());
       btnCerrarModal.addEventListener("click", cerrarModal);
 
+<<<<<<< HEAD
       // Función para filtrar filas en la tabla según el texto de búsqueda
       function filterTable() {
         const term = document.getElementById("searchInput").value.toLowerCase();
@@ -215,6 +254,9 @@
       }
 
       // Cargar lista de productos
+=======
+      // --- Cargar lista de productos en la tabla ---
+>>>>>>> 50aa39d3ff35cd87556784f8f940aad648b1e0bf
       async function cargarInventario() {
         try {
           const res = await fetch(`${BACKEND_URL}/ventas/productos/`, {
@@ -327,8 +369,12 @@
         const precio = parseFloat(document.getElementById("precioProd").value);
         const stockCantidad = parseInt(document.getElementById("stockProd").value, 10);
 
+<<<<<<< HEAD
         /*
         if (!codigo || !nombre || isNaN(precio) || isNaN(stockCantidad)) {
+=======
+        if (!codigo || !nombre || isNaN(precio)) {
+>>>>>>> 50aa39d3ff35cd87556784f8f940aad648b1e0bf
           alert("Rellena todos los campos correctamente.");
           return;
         }
@@ -360,34 +406,97 @@
               headers,
               body: JSON.stringify(productoPayload),
             });
-            if (!r.ok) {
-              const eJson = await r.json();
-              alert("Error al actualizar producto: " + JSON.stringify(eJson));
-              return;
-            }
-            productoRes = await r.json();
           }
 
-          // Ahora manejamos el Stock asociado
-          //  - Si existía stock, actualizamos con PUT
-          //  - Si no existía, creamos con POST
-          const stocksR = await fetch(`${BACKEND_URL}/ventas/stocks/?producto=${prodId}`, {
+          if (!r.ok) {
+            const eJson = await r.json();
+              alert("Error al actualizar producto: " + JSON.stringify(eJson));
+            return;
+          }
+
+          cerrarModal();
+          cargarInventario();
+        } catch (err) {
+          console.error(err);
+          alert("Error al guardar producto.");
+        }
+      });
+
+      // --- Funcionalidad del botón Exportar CSV ---
+      btnExportar.addEventListener("click", async () => {
+        try {
+          const res = await fetch(`${BACKEND_URL}/ventas/productos/`, {
             method: "GET",
             headers,
           });
-          const stocksData = await stocksR.json();
+          if (!res.ok) throw new Error("Error al obtener productos para exportar");
+          const productos = await res.json();
 
-          if (stocksData.length > 0) {
-            // Actualizar stock
-            const stockId = stocksData[0].id;
-            await fetch(`${BACKEND_URL}/ventas/stocks/${stockId}/`, {
-              method: "PUT",
-              headers,
-              body: JSON.stringify({ producto: prodId, cantidad: stockCantidad }),
-            });
-          } else {
-            // Crear stock nuevo
-            await fetch(`${BACKEND_URL}/ventas/stocks/`, {
+          // Armamos el contenido CSV con encabezado "SKU,Name,Barcode,Price"
+          let csv = "SKU,Name,Barcode,Price\n";
+          productos.forEach((prod) => {
+            // prod.id → SKU, prod.nombre → Name, prod.codigo → Barcode, prod.precio → Price
+            const línea = `${prod.id},${prod.nombre},${prod.codigo},${prod.precio}`;
+            csv += línea + "\n";
+          });
+
+          // Creamos un blob y forzamos la descarga
+          const blob = new Blob([csv], { type: "text/csv" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "productos.csv";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        } catch (err) {
+          console.error(err);
+          alert("Error al exportar CSV.");
+        }
+      });
+
+      // --- Funcionalidad del botón Importar CSV ---
+      // Al hacer clic en “Importar”, abrimos el selector de archivos
+      btnImportar.addEventListener("click", () => {
+        inputImportCsv.value = null; // Limpiar selección previa
+        inputImportCsv.click();
+      });
+
+      inputImportCsv.addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+          const text = await file.text();
+          // Dividimos por líneas (soporta \n o \r\n)
+          const líneas = text.split(/\r?\n/);
+          if (líneas.length < 2) {
+            alert("El CSV no contiene datos válidos.");
+            return;
+          }
+
+          // Se asume encabezado: SKU,Name,Barcode,Price 
+          // Ignoramos la primera línea (header)
+          for (let i = 1; i < líneas.length; i++) {
+            const línea = líneas[i].trim();
+            if (!línea) continue; // saltamos líneas vacías
+            const columnas = línea.split(",");
+            if (columnas.length < 4) {
+              console.warn(`Fila ${i + 1} ignorada: formato incorrecto.`);
+              continue;
+            }
+            // columnas[0] es SKU (ignored)
+            const nombre = columnas[1].trim();   // Name
+            const codigo = columnas[2].trim();   // Barcode
+            const precio = parseFloat(columnas[3].trim()); // Price
+            if (!codigo || !nombre || isNaN(precio)) {
+              console.warn(`Fila ${i + 1} ignorada: datos no válidos.`);
+              continue;
+            }
+
+            // Creamos producto en el backend (no enviamos SKU, el backend asigna id)
+            await fetch(`${BACKEND_URL}/ventas/productos/`, {
               method: "POST",
               headers,
               body: JSON.stringify({ producto: prodId, cantidad: stockCantidad }),
@@ -397,6 +506,7 @@
           // Cerrar modal y recargar lista
           cerrarModal();
           cargarInventario();
+          alert("Importación finalizada.");
         } catch (err) {
           console.error(err);
           alert("Error al guardar producto.");
