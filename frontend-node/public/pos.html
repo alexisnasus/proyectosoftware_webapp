@@ -60,15 +60,17 @@
     <main class="max-w-4xl mx-auto py-6">
       <h1 class="text-2xl font-semibold text-gray-800 mb-4">Punto de Venta</h1>
 
-      <!-- BLOQUE DE AGREGAR PRODUCTO -->
-      <div class="flex items-center mb-4">
+      <!-- BLOQUE DE AGREGAR PRODUCTO (con contenedor de sugerencias) -->
+      <div class="flex items-center mb-4 relative">
         <div class="relative flex-grow">
           <input
             id="inputBuscar"
             type="text"
-            placeholder="Código de producto"
+            placeholder="Código o nombre de producto"
+            autocomplete="off"
             class="w-full pl-10 pr-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg"
           />
+          <!-- Ícono de lupa -->
           <svg
             class="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
             xmlns="http://www.w3.org/2000/svg"
@@ -83,6 +85,12 @@
               d="M21 21l-4.35-4.35M16.65 16.65A7 7 0 1110 3a7 7 0 016.65 13.65z"
             />
           </svg>
+
+          <!-- CONTENEDOR DE SUGERENCIAS (oculto inicialmente) -->
+          <div
+            id="contenedorSugerencias"
+            class="absolute z-10 w-full bg-white border border-gray-300 rounded-b-lg shadow-md mt-1 hidden max-h-60 overflow-auto"
+          ></div>
         </div>
         <button
           id="btnAgregar"
@@ -174,6 +182,10 @@
       const spanTotalFinal = document.getElementById("spanTotalFinal");
       const inputDescuento = document.getElementById("inputDescuento");
       const btnComprar = document.getElementById("btnComprar");
+
+      // ** NUEVA REFERENCIA **
+      const contenedorSugerencias = document.getElementById("contenedorSugerencias");
+
 
       // 3) URL base del backend Django
       const BACKEND_URL = "http://localhost:8000";
@@ -424,6 +436,106 @@
         renderizarCarrito();
         actualizarTotales();
       });
+
+      // ——————————————————————————————
+      // AUTOCOMPLETADO DE PRODUCTOS
+      // ——————————————————————————————
+
+      let timeoutId = null;
+
+      // 1) debounce: retrasa la búsqueda 300ms tras última pulsación
+      function debounce(fn, delay) {
+        return function (...args) {
+          if (timeoutId) clearTimeout(timeoutId);
+          timeoutId = setTimeout(() => {
+            fn.apply(this, args);
+          }, delay);
+        };
+      }
+
+      // 2) buscar sugerencias en el backend Django
+      async function buscarSugerencias(texto) {
+        if (!texto) {
+          contenedorSugerencias.innerHTML = "";
+          contenedorSugerencias.classList.add("hidden");
+          return;
+        }
+
+        try {
+          const resp = await fetch(
+            `${BACKEND_URL}/ventas/productos/?codigo=${encodeURIComponent(texto)}`,
+            { method: "GET", headers }
+          );
+          if (!resp.ok) throw new Error("Error al buscar sugerencias");
+
+          const productos = await resp.json();
+
+          // Filtrar localmente por coincidencia parcial
+          const filtrados = productos.filter((p) => {
+            const txt = texto.toLowerCase();
+            return (
+              p.nombre.toLowerCase().includes(txt) ||
+              p.codigo.toString().toLowerCase().includes(txt)
+            );
+          });
+
+          renderizarSugerencias(filtrados);
+        } catch (err) {
+          console.error("Error en buscarSugerencias:", err);
+          contenedorSugerencias.innerHTML = "";
+          contenedorSugerencias.classList.add("hidden");
+        }
+      }
+
+      // 3) Renderiza la lista de sugerencias en pantalla
+      function renderizarSugerencias(lista) {
+        contenedorSugerencias.innerHTML = "";
+
+        if (lista.length === 0) {
+          contenedorSugerencias.classList.add("hidden");
+          return;
+        }
+
+        lista.forEach((prod) => {
+          const item = document.createElement("div");
+          item.className =
+            "px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm flex justify-between";
+          item.innerHTML = `
+            <span>${prod.nombre}</span>
+            <span class="text-gray-500 font-mono">${prod.codigo}</span>
+          `;
+          item.addEventListener("click", () => {
+            inputBuscar.value = prod.nombre;
+            contenedorSugerencias.classList.add("hidden");
+          });
+          contenedorSugerencias.appendChild(item);
+        });
+
+        contenedorSugerencias.classList.remove("hidden");
+      }
+
+      // 4) Listener “input” con debounce(…)
+      inputBuscar.addEventListener(
+        "input",
+        debounce((e) => {
+          const texto = e.target.value.trim();
+          buscarSugerencias(texto);
+        }, 300)
+      );
+
+      // 5) Si el usuario hace clic fuera, se ocultan las sugerencias
+      document.addEventListener("click", (e) => {
+        if (
+          !inputBuscar.contains(e.target) &&
+          !contenedorSugerencias.contains(e.target)
+        ) {
+          contenedorSugerencias.classList.add("hidden");
+        }
+      });
+
+      // ——————————————————————————————
+      // FIN AUTOCOMPLETADO
+      // ——————————————————————————————
     </script>
   </body>
 </html>
