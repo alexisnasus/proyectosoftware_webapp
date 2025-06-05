@@ -336,7 +336,20 @@
             return;
           }
 
-          const prod = productos[0];
+          // ———> Modificamos aquí: buscamos coincidencia exacta por código o nombre
+    let prod = productos.find(
+      (p) =>
+        // Si el usuario escribió un número, comparamos con p.codigo
+        p.codigo.toString() === codigoBuscado ||
+        // O comparamos nombre en minúsculas
+        p.nombre.toLowerCase() === codigoBuscado.toLowerCase()
+    );
+
+    // Si no encontró EXACTAMENTE ese nombre/código, tomamos el primero (fallback)
+    if (!prod) {
+      prod = productos[0];
+    }
+
           // Si ya existe, incrementamos cantidad
           const existe = carritoItems.find((p) => p.codigo === prod.codigo);
           if (existe) {
@@ -488,31 +501,35 @@
       }
 
       // 3) Renderiza la lista de sugerencias en pantalla
-      function renderizarSugerencias(lista) {
-        contenedorSugerencias.innerHTML = "";
+ function renderizarSugerencias(lista) {
+  contenedorSugerencias.innerHTML = "";
 
-        if (lista.length === 0) {
-          contenedorSugerencias.classList.add("hidden");
-          return;
-        }
+  if (lista.length === 0) {
+    contenedorSugerencias.classList.add("hidden");
+    return;
+  }
 
-        lista.forEach((prod) => {
-          const item = document.createElement("div");
-          item.className =
-            "px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm flex justify-between";
-          item.innerHTML = `
-            <span>${prod.nombre}</span>
-            <span class="text-gray-500 font-mono">${prod.codigo}</span>
-          `;
-          item.addEventListener("click", () => {
-            inputBuscar.value = prod.nombre;
-            contenedorSugerencias.classList.add("hidden");
-          });
-          contenedorSugerencias.appendChild(item);
-        });
+  lista.forEach((prod) => {
+    const item = document.createElement("div");
+    item.className =
+      "px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm flex justify-between";
+    item.innerHTML = `
+      <span>${prod.nombre}</span>
+      <span class="text-gray-500 font-mono">${prod.codigo}</span>
+    `;
 
-        contenedorSugerencias.classList.remove("hidden");
-      }
+    item.addEventListener("click", () => {
+      // —————> Llenamos el input con el CÓDIGO
+      inputBuscar.value = prod.codigo.toString();
+      contenedorSugerencias.classList.add("hidden");
+    });
+
+    contenedorSugerencias.appendChild(item);
+  });
+
+  contenedorSugerencias.classList.remove("hidden");
+}
+
 
       // 4) Listener “input” con debounce(…)
       inputBuscar.addEventListener(
