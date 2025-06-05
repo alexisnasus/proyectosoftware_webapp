@@ -360,7 +360,7 @@
         });
       }
 
-      // 7) Agregar producto al carrito (ahora obtenemos stock real desde /ventas/stocks/)
+      // 7) Agregar producto al carrito (hace dos fetch: uno para producto y otro para stock)
       btnAgregar.onclick = async () => {
         const codigoBuscado = inputBuscar.value.trim();
         if (!codigoBuscado) {
@@ -369,7 +369,7 @@
         }
 
         try {
-          // 7.1) Pedimos al endpoint de productos (ventas) para nombre, precio e id
+          // 7.1) Pedimos al endpoint de productos para nombre, precio e id
           const respVentas = await fetch(
             `${BACKEND_URL}/ventas/productos/?codigo=${encodeURIComponent(codigoBuscado)}`,
             {
@@ -395,7 +395,7 @@
             prodVentas = productosVentas[0];
           }
 
-          // 7.2) Ahora pedimos al endpoint de stocks en ventas para obtener la cantidad actual
+          // 7.2) Pedimos al endpoint de stocks para obtener la cantidad actual
           const respStock = await fetch(
             `${BACKEND_URL}/ventas/stocks/?producto=${encodeURIComponent(prodVentas.id)}`,
             {
@@ -411,18 +411,21 @@
             return;
           }
 
-          // Tomamos stocksArray[0].cantidad como stock actual
-          const stockActual = parseInt(stocksArray[0].cantidad) || 0;
+          // Filtramos para encontrar el objeto cuyo campo producto === prodVentas.id
+          const stockObj = stocksArray.find((s) => s.producto === prodVentas.id);
+          const stockActual = stockObj ? parseInt(stockObj.cantidad) : 0;
 
-          // 7.3) Agregamos al carritoItems, guardando stockActual en item.stock
+          // 7.3) Agregamos al carritoItems, guardando stockActual e id_producto
           const existe = carritoItems.find((p) => p.codigo === prodVentas.codigo);
           if (existe) {
-            // Si ya existía, intentamos incrementar sin pasarnos del stock
+            // Si ya existía, intentamos incrementar sin pasarnos del nuevo stock
             if (existe.cantidad + 1 > stockActual) {
               alert(`No hay suficiente stock. Solo quedan ${stockActual}.`);
               return;
             }
             existe.cantidad++;
+            // Actualizamos el stock para ese elemento en caso que haya cambiado
+            existe.stock = stockActual;
           } else {
             if (stockActual < 1) {
               alert("No hay stock disponible para este producto.");
@@ -434,6 +437,7 @@
               precio: parseFloat(prodVentas.precio),
               stock: stockActual,
               cantidad: 1,
+              id_producto: prodVentas.id   // <--- guardamos el id real para el stock
             });
           }
 
@@ -445,6 +449,32 @@
           alert("Error al agregar producto.");
         }
       };
+
+      // Función auxiliar para refrescar stock de todos los items que hoy estén en carrito
+      async function refrescarStockDeCarrito() {
+        for (let i = 0; i < carritoItems.length; i++) {
+          const item = carritoItems[i];
+          try {
+            const respStock = await fetch(
+              `${BACKEND_URL}/ventas/stocks/?producto=${encodeURIComponent(item.id_producto)}`,
+              {
+                method: "GET",
+                headers,
+              }
+            );
+            if (!respStock.ok) continue;
+            const stocksArray = await respStock.json();
+            if (stocksArray.length > 0) {
+              // Filtramos para el que coincida con item.id_producto
+              const stockObj = stocksArray.find((s) => s.producto === item.id_producto);
+              item.stock = stockObj ? parseInt(stockObj.cantidad) : 0;
+            }
+          } catch (e) {
+            console.error("Error refrescando stock para producto", item.codigo, e);
+          }
+        }
+        renderizarCarrito();
+      }
 
       // 8) Comprar: crear y confirmar transacción
       btnComprar.onclick = async () => {
@@ -513,16 +543,19 @@
           // 8.4) Mostrar resultado
           if (resultado.estado === "CONFIRMADA") {
             alert(`¡Venta confirmada (#${resultado.id})!`);
+            // Si se confirmó, limpiamos el carrito completamente:
+            carritoItems = [];
+            inputDescuentoClp.value = 0;
+            inputDescuentoPct.value = 0;
+            renderizarCarrito();
+            actualizarTotales();
           } else {
+            // Si falla por stock insuficiente:
             alert(`Venta fallida (#${resultado.id}). Stock insuficiente.`);
+            // REFRESCAMOS el stock de cada producto que aún esté en carrito:
+            await refrescarStockDeCarrito();
+            actualizarTotales();
           }
-
-          // 8.5) Limpiar carrito
-          carritoItems = [];
-          inputDescuentoClp.value = 0;
-          inputDescuentoPct.value = 0;
-          renderizarCarrito();
-          actualizarTotales();
         } catch (err) {
           console.error(err);
           alert("Error en el proceso de compra.");
