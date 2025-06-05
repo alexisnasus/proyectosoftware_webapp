@@ -15,7 +15,7 @@
         <div class="flex justify-between h-16 items-center">
           <div class="flex-shrink-0">
             <a href="/dashboard">
-              <img class="h-8 w-auto" src="/assets/logo.png" alt="Logo ManuMarket" />
+              <img class="h-8 w-auto" src="ManuLogo_WIP.png" alt="Logo ManuMarket" />
             </a>
           </div>
           <div class="hidden md:flex md:space-x-8">
@@ -73,7 +73,7 @@
           <thead class="bg-gray-50">
             <tr>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código de Barra</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
@@ -93,14 +93,14 @@
         <h2 id="modalTitle" class="text-xl font-semibold text-gray-800 mb-4">Nuevo Producto</h2>
         <form id="formProducto" class="space-y-4">
           <div>
-            <label for="codigoProd" class="block text-sm font-medium text-gray-700">Código</label>
+            <label for="codigoProd" class="block text-sm font-medium text-gray-700">Código de Barra</label>
             <input
               id="codigoProd"
               type="text"
-              required
-              class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+              
+              class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+            /> 
+          </div> 
           <div>
             <label for="nombreProd" class="block text-sm font-medium text-gray-700">Nombre</label>
             <input
@@ -115,9 +115,9 @@
             <input
               id="precioProd"
               type="number"
-              step="0.01"
+              step="10"
               min="0"
-              required
+              
               class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -127,7 +127,6 @@
               id="stockProd"
               type="number"
               min="0"
-              required
               class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -298,10 +297,14 @@
         const precio = parseFloat(document.getElementById("precioProd").value);
         const stockCantidad = parseInt(document.getElementById("stockProd").value, 10);
 
+
+        /*
+
         if (!codigo || !nombre || isNaN(precio) || isNaN(stockCantidad)) {
           alert("Rellena todos los campos correctamente.");
           return;
         }
+        */
 
         try {
           let prodId = editandoProductoId;

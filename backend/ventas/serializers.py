@@ -30,9 +30,13 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 # ------------------------------
 
 class ProductoSerializer(serializers.ModelSerializer):
+    precio = serializers.IntegerField()
     class Meta:
         model = Producto
         fields = '__all__'
+        extra_kwargs = {
+            'codigo': {'required': False, 'allow_blank': True},
+        }
 
 
 # ------------------------------
