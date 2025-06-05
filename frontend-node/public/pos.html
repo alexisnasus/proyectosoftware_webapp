@@ -204,6 +204,7 @@
       <button onclick="cerrarModal()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
         Aceptar
       </button>
+      
     </div>
   </div>
 </div>
@@ -504,6 +505,11 @@
             mostrarModal("¡Venta exitosa", `Transacción confirmada correctamente!`);
           }
 
+          localStorage.setItem('ultimaCompra', JSON.stringify(carritoItems));
+const total = carritoItems.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
+localStorage.setItem('totalCompra', JSON.stringify(total));
+
+
           // Limpiar carrito
           carritoItems = [];
           inputDescuentoClp.value = 0;
@@ -533,6 +539,9 @@ function AbrirModal() {
 
 function cerrarModal() {
   document.getElementById("miModal").classList.add("hidden");
+   setTimeout(() => {
+      window.location.href = "compras.html";
+    }, 200);
 }
 
       // 9) Inicializar al cargar

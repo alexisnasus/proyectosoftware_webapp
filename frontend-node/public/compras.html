@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Compras Realizadas - ManuMarket</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+      .fade-in {
+        animation: fadeIn 0.5s ease-in;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 min-h-screen p-6">
+    <div class="max-w-3xl mx-auto fade-in">
+      <!-- Encabezado con total -->
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">Productos Comprados</h1>
+        <div class="bg-green-100 px-4 py-2 rounded-lg">
+          <p class="text-green-800 font-semibold">Total: <span id="totalCompra">₱0</span></p>
+        </div>
+      </div>
+
+      <!-- Lista de productos comprados -->
+      <ul id="listaProductos" class="space-y-4">
+        <!-- Los productos se cargarán aquí dinámicamente -->
+      </ul>
+    </div>
+
+    <a href="pos.html">
+      <button class="fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-700 transition-colors">
+        Volver a punto de venta
+      </button> 
+    </a>
+
+    <script>
+      // Obtener los productos del localStorage
+      document.addEventListener('DOMContentLoaded', () => {
+        const carritoGuardado = localStorage.getItem('ultimaCompra');
+        const totalGuardado = localStorage.getItem('totalCompra');
+        
+        if (carritoGuardado && totalGuardado) {
+          const carrito = JSON.parse(carritoGuardado);
+          const total = JSON.parse(totalGuardado);
+          
+          // Mostrar total
+          document.getElementById('totalCompra').textContent = formatearMoneda(total);
+          
+          // Generar lista de productos
+          const lista = document.getElementById('listaProductos');
+          lista.innerHTML = '';
+          
+          carrito.forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'bg-white p-4 rounded-lg shadow flex justify-between items-center hover:bg-gray-50 transition-colors';
+            li.innerHTML = `
+              <div>
+                <p class="font-semibold">${item.nombre} <span class="text-gray-500">x${item.cantidad}</span></p>
+                <p class="text-sm text-gray-500">#${item.codigo}</p>
+              </div>
+              <div class="font-medium text-right text-green-600">
+                ${formatearMoneda(item.precio * item.cantidad)}
+              </div>
+            `;
+            lista.appendChild(li);
+          });
+        } else {
+          // Si no hay datos, mostrar mensaje
+          const lista = document.getElementById('listaProductos');
+          lista.innerHTML = `
+            <li class="bg-white p-4 rounded-lg shadow text-center text-gray-500">
+              No hay productos en esta compra
+            </li>
+          `;
+        }
+      });
+
+      // Función para formatear moneda (igual que en pos.html)
+      function formatearMoneda(valor) {
+        return new Intl.NumberFormat('es-CL', { 
+          style: 'currency', 
+          currency: 'CLP',
+          minimumFractionDigits: 0
+        }).format(valor);
+      }
+    </script>
+  </body>
+</html>
