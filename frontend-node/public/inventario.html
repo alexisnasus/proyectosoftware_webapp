@@ -70,7 +70,6 @@
     <main class="max-w-7xl mx-auto p-6">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
         <h1 class="text-2xl font-semibold text-gray-800">Inventario</h1>
-<<<<<<< HEAD
         <div class="flex space-x-2 w-full sm:w-auto">
           <input
             id="searchInput"
@@ -78,36 +77,27 @@
             placeholder="Buscar producto..."
             class="flex-1 border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-=======
-        <!-- Contenedor flex para botones Importar, Exportar y + Nuevo Producto -->
-        <div class="flex items-center space-x-2">
-          <!-- Botón Importar -->
+          <!-- Botón Importar (azul) -->
           <button
             id="btnImportar"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
           >
             Importar
           </button>
-          <!-- Botón Exportar -->
+          <!-- Botón Exportar (morado) -->
           <button
             id="btnExportar"
-            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+            class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
           >
             Exportar
           </button>
-          <!-- Botón + Nuevo Producto -->
->>>>>>> 50aa39d3ff35cd87556784f8f940aad648b1e0bf
+          <!-- Botón Nuevo Producto (verde) -->
           <button
             id="btnNuevoProducto"
             class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
           >
             + Nuevo Producto
           </button>
-<<<<<<< HEAD
-=======
-          <!-- Input oculto para seleccionar CSV -->
-          <input id="inputImportCsv" type="file" accept=".csv" class="hidden" />
->>>>>>> 50aa39d3ff35cd87556784f8f940aad648b1e0bf
         </div>
       </div>
 
@@ -119,6 +109,7 @@
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código de Barra</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
               <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
             </tr>
           </thead>
@@ -128,6 +119,9 @@
         </table>
       </div>
     </main>
+
+    <!-- Input oculto para importar CSV -->
+    <input type="file" id="inputImportarCSV" accept=".csv" class="hidden" />
 
     <!-- Modal HTML para crear/editar producto (hidden por defecto) -->
     <div id="modalProducto" class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 hidden">
@@ -139,15 +133,9 @@
             <input
               id="codigoProd"
               type="text"
-<<<<<<< HEAD
               class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-=======
-              class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-            /> 
-          </div> 
->>>>>>> 50aa39d3ff35cd87556784f8f940aad648b1e0bf
           <div>
             <label for="nombreProd" class="block text-sm font-medium text-gray-700">Nombre</label>
             <input
@@ -164,7 +152,6 @@
               type="number"
               step="10"
               min="0"
-<<<<<<< HEAD
               class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -174,8 +161,6 @@
               id="stockProd"
               type="number"
               min="0"
-=======
->>>>>>> 50aa39d3ff35cd87556784f8f940aad648b1e0bf
               class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -207,10 +192,10 @@
       const modalTitle = document.getElementById("modalTitle");
       const btnCerrarModal = document.getElementById("btnCerrarModal");
 
-      // Botones Importar / Exportar
       const btnImportar = document.getElementById("btnImportar");
       const btnExportar = document.getElementById("btnExportar");
-      const inputImportCsv = document.getElementById("inputImportCsv");
+      const inputImportarCSV = document.getElementById("inputImportarCSV");
+      const searchInput = document.getElementById("searchInput");
 
       let editandoProductoId = null;
 
@@ -238,13 +223,13 @@
         modalProducto.classList.add("hidden");
       }
 
+      // Listener para “+ Nuevo Producto”
       btnNuevoProducto.addEventListener("click", () => abrirModal());
       btnCerrarModal.addEventListener("click", cerrarModal);
 
-<<<<<<< HEAD
       // Función para filtrar filas en la tabla según el texto de búsqueda
       function filterTable() {
-        const term = document.getElementById("searchInput").value.toLowerCase();
+        const term = searchInput.value.toLowerCase();
         document.querySelectorAll("#tbodyInventario tr").forEach((row) => {
           const codigo = row.children[1].textContent.toLowerCase();
           const nombre = row.children[2].textContent.toLowerCase();
@@ -253,10 +238,93 @@
         });
       }
 
-      // Cargar lista de productos
-=======
-      // --- Cargar lista de productos en la tabla ---
->>>>>>> 50aa39d3ff35cd87556784f8f940aad648b1e0bf
+
+
+
+      // --- Importar Inventario desde CSV ---
+      btnImportar.addEventListener("click", () => {
+        // Abrir diálogo para elegir archivo CSV
+        inputImportarCSV.click();
+      });
+
+      inputImportarCSV.addEventListener("change", async function (e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const text = await file.text();
+      const lines = text.trim().split("\n");
+      lines.shift(); // quitamos la cabecera
+
+      for (const line of lines) {
+        const values = line.split(",").map(v => v.replace(/^"|"$/g, ""));
+        const codigo = values[1]?.trim();
+        const nombre = values[2]?.trim();
+        let precioStr = values[3]?.trim() || "";
+        precioStr = precioStr.replace(/\./g, "").replace(",", ".");
+        const precio = parseFloat(precioStr);
+
+        if (!codigo) continue; // si no hay código, lo saltamos
+
+        try {
+          // Sólo creamos cada producto (POST), sin comprobar existencia
+          const urlPost = `${BACKEND_URL}/ventas/productos/`;
+          const resPost = await fetch(urlPost, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({ codigo, nombre, precio })
+          });
+          if (!resPost.ok) {
+            console.error("Error al crear producto:", await resPost.text());
+          }
+        } catch (error) {
+          console.error("Error de red al importar producto:", error.message);
+        }
+      }
+
+      alert("Importación finalizada");
+      cargarInventario();
+      this.value = ""; // limpiar el input para poder re-subir el mismo CSV
+    });
+
+
+      // --- Exportar Inventario a CSV ---
+      function exportarCSV() {
+        const filas = [];
+        // Cabecera con 4 columnas
+        filas.push(["ID", "Código de Barra", "Nombre", "Precio"]);
+
+        document.querySelectorAll("#tbodyInventario tr").forEach((tr) => {
+          const cols = tr.querySelectorAll("td");
+          const id = cols[0].textContent.trim();
+          const codigo = cols[1].textContent.trim();
+          const nombre = cols[2].textContent.trim();
+          // Limpiar símbolos de moneda y puntos del precio (col[3])
+          const precio = cols[3]
+            .textContent
+            .trim()
+            .replace(/\$/g, "")
+            .replace(/\./g, "")
+            .replace(/\s/g, "");
+          filas.push([id, codigo, nombre, precio]);
+        });
+
+        const csvContent = filas
+          .map((r) => r.map((v) => `"${v.replace(/"/g, '""')}"`).join(","))
+          .join("\n");
+
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "inventario_export.csv";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+      btnExportar.addEventListener("click", exportarCSV);
+
+      // --- Cargar lista de productos ---
       async function cargarInventario() {
         try {
           const res = await fetch(`${BACKEND_URL}/ventas/productos/`, {
@@ -369,12 +437,8 @@
         const precio = parseFloat(document.getElementById("precioProd").value);
         const stockCantidad = parseInt(document.getElementById("stockProd").value, 10);
 
-<<<<<<< HEAD
         /*
         if (!codigo || !nombre || isNaN(precio) || isNaN(stockCantidad)) {
-=======
-        if (!codigo || !nombre || isNaN(precio)) {
->>>>>>> 50aa39d3ff35cd87556784f8f940aad648b1e0bf
           alert("Rellena todos los campos correctamente.");
           return;
         }
@@ -406,97 +470,34 @@
               headers,
               body: JSON.stringify(productoPayload),
             });
-          }
-
-          if (!r.ok) {
-            const eJson = await r.json();
+            if (!r.ok) {
+              const eJson = await r.json();
               alert("Error al actualizar producto: " + JSON.stringify(eJson));
-            return;
+              return;
+            }
+            productoRes = await r.json();
           }
 
-          cerrarModal();
-          cargarInventario();
-        } catch (err) {
-          console.error(err);
-          alert("Error al guardar producto.");
-        }
-      });
-
-      // --- Funcionalidad del botón Exportar CSV ---
-      btnExportar.addEventListener("click", async () => {
-        try {
-          const res = await fetch(`${BACKEND_URL}/ventas/productos/`, {
+          // Ahora manejamos el Stock asociado
+          //  - Si existía stock, actualizamos con PUT
+          //  - Si no existía, creamos con POST
+          const stocksR = await fetch(`${BACKEND_URL}/ventas/stocks/?producto=${prodId}`, {
             method: "GET",
             headers,
           });
-          if (!res.ok) throw new Error("Error al obtener productos para exportar");
-          const productos = await res.json();
+          const stocksData = await stocksR.json();
 
-          // Armamos el contenido CSV con encabezado "SKU,Name,Barcode,Price"
-          let csv = "SKU,Name,Barcode,Price\n";
-          productos.forEach((prod) => {
-            // prod.id → SKU, prod.nombre → Name, prod.codigo → Barcode, prod.precio → Price
-            const línea = `${prod.id},${prod.nombre},${prod.codigo},${prod.precio}`;
-            csv += línea + "\n";
-          });
-
-          // Creamos un blob y forzamos la descarga
-          const blob = new Blob([csv], { type: "text/csv" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = "productos.csv";
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        } catch (err) {
-          console.error(err);
-          alert("Error al exportar CSV.");
-        }
-      });
-
-      // --- Funcionalidad del botón Importar CSV ---
-      // Al hacer clic en “Importar”, abrimos el selector de archivos
-      btnImportar.addEventListener("click", () => {
-        inputImportCsv.value = null; // Limpiar selección previa
-        inputImportCsv.click();
-      });
-
-      inputImportCsv.addEventListener("change", async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        try {
-          const text = await file.text();
-          // Dividimos por líneas (soporta \n o \r\n)
-          const líneas = text.split(/\r?\n/);
-          if (líneas.length < 2) {
-            alert("El CSV no contiene datos válidos.");
-            return;
-          }
-
-          // Se asume encabezado: SKU,Name,Barcode,Price 
-          // Ignoramos la primera línea (header)
-          for (let i = 1; i < líneas.length; i++) {
-            const línea = líneas[i].trim();
-            if (!línea) continue; // saltamos líneas vacías
-            const columnas = línea.split(",");
-            if (columnas.length < 4) {
-              console.warn(`Fila ${i + 1} ignorada: formato incorrecto.`);
-              continue;
-            }
-            // columnas[0] es SKU (ignored)
-            const nombre = columnas[1].trim();   // Name
-            const codigo = columnas[2].trim();   // Barcode
-            const precio = parseFloat(columnas[3].trim()); // Price
-            if (!codigo || !nombre || isNaN(precio)) {
-              console.warn(`Fila ${i + 1} ignorada: datos no válidos.`);
-              continue;
-            }
-
-            // Creamos producto en el backend (no enviamos SKU, el backend asigna id)
-            await fetch(`${BACKEND_URL}/ventas/productos/`, {
+          if (stocksData.length > 0) {
+            // Actualizar stock
+            const stockId = stocksData[0].id;
+            await fetch(`${BACKEND_URL}/ventas/stocks/${stockId}/`, {
+              method: "PUT",
+              headers,
+              body: JSON.stringify({ producto: prodId, cantidad: stockCantidad }),
+            });
+          } else {
+            // Crear stock nuevo
+            await fetch(`${BACKEND_URL}/ventas/stocks/`, {
               method: "POST",
               headers,
               body: JSON.stringify({ producto: prodId, cantidad: stockCantidad }),
@@ -506,7 +507,6 @@
           // Cerrar modal y recargar lista
           cerrarModal();
           cargarInventario();
-          alert("Importación finalizada.");
         } catch (err) {
           console.error(err);
           alert("Error al guardar producto.");
