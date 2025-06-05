@@ -100,18 +100,36 @@
         </button>
       </div>
 
-      <!-- BLOQUE DE DESCUENTO GLOBAL -->
+      <!-- BLOQUE DE DESCUENTOS -->
       <div class="bg-white p-4 mb-4 rounded-lg shadow">
-        <label for="inputDescuento" class="block text-gray-700 font-medium mb-2">Descuento de la venta (en CLP):</label>
+        <!-- 1) Descuento fijo en CLP -->
+        <label for="inputDescuentoClp" class="block text-gray-700 font-medium mb-2">
+          Descuento de la venta (en CLP):
+        </label>
         <input
-          id="inputDescuento"
+          id="inputDescuentoClp"
           type="number"
           step="0.01"
           value="0"
           min="0"
           class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-        <p class="text-sm text-gray-500 mt-1">Si no deseas descuento, deja en cero.</p>
+        <p class="text-sm text-gray-500 mb-4">Si no deseas descuento en CLP, deja en cero.</p>
+
+        <!-- 2) Descuento porcentual -->
+        <label for="inputDescuentoPct" class="block text-gray-700 font-medium mb-2">
+          Descuento porcentual (%):
+        </label>
+        <input
+          id="inputDescuentoPct"
+          type="number"
+          step="0.01"
+          value="0"
+          min="0"
+          max="100"
+          class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <p class="text-sm text-gray-500 mt-1">Ingresa un porcentaje (ej. “10” = 10 %).</p>
       </div>
 
       <!-- TABLA DE ÍTEMS DEL CARRITO -->
@@ -119,7 +137,8 @@
         <!-- Encabezados -->
         <div class="grid grid-cols-12 bg-gray-100 p-3 font-medium text-gray-700">
           <div class="col-span-2">Código</div>
-          <div class="col-span-4">Producto</div>
+          <div class="col-span-3">Producto</div>
+          <div class="col-span-1 text-center">Stock</div>
           <div class="col-span-2 text-right">Precio U.</div>
           <div class="col-span-2 text-right">Subtotal</div>
           <div class="col-span-2 text-center">Cantidad</div>
@@ -137,7 +156,7 @@
             <span id="spanTotal" class="font-semibold text-gray-900">₱0.00</span>
           </div>
           <div class="flex justify-between">
-            <span class="font-medium text-gray-700">Total final (con descuento):</span>
+            <span class="font-medium text-gray-700">Total final (con descuentos):</span>
             <span id="spanTotalFinal" class="font-semibold text-gray-900">₱0.00</span>
           </div>
         </div>
@@ -180,12 +199,15 @@
       const cuerpoTabla = document.getElementById("cuerpoTabla");
       const spanTotal = document.getElementById("spanTotal");
       const spanTotalFinal = document.getElementById("spanTotalFinal");
-      const inputDescuento = document.getElementById("inputDescuento");
+
+      // ** Ahora tenemos DOS inputs de descuento **
+      const inputDescuentoClp = document.getElementById("inputDescuentoClp");
+      const inputDescuentoPct = document.getElementById("inputDescuentoPct");
+
       const btnComprar = document.getElementById("btnComprar");
 
-      // ** NUEVA REFERENCIA **
+      // ** NUEVA REFERENCIA PARA SUGERENCIAS **
       const contenedorSugerencias = document.getElementById("contenedorSugerencias");
-
 
       // 3) URL base del backend Django
       const BACKEND_URL = "http://localhost:8000";
@@ -199,18 +221,33 @@
         return new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP" }).format(valor);
       }
 
-      // 5) Calcular totales y actualizar UI
+      // 5) Calcular totales y actualizar UI (incluye descuentos CLP + %)
       function actualizarTotales() {
+        // Total bruto
         const total = carritoItems.reduce((acc, item) => acc + item.precio * item.cantidad, 0);
-        let descuento = parseFloat(inputDescuento.value) || 0;
-        let totalFinal = total - descuento;
+
+        // 1) Descuento en CLP
+        let descuentoClp = parseFloat(inputDescuentoClp.value) || 0;
+        if (descuentoClp < 0) descuentoClp = 0;
+
+        // 2) Descuento porcentual
+        let pct = parseFloat(inputDescuentoPct.value) || 0;
+        if (pct < 0) pct = 0;
+        if (pct > 100) pct = 100;
+
+        // 3) Monto de descuento porcentual
+        const descuentoPctMonto = (total * pct) / 100;
+
+        // 4) Total final
+        let totalFinal = total - descuentoClp - descuentoPctMonto;
         if (totalFinal < 0) totalFinal = 0;
 
+        // 5) Actualizar UI
         spanTotal.textContent = formatearMoneda(total);
         spanTotalFinal.textContent = formatearMoneda(totalFinal);
       }
 
-      // 6) Renderizar carrito
+      // 6) Renderizar carrito (ahora con columna Stock)
       function renderizarCarrito() {
         cuerpoTabla.innerHTML = "";
 
@@ -220,31 +257,37 @@
           const fila = document.createElement("div");
           fila.className = "grid grid-cols-12 p-3 items-center hover:bg-gray-50 border-t border-gray-200";
 
-          // Código
+          // 1) Código
           const divCodigo = document.createElement("div");
           divCodigo.className = "col-span-2 font-mono text-sm";
           divCodigo.textContent = item.codigo;
           fila.appendChild(divCodigo);
 
-          // Nombre
+          // 2) Nombre
           const divNombre = document.createElement("div");
-          divNombre.className = "col-span-4";
+          divNombre.className = "col-span-3";
           divNombre.textContent = item.nombre;
           fila.appendChild(divNombre);
 
-          // Precio unitario
+          // 3) Stock actual
+          const divStock = document.createElement("div");
+          divStock.className = "col-span-1 text-center font-mono text-sm";
+          divStock.textContent = item.stock;
+          fila.appendChild(divStock);
+
+          // 4) Precio unitario
           const divPrecio = document.createElement("div");
           divPrecio.className = "col-span-2 text-right font-medium";
           divPrecio.textContent = formatearMoneda(item.precio);
           fila.appendChild(divPrecio);
 
-          // Subtotal
+          // 5) Subtotal
           const divSubtotal = document.createElement("div");
           divSubtotal.className = "col-span-2 text-right font-medium";
           divSubtotal.textContent = formatearMoneda(subtotal);
           fila.appendChild(divSubtotal);
 
-          // Controles cantidad
+          // 6) Controles cantidad
           const divCantCont = document.createElement("div");
           divCantCont.className = "col-span-2 flex justify-center";
           const divCantInner = document.createElement("div");
@@ -285,7 +328,7 @@
           divCantCont.appendChild(divCantInner);
           fila.appendChild(divCantCont);
 
-          // Botón eliminar
+          // 7) Botón eliminar
           const divEliminar = document.createElement("div");
           divEliminar.className = "col-span-1 flex justify-end";
           const btnEliminar = document.createElement("button");
@@ -298,7 +341,8 @@
                    7m5 4v6m4-6v6m1-10V4a1 1 0
                    00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
               ></path>
-            </svg>`;
+            </svg>
+          `;
           btnEliminar.onclick = () => {
             carritoItems.splice(index, 1);
             renderizarCarrito();
@@ -311,18 +355,17 @@
         });
       }
 
-      // 7) Agregar producto al carrito
+      // 7) Agregar producto al carrito (ahora buscamos por coincidencia exacta)
       btnAgregar.onclick = async () => {
         const codigoBuscado = inputBuscar.value.trim();
         if (!codigoBuscado) {
-          alert("Ingresa un código de producto.");
+          alert("Ingresa un código o nombre de producto.");
           return;
         }
 
         try {
-          // Llamar a GET /ventas/productos/?codigo=<…>
           const resp = await fetch(
-            `${BACKEND_URL}/ventas/productos/?codigo=${codigoBuscado}`,
+            `${BACKEND_URL}/ventas/productos/?codigo=${encodeURIComponent(codigoBuscado)}`,
             {
               method: "GET",
               headers,
@@ -336,21 +379,17 @@
             return;
           }
 
-          // ———> Modificamos aquí: buscamos coincidencia exacta por código o nombre
-    let prod = productos.find(
-      (p) =>
-        // Si el usuario escribió un número, comparamos con p.codigo
-        p.codigo.toString() === codigoBuscado ||
-        // O comparamos nombre en minúsculas
-        p.nombre.toLowerCase() === codigoBuscado.toLowerCase()
-    );
+          // ———> BUSCAR COINCIDENCIA EXACTA (por código o por nombre)
+          let prod = productos.find(
+            (p) =>
+              p.codigo.toString() === codigoBuscado ||
+              p.nombre.toLowerCase() === codigoBuscado.toLowerCase()
+          );
+          // Si no hay coincidencia exacta, tomar el primero como fallback
+          if (!prod) {
+            prod = productos[0];
+          }
 
-    // Si no encontró EXACTAMENTE ese nombre/código, tomamos el primero (fallback)
-    if (!prod) {
-      prod = productos[0];
-    }
-
-          // Si ya existe, incrementamos cantidad
           const existe = carritoItems.find((p) => p.codigo === prod.codigo);
           if (existe) {
             existe.cantidad++;
@@ -359,6 +398,7 @@
               codigo: prod.codigo,
               nombre: prod.nombre,
               precio: parseFloat(prod.precio),
+              stock: prod.stock,      // mantenemos stock
               cantidad: 1,
             });
           }
@@ -383,10 +423,12 @@
           codigo: item.codigo,
           cantidad: item.cantidad,
         }));
-        const descuentoValor = parseFloat(inputDescuento.value) || 0;
+        const descuentoValor = parseFloat(inputDescuentoClp.value) || 0;
+        const pctValor = parseFloat(inputDescuentoPct.value) || 0;
 
         const body = {
           descuento_carrito: descuentoValor,
+          porcentaje_descuento: pctValor,
           items: itemsParaEnviar,
         };
 
@@ -435,7 +477,8 @@
 
           // Limpiar carrito
           carritoItems = [];
-          inputDescuento.value = 0;
+          inputDescuentoClp.value = 0;
+          inputDescuentoPct.value = 0;
           renderizarCarrito();
           actualizarTotales();
         } catch (err) {
@@ -450,13 +493,12 @@
         actualizarTotales();
       });
 
-      // ——————————————————————————————
+      //——————————————————————————————
       // AUTOCOMPLETADO DE PRODUCTOS
-      // ——————————————————————————————
+      //——————————————————————————————
 
       let timeoutId = null;
 
-      // 1) debounce: retrasa la búsqueda 300ms tras última pulsación
       function debounce(fn, delay) {
         return function (...args) {
           if (timeoutId) clearTimeout(timeoutId);
@@ -466,7 +508,6 @@
         };
       }
 
-      // 2) buscar sugerencias en el backend Django
       async function buscarSugerencias(texto) {
         if (!texto) {
           contenedorSugerencias.innerHTML = "";
@@ -482,8 +523,6 @@
           if (!resp.ok) throw new Error("Error al buscar sugerencias");
 
           const productos = await resp.json();
-
-          // Filtrar localmente por coincidencia parcial
           const filtrados = productos.filter((p) => {
             const txt = texto.toLowerCase();
             return (
@@ -500,38 +539,33 @@
         }
       }
 
-      // 3) Renderiza la lista de sugerencias en pantalla
- function renderizarSugerencias(lista) {
-  contenedorSugerencias.innerHTML = "";
+      function renderizarSugerencias(lista) {
+        contenedorSugerencias.innerHTML = "";
 
-  if (lista.length === 0) {
-    contenedorSugerencias.classList.add("hidden");
-    return;
-  }
+        if (lista.length === 0) {
+          contenedorSugerencias.classList.add("hidden");
+          return;
+        }
 
-  lista.forEach((prod) => {
-    const item = document.createElement("div");
-    item.className =
-      "px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm flex justify-between";
-    item.innerHTML = `
-      <span>${prod.nombre}</span>
-      <span class="text-gray-500 font-mono">${prod.codigo}</span>
-    `;
+        lista.forEach((prod) => {
+          const item = document.createElement("div");
+          item.className =
+            "px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm flex justify-between";
+          item.innerHTML = `
+            <span>${prod.nombre}</span>
+            <span class="text-gray-500 font-mono">${prod.codigo}</span>
+          `;
+          item.addEventListener("click", () => {
+            // Ahora inyectamos el CÓDIGO en el input
+            inputBuscar.value = prod.codigo.toString();
+            contenedorSugerencias.classList.add("hidden");
+          });
+          contenedorSugerencias.appendChild(item);
+        });
 
-    item.addEventListener("click", () => {
-      // —————> Llenamos el input con el CÓDIGO
-      inputBuscar.value = prod.codigo.toString();
-      contenedorSugerencias.classList.add("hidden");
-    });
+        contenedorSugerencias.classList.remove("hidden");
+      }
 
-    contenedorSugerencias.appendChild(item);
-  });
-
-  contenedorSugerencias.classList.remove("hidden");
-}
-
-
-      // 4) Listener “input” con debounce(…)
       inputBuscar.addEventListener(
         "input",
         debounce((e) => {
@@ -540,7 +574,6 @@
         }, 300)
       );
 
-      // 5) Si el usuario hace clic fuera, se ocultan las sugerencias
       document.addEventListener("click", (e) => {
         if (
           !inputBuscar.contains(e.target) &&
@@ -550,9 +583,23 @@
         }
       });
 
-      // ——————————————————————————————
+      //——————————————————————————————
       // FIN AUTOCOMPLETADO
-      // ——————————————————————————————
+      //——————————————————————————————
+
+      //——————————————————————————————
+      // ESCUCHAR CAMBIOS EN DESCUENTOS
+      //——————————————————————————————
+      inputDescuentoClp.addEventListener("input", () => {
+        actualizarTotales();
+      });
+      inputDescuentoPct.addEventListener("input", () => {
+        actualizarTotales();
+      });
+      //——————————————————————————————
+      // FIN ESCUCHAR CAMBIOS EN DESCUENTOS
+      //——————————————————————————————
+
     </script>
   </body>
 </html>
