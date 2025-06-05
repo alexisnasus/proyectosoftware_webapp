@@ -30,13 +30,19 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 # ------------------------------
 
 class ProductoSerializer(serializers.ModelSerializer):
-    precio = serializers.IntegerField()
+    # Campo extra que toma obj.stock.cantidad o 0 si no existe relación
+    stock = serializers.SerializerMethodField()
+
     class Meta:
         model = Producto
-        fields = '__all__'
-        extra_kwargs = {
-            'codigo': {'required': False, 'allow_blank': True},
-        }
+        fields = ['id', 'codigo', 'nombre', 'precio', 'stock']  # agregamos el campo “stock”
+
+    def get_stock(self, obj):
+        # Si existe un registro de Stock para este Producto, devolvemos la cantidad; si no, 0
+        try:
+            return obj.stock.cantidad
+        except Stock.DoesNotExist:
+            return 0
 
 
 # ------------------------------

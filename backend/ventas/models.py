@@ -21,8 +21,8 @@ class User(AbstractUser):
 # --- Producto y Stock (sin cambios) ---
 #
 class Producto(models.Model):
-    codigo = models.CharField(max_length=50, unique=True, blank=True, null=True)
-    nombre = models.CharField(max_length=200)
+    codigo = models.CharField(max_length=100, unique=True, blank=True, null=True)
+    nombre = models.CharField(max_length=300)
     # precio = models.DecimalField(max_digits=10, decimal_places=2) decimales
     precio = models.IntegerField()    # Antes DecimalField; ahora IntegerField
 
