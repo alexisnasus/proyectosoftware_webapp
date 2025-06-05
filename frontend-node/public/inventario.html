@@ -67,7 +67,7 @@
     <!-- ================================ -->
 
     <!-- CONTENIDO: LISTADO DE PRODUCTOS -->
-    <main class="max-w-7xl mx-auto p-6">
+    <main class="max-w-screen-2xl mx-auto p-6">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
         <h1 class="text-2xl font-semibold text-gray-800">Inventario</h1>
         <div class="flex space-x-2 w-full sm:w-auto">
@@ -262,9 +262,17 @@
         const values = line.split(",").map(v => v.replace(/^"|"$/g, ""));
         const codigo = values[1]?.trim();
         const nombre = values[2]?.trim();
-        let precioStr = values[3]?.trim() || "";
-        precioStr = precioStr.replace(/\./g, "").replace(",", ".");
-        const precio = parseInt(parseFloat(precioStr), 10);
+
+        // 1) Tomamos el valor "crudo" de precio (puede ser "null", vacío o un número)
+        let precioRaw = values[3]?.trim() || "";
+
+        // 2) Si viene "null" (o está vacío), lo volcamos a "0"
+        if (precioRaw.toLowerCase() === "null" || precioRaw === "") {
+          precioRaw = "0";
+        }
+        // 3) Intentamos parsear a entero; si parseInt da NaN, dejamos 0
+        let precio = parseInt(precioRaw, 10);
+        if (isNaN(precio)) precio = 0;
 
         if (!codigo) continue; // si no hay código, lo saltamos
 
