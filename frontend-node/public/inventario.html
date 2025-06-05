@@ -264,7 +264,7 @@
         const nombre = values[2]?.trim();
         let precioStr = values[3]?.trim() || "";
         precioStr = precioStr.replace(/\./g, "").replace(",", ".");
-        const precio = parseFloat(precioStr);
+        const precio = parseInt(parseFloat(precioStr), 10);
 
         if (!codigo) continue; // si no hay código, lo saltamos
 
