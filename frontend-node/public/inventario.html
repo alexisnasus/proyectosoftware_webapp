@@ -233,8 +233,11 @@
         document.querySelectorAll("#tbodyInventario tr").forEach((row) => {
           const codigo = row.children[1].textContent.toLowerCase();
           const nombre = row.children[2].textContent.toLowerCase();
-          row.style.display =
-            codigo.includes(term) || nombre.includes(term) ? "" : "none";
+        if (codigo.includes(term) || nombre.includes(term)) {
+              row.style.display = "";   // muéstralo
+            } else {
+              row.style.display = "none"; // lo oculta
+            }
         });
       }
 
@@ -516,6 +519,7 @@
       // Al cargar la página, obtenemos el inventario
       document.addEventListener("DOMContentLoaded", () => {
         cargarInventario();
+        searchInput.addEventListener("input", filterTable);
         // Escuchar el input de búsqueda para filtrar en tiempo real
         document.getElementById("searchInput").addEventListener("input", filterTable);
       });
