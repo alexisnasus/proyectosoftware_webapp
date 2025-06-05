@@ -60,12 +60,32 @@
     <main class="max-w-7xl mx-auto p-6">
       <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-semibold text-gray-800">Inventario</h1>
-        <button
-          id="btnNuevoProducto"
-          class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-        >
-          + Nuevo Producto
-        </button>
+        <!-- Contenedor flex para botones Importar, Exportar y + Nuevo Producto -->
+        <div class="flex items-center space-x-2">
+          <!-- Botón Importar -->
+          <button
+            id="btnImportar"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            Importar
+          </button>
+          <!-- Botón Exportar -->
+          <button
+            id="btnExportar"
+            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+          >
+            Exportar
+          </button>
+          <!-- Botón + Nuevo Producto -->
+          <button
+            id="btnNuevoProducto"
+            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+          >
+            + Nuevo Producto
+          </button>
+          <!-- Input oculto para seleccionar CSV -->
+          <input id="inputImportCsv" type="file" accept=".csv" class="hidden" />
+        </div>
       </div>
 
       <div class="bg-white shadow rounded-lg overflow-hidden">
@@ -76,7 +96,6 @@
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código de Barra</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
               <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
             </tr>
           </thead>
@@ -97,7 +116,6 @@
             <input
               id="codigoProd"
               type="text"
-              
               class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
             /> 
           </div> 
@@ -116,16 +134,6 @@
               id="precioProd"
               type="number"
               step="10"
-              min="0"
-              
-              class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label for="stockProd" class="block text-sm font-medium text-gray-700">Cantidad en Stock</label>
-            <input
-              id="stockProd"
-              type="number"
               min="0"
               class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -146,7 +154,7 @@
       // BASE URL de tu API Django (ventas_api)
       const BACKEND_URL = "http://localhost:8000";
       const token = localStorage.getItem("token");
-      // Agrega el header Authorization si hay token
+      // Headers para las peticiones (incluye Authorization si hay token)
       const headers = token
         ? { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
         : { "Content-Type": "application/json" };
@@ -158,9 +166,14 @@
       const modalTitle = document.getElementById("modalTitle");
       const btnCerrarModal = document.getElementById("btnCerrarModal");
 
+      // Botones Importar / Exportar
+      const btnImportar = document.getElementById("btnImportar");
+      const btnExportar = document.getElementById("btnExportar");
+      const inputImportCsv = document.getElementById("inputImportCsv");
+
       let editandoProductoId = null;
 
-      // Función para abrir modal (crear o editar)
+      // --- Modal para crear/editar producto ---
       function abrirModal(nuevo = true, producto = {}) {
         modalProducto.classList.remove("hidden");
         if (nuevo) {
@@ -168,14 +181,12 @@
           document.getElementById("codigoProd").value = "";
           document.getElementById("nombreProd").value = "";
           document.getElementById("precioProd").value = "";
-          document.getElementById("stockProd").value = "";
           editandoProductoId = null;
         } else {
           modalTitle.textContent = "Editar Producto";
           document.getElementById("codigoProd").value = producto.codigo;
           document.getElementById("nombreProd").value = producto.nombre;
           document.getElementById("precioProd").value = producto.precio;
-          document.getElementById("stockProd").value = producto.stock;
           editandoProductoId = producto.id;
         }
       }
@@ -187,7 +198,7 @@
       btnNuevoProducto.addEventListener("click", () => abrirModal());
       btnCerrarModal.addEventListener("click", cerrarModal);
 
-      // Cargar lista de productos
+      // --- Cargar lista de productos en la tabla ---
       async function cargarInventario() {
         try {
           const res = await fetch(`${BACKEND_URL}/ventas/productos/`, {
@@ -209,7 +220,6 @@
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                 ${new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP" }).format(parseFloat(prod.precio))}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${prod.stock?.cantidad || 0}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-center">
                 <button data-id="${prod.id}" class="btnEditar inline-flex px-2 py-1 bg-yellow-400 text-white rounded hover:bg-yellow-500 text-xs mr-2">
                   Editar
@@ -233,18 +243,12 @@
                   headers,
                 });
                 const producto = await r.json();
-                // 2) Obtener stock asociado (si existe)
-                const stocksR = await fetch(`${BACKEND_URL}/ventas/stocks/?producto=${id}`, { headers });
-                const stocksData = await stocksR.json();
-                const cantidadStock = stocksData.length > 0 ? stocksData[0].cantidad : 0;
-
-                // 3) Abrir modal con datos precargados
+                // 2) Abrir modal con datos precargados
                 abrirModal(false, {
                   id: producto.id,
                   codigo: producto.codigo,
                   nombre: producto.nombre,
                   precio: producto.precio,
-                  stock: cantidadStock
                 });
               } catch (err) {
                 console.error(err);
@@ -258,20 +262,7 @@
               const id = e.currentTarget.dataset.id;
               if (!confirm("¿Eliminar este producto?")) return;
               try {
-                // 1) Borrar stock primero (si existe)
-                const stocksR = await fetch(`${BACKEND_URL}/ventas/stocks/?producto=${id}`, {
-                  method: "GET",
-                  headers,
-                });
-                const stocksData = await stocksR.json();
-                if (stocksData.length > 0) {
-                  const stockId = stocksData[0].id;
-                  await fetch(`${BACKEND_URL}/ventas/stocks/${stockId}/`, {
-                    method: "DELETE",
-                    headers,
-                  });
-                }
-                // 2) Borrar producto
+                // 1) Borrar producto
                 await fetch(`${BACKEND_URL}/ventas/productos/${id}/`, {
                   method: "DELETE",
                   headers,
@@ -289,89 +280,140 @@
         }
       }
 
-      // Al enviar el formulario del modal (crear o editar)
+      // --- Guardar (crear o editar) producto desde el modal ---
       formProducto.addEventListener("submit", async (e) => {
         e.preventDefault();
         const codigo = document.getElementById("codigoProd").value.trim();
         const nombre = document.getElementById("nombreProd").value.trim();
         const precio = parseFloat(document.getElementById("precioProd").value);
-        const stockCantidad = parseInt(document.getElementById("stockProd").value, 10);
 
-
-        /*
-
-        if (!codigo || !nombre || isNaN(precio) || isNaN(stockCantidad)) {
+        if (!codigo || !nombre || isNaN(precio)) {
           alert("Rellena todos los campos correctamente.");
           return;
         }
-        */
 
         try {
           let prodId = editandoProductoId;
           let productoPayload = { codigo, nombre, precio };
-          let productoRes;
+          let r;
 
           if (!prodId) {
             // Crear nuevo producto
-            const r = await fetch(`${BACKEND_URL}/ventas/productos/`, {
+            r = await fetch(`${BACKEND_URL}/ventas/productos/`, {
               method: "POST",
               headers,
               body: JSON.stringify(productoPayload),
             });
-            if (!r.ok) {
-              const eJson = await r.json();
-              alert("Error al crear producto: " + JSON.stringify(eJson));
-              return;
-            }
-            productoRes = await r.json();
-            prodId = productoRes.id;
           } else {
             // Editar producto existente
-            const r = await fetch(`${BACKEND_URL}/ventas/productos/${prodId}/`, {
+            r = await fetch(`${BACKEND_URL}/ventas/productos/${prodId}/`, {
               method: "PUT",
               headers,
               body: JSON.stringify(productoPayload),
             });
-            if (!r.ok) {
-              const eJson = await r.json();
-              alert("Error al actualizar producto: " + JSON.stringify(eJson));
-              return;
-            }
-            productoRes = await r.json();
           }
 
-          // Ahora manejamos el Stock asociado
-          //  - Si existía stock, actualizamos con PUT
-          //  - Si no existía, creamos con POST
-          const stocksR = await fetch(`${BACKEND_URL}/ventas/stocks/?producto=${prodId}`, {
-            method: "GET",
-            headers,
-          });
-          const stocksData = await stocksR.json();
-
-          if (stocksData.length > 0) {
-            // Actualizar stock
-            const stockId = stocksData[0].id;
-            await fetch(`${BACKEND_URL}/ventas/stocks/${stockId}/`, {
-              method: "PUT",
-              headers,
-              body: JSON.stringify({ producto: prodId, cantidad: stockCantidad }),
-            });
-          } else {
-            // Crear stock nuevo
-            await fetch(`${BACKEND_URL}/ventas/stocks/`, {
-              method: "POST",
-              headers,
-              body: JSON.stringify({ producto: prodId, cantidad: stockCantidad }),
-            });
+          if (!r.ok) {
+            const eJson = await r.json();
+            alert("Error al guardar producto: " + JSON.stringify(eJson));
+            return;
           }
 
-          // Cerrar modal y recargar lista
           cerrarModal();
           cargarInventario();
         } catch (err) {
           console.error(err);
           alert("Error al guardar producto.");
+        }
+      });
+
+      // --- Funcionalidad del botón Exportar CSV ---
+      btnExportar.addEventListener("click", async () => {
+        try {
+          const res = await fetch(`${BACKEND_URL}/ventas/productos/`, {
+            method: "GET",
+            headers,
+          });
+          if (!res.ok) throw new Error("Error al obtener productos para exportar");
+          const productos = await res.json();
+
+          // Armamos el contenido CSV con encabezado "SKU,Name,Barcode,Price"
+          let csv = "SKU,Name,Barcode,Price\n";
+          productos.forEach((prod) => {
+            // prod.id → SKU, prod.nombre → Name, prod.codigo → Barcode, prod.precio → Price
+            const línea = `${prod.id},${prod.nombre},${prod.codigo},${prod.precio}`;
+            csv += línea + "\n";
+          });
+
+          // Creamos un blob y forzamos la descarga
+          const blob = new Blob([csv], { type: "text/csv" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "productos.csv";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        } catch (err) {
+          console.error(err);
+          alert("Error al exportar CSV.");
+        }
+      });
+
+      // --- Funcionalidad del botón Importar CSV ---
+      // Al hacer clic en “Importar”, abrimos el selector de archivos
+      btnImportar.addEventListener("click", () => {
+        inputImportCsv.value = null; // Limpiar selección previa
+        inputImportCsv.click();
+      });
+
+      inputImportCsv.addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+          const text = await file.text();
+          // Dividimos por líneas (soporta \n o \r\n)
+          const líneas = text.split(/\r?\n/);
+          if (líneas.length < 2) {
+            alert("El CSV no contiene datos válidos.");
+            return;
+          }
+
+          // Se asume encabezado: SKU,Name,Barcode,Price 
+          // Ignoramos la primera línea (header)
+          for (let i = 1; i < líneas.length; i++) {
+            const línea = líneas[i].trim();
+            if (!línea) continue; // saltamos líneas vacías
+            const columnas = línea.split(",");
+            if (columnas.length < 4) {
+              console.warn(`Fila ${i + 1} ignorada: formato incorrecto.`);
+              continue;
+            }
+            // columnas[0] es SKU (ignored)
+            const nombre = columnas[1].trim();   // Name
+            const codigo = columnas[2].trim();   // Barcode
+            const precio = parseFloat(columnas[3].trim()); // Price
+            if (!codigo || !nombre || isNaN(precio)) {
+              console.warn(`Fila ${i + 1} ignorada: datos no válidos.`);
+              continue;
+            }
+
+            // Creamos producto en el backend (no enviamos SKU, el backend asigna id)
+            await fetch(`${BACKEND_URL}/ventas/productos/`, {
+              method: "POST",
+              headers,
+              body: JSON.stringify({ codigo, nombre, precio }),
+            });
+          }
+
+          // Una vez que termine, recargamos la tabla
+          cargarInventario();
+          alert("Importación finalizada.");
+        } catch (err) {
+          console.error(err);
+          alert("Error al leer el archivo CSV.");
         }
       });
 
