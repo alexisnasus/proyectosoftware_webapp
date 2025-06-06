@@ -5,7 +5,7 @@ Repositorio para el proyecto de punto de ventas y gestión de inventario de *Man
 ## Tecnologías usadas
 
 - **Backend**: Django 5.2, Django REST Framework, django-cors-headers
-- **Frontend**: Astro, Tailwind CSS
+- **Frontend**: Tailwind CSS
 - **Entorno**: Python 3.12+, Node.js 18+
 
 ---
@@ -18,7 +18,6 @@ Repositorio para el proyecto de punto de ventas y gestión de inventario de *Man
 
     python -m venv env
     .\env\Scripts\Activate.ps1
-
     pip install -r requirements.txt
      # source env/bin/activate (mac/linux)
 
@@ -38,15 +37,20 @@ Repositorio para el proyecto de punto de ventas y gestión de inventario de *Man
    # b) Chequee que están los contenedores corriendo:
    docker ps
 
-   # c) Hacer migraciones
-   docker-compose exec users_api python manage.py migrate
-   docker-compose exec users_api python manage.py makemigrations
+   #Hacer migraciones
+   docker-compose exec ventas_api python manage.py makemigrations ventas
+   docker-compose exec ventas_api python manage.py migrate
+   
+   #crear las credenciales
+   docker-compose exec ventas_api python manage.py createsuperuser
+
    ```
 
 3. URL´L
 
-   - Test de API: <http://localhost:8001/swagger/>
-   - front: <http://localhost:4321/>
+   - Test de API: <http://localhost:8000/swagger/>
+   - front-old: <http://localhost:4321/>
+   - front-node: <http://localhost:3000/>
 
 ---
 

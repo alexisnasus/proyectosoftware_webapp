@@ -1,4 +1,4 @@
-# version: '3.8'
+#version: '3.8'
 
 services:
   db:
@@ -10,16 +10,16 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB:       manumarket
     volumes:
-      - ./db_init:/docker-entrypoint-initdb.d
       - manumarket-data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
 
-  users_api:
+
+  ventas_api:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: users_api
+    container_name: ventas_api
     command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
     volumes:
       - ./backend:/app
@@ -30,35 +30,17 @@ services:
     env_file:
       - .env
 
-  inventory_api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: inventory_api
-    command: ["python", "manage.py", "runserver", "0.0.0.0:8001"]
+  frontend_node:
+    image: node:18-alpine
+    container_name: frontend_node
+    working_dir: /app
     volumes:
-      - ./backend:/app
+      - ./frontend-node:/app
+    command: sh -c "npm install && npx nodemon --watch src --exec 'node src/server.js'"
     ports:
-      - "8001:8001"
+      - "3000:3000"
     depends_on:
-      - db
-    env_file:
-      - .env
-
-  ventas_api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: ventas_api
-    command: ["python", "manage.py", "runserver", "0.0.0.0:8002"]
-    volumes:
-      - ./backend:/app
-    ports:
-      - "8002:8002"
-    depends_on:
-      - db
-    env_file:
-      - .env
+      - ventas_api
 
   frontend:
     build:
@@ -74,7 +56,6 @@ services:
       - NODE_ENV=development
     extra_hosts:
       - "host.docker.internal:host-gateway"
-
 
 volumes:
   manumarket-data:

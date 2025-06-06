@@ -1,0 +1,21 @@
+{
+  "name": "manumarket-frontend",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Frontend en Node.js y Tailwind para ManuMarket",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  }
+}

@@ -34,18 +34,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
-    'corsheaders',
-
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
-    'users',
     'ventas',
-    'inventario',
+    "corsheaders",
     'drf_yasg',
 ]
 
-AUTH_USER_MODEL = 'users.User'
+AUTH_USER_MODEL = 'ventas.User'
 
 from datetime import timedelta
 
@@ -64,6 +60,14 @@ SIMPLE_JWT = {
 SWAGGER_SETTINGS = {
     'USE_SESSION_AUTH': False,
     'JSON_EDITOR': True,
+    'SECURITY_DEFINITIONS': {
+    'Bearer': {
+        'type': 'apiKey',
+        'name': 'Authorization',
+        'in': 'header',
+        'description': 'JWT Authorization header usando el esquema Bearer. Ejemplo: "Bearer {token}"',
+    }
+}
 }
 
 REST_FRAMEWORK = {
@@ -73,6 +77,7 @@ REST_FRAMEWORK = {
 }
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -82,6 +87,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
 ]
+
+CORS_ALLOW_ALL_ORIGINS = True
 
 ROOT_URLCONF = 'manumarket.urls'
 
