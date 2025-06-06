@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Inventario - Manu Market</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen text-sm">
+
+  <!-- Título -->
+  <header class="p-4 bg-[#0F2E44] text-white text-center text-2xl font-bold">
+    Inventario
+  </header>
+  <!-- Modal Nuevo Producto -->
+  <div id="modalNuevoProducto" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded p-6 w-96">
+      <h2 class="text-lg font-bold mb-4">Nuevo Producto</h2>
+      <form id="formNuevoProducto" class="space-y-3">
+        <input type="text" id="nuevoNombre" placeholder="Nombre" class="w-full border p-2 rounded" required />
+        <input type="text" id="nuevoCodigo" placeholder="Barcode" class="w-full border p-2 rounded" required />
+        <input type="number" id="nuevoPrecio" placeholder="Precio" class="w-full border p-2 rounded" required min="0" step="100" />
+        <div class="flex justify-end gap-2 mt-4">
+          <button type="button" onclick="cerrarModal()" class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400">Cancelar</button>
+          <button type="submit" class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">Crear</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+
+  <main class="p-4">
+
+    <input type="file" id="inputImportarCSV" accept=".csv" class="hidden" />
+
+    <!-- Botones -->
+    <div class="flex flex-wrap gap-2 mb-4">
+      <button onclick="abrirModal()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">+ Agregar Producto</button>
+      <button id="btnEditar" onclick="abrirModalEditar()" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600" disabled>✏️ Editar Producto</button>
+      <button id="btnEliminar" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700" disabled>🗑️ Eliminar Producto</button>
+      <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">⬆ Importar</button>
+      <button onclick="exportarCSV()" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">⬇ Exportar</button>
+
+    </div>
+
+    <!-- Filtro -->
+    <div class="flex items-center mb-4">
+      <input type="text" placeholder="🔍 Nombre del Producto" class="border p-2 flex-grow rounded-l-md border-gray-300" />
+      <span class="bg-gray-200 px-4 py-2 rounded-r-md border border-gray-300">Ctd. Prod: <strong>0</strong></span>
+    </div>
+
+    <!-- Tabla -->
+    <div class="overflow-x-auto bg-white rounded shadow">
+      <table class="min-w-full border border-gray-300 text-left">
+        <thead class="bg-[#0F2E44] text-white">
+          <tr>
+            <th class="py-2 px-4 border-r">Nombre</th>
+            <th class="py-2 px-4 border-r">Barcode</th>
+            <th class="py-2 px-4">Precio</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Productos cargados aquí -->
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <script>
+    let productoSeleccionado = null;
+
+    // Función para crear producto (separada)
+    async function crearProducto(e) {
+      e.preventDefault();
+      const codigo = document.getElementById('nuevoCodigo').value.trim();
+      const nombre = document.getElementById('nuevoNombre').value.trim();
+      const precio = parseFloat(document.getElementById('nuevoPrecio').value);
+
+      try {
+        const res = await fetch('http://localhost:8000/api/inventario/productos/crear/', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({codigo, nombre, precio}),
+        });
+        if (!res.ok) {
+          const errorData = await res.json();
+          alert('Error: ' + JSON.stringify(errorData));
+          return;
+        }
+        cerrarModal();
+        cargarInventario(); // actualizar tabla
+      } catch (error) {
+        alert('Error al crear producto: ' + error.message);
+      }
+    }
+
+    async function cargarInventario() {
+      try {
+        const response = await fetch('http://localhost:8000/api/inventario/productos/listar/');
+        if (!response.ok) throw new Error('Error en la petición: ' + response.status);
+
+        const productos = await response.json();
+
+        const tbody = document.querySelector('tbody');
+        tbody.innerHTML = ''; // limpiar tabla
+
+        let filas = '';
+        productos.forEach(p => {
+          filas += `
+            <tr class="hover:bg-gray-100 cursor-pointer">
+              <td class="py-2 px-4 border-b border-r">${p.nombre}</td>
+              <td class="py-2 px-4 border-b border-r">${p.codigo}</td>
+              <td class="py-2 px-4 border-b">$${parseFloat(p.precio).toLocaleString()}</td>
+            </tr>`;
+        });
+        tbody.innerHTML = filas;  // asignas todo el HTML de las filas
+
+        // Ahora agregas el evento click a cada fila, pasando el elemento <tr> y el producto correspondiente
+        tbody.querySelectorAll('tr').forEach((tr, i) => {
+          tr.addEventListener('click', () => seleccionarProducto(tr, productos[i]));
+        });
+
+
+        // Actualizar contador de productos
+        document.querySelector('span strong').textContent = productos.length;
+
+        // Deshabilitar botón editar al cargar
+        document.getElementById('btnEditar').disabled = true;
+        document.getElementById('btnEliminar').disabled = true;
+        productoSeleccionado = null;
+
+      } catch (error) {
+        console.error('Error al cargar inventario:', error);
+        alert('Error al cargar inventario. Revisa la consola.');
+      }
+    }
+
+    // Nuevo Producto
+    function abrirModal() {
+      document.getElementById('nuevoNombre').value = '';
+      document.getElementById('nuevoCodigo').value = '';
+      document.getElementById('nuevoPrecio').value = '';
+      document.getElementById('modalNuevoProducto').classList.remove('hidden');
+      document.getElementById('formNuevoProducto').onsubmit = crearProducto; // Asegura que el submit es para crear
+    }
+
+    function cerrarModal() {
+      document.getElementById('modalNuevoProducto').classList.add('hidden');
+      document.getElementById('formNuevoProducto').onsubmit = crearProducto;
+      productoSeleccionado = null;
+      document.getElementById('btnEditar').disabled = true;
+      document.getElementById('btnEliminar').disabled = true;
+    }
+
+    function seleccionarProducto(tr, producto) {
+      // Limpiar selección previa
+      document.querySelectorAll('tbody tr').forEach(row => row.classList.remove('bg-yellow-100'));
+
+      // Marcar seleccionado
+      tr.classList.add('bg-yellow-100');
+
+      productoSeleccionado = producto;
+
+      // Habilitar botón editar
+      document.getElementById('btnEditar').disabled = false;
+      document.getElementById('btnEliminar').disabled = false;
+    }
+
+    function abrirModalEditar() {
+      if (!productoSeleccionado) return alert('Seleccione un producto para editar');
+
+      document.getElementById('modalNuevoProducto').classList.remove('hidden');
+
+      // Llenar formulario con datos
+      document.getElementById('nuevoCodigo').value = productoSeleccionado.codigo;
+      document.getElementById('nuevoNombre').value = productoSeleccionado.nombre;
+      document.getElementById('nuevoPrecio').value = productoSeleccionado.precio;
+
+      // Cambiar el evento submit para edición
+      document.getElementById('formNuevoProducto').onsubmit = async function(e) {
+        e.preventDefault();
+        const nombre = document.getElementById('nuevoNombre').value.trim();
+        const precio = parseFloat(document.getElementById('nuevoPrecio').value);
+
+        try {
+          const res = await fetch(`http://localhost:8000/api/inventario/productos/${productoSeleccionado.id}/actualizar/`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({codigo: productoSeleccionado.codigo, nombre, precio}),
+          });
+
+          // Primero lee el texto
+          const text = await res.text();
+          
+          // Intenta parsear solo si no está vacío y es JSON válido
+          let data = null;
+          try {
+            data = text ? JSON.parse(text) : null;
+          } catch (e) {
+            // no es JSON, ignorar o loguear
+          }
+
+          if (!res.ok) {
+            alert('Error: ' + (data ? JSON.stringify(data) : text));
+            return;
+          }
+
+          // éxito, continuar normalmente
+          cerrarModal();
+          cargarInventario();
+        } catch (error) {
+          alert('Error al editar producto: ' + error.message);
+        }
+      };
+    }
+
+    // Asignar handler submit para creación inicialmente
+    document.getElementById('formNuevoProducto').onsubmit = crearProducto;
+
+
+    // Eliminar Producto
+    document.getElementById('btnEliminar').addEventListener('click', async () => {
+      if (!productoSeleccionado) {
+        alert('Seleccione un producto para eliminar');
+        return;
+      }
+
+      const confirmado = confirm(`¿Seguro que quieres eliminar el producto "${productoSeleccionado.nombre}"?`);
+
+      if (!confirmado) return;
+
+      try {
+        const res = await fetch(`http://localhost:8000/api/inventario/productos/${productoSeleccionado.id}/eliminar/`, {
+          method: 'DELETE',
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          alert('Error al eliminar producto: ' + JSON.stringify(errorData));
+          return;
+        }
+
+        // alert(`Producto "${productoSeleccionado.nombre}" eliminado correctamente.`);
+
+        productoSeleccionado = null;
+        document.getElementById('btnEditar').disabled = true;
+        document.getElementById('btnEliminar').disabled = true;
+
+        cargarInventario();
+
+      } catch (error) {
+        alert('Error al eliminar producto: ' + error.message);
+      }
+    });
+    
+    //Importar Inventario
+
+    // Abrir diálogo para elegir archivo CSV
+      document.querySelector('.bg-green-600').addEventListener('click', () => {
+        document.getElementById('inputImportarCSV').click();
+      });
+
+      // Manejar archivo CSV seleccionado
+      document.getElementById('inputImportarCSV').addEventListener('change', async function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const text = await file.text();
+
+        // Parsear CSV simple (asumiendo encabezados: codigo,nombre,precio)
+        const lines = text.trim().split('\n');
+        const headers = lines.shift().split(',');
+
+        for (const line of lines) {
+          const values = line.split(',');
+
+          //Codigo para cada columna
+          // const obj = {};
+          // headers.forEach((h, i) => obj[h.trim()] = values[i].trim());
+          // Ignoramos values[0] que es SKU
+          const nombre = values[1].trim();
+          const codigo = values[2].trim();
+          let precioStr = values[3].trim();
+
+          // Limpieza para precios con miles y decimales si vienen con puntos y comas
+          precioStr = precioStr.replace(/\./g, '').replace(',', '.');
+
+          const precio = parseFloat(precioStr);
+
+          // Enviar al backend (ajusta si tu backend espera otros nombres de campos)
+          try {
+            const res = await fetch('http://localhost:8000/api/inventario/productos/crear/', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({codigo, nombre, precio}),
+            });
+
+
+            if (!res.ok) {
+              const errorData = await res.json();
+              console.error('Error al importar producto:', JSON.stringify(errorData));
+            }
+          } catch (error) {
+            console.error('Error de red al importar producto:', error.message);
+          }
+        }
+
+        alert('Importación finalizada');
+        cargarInventario();
+        this.value = ''; // limpiar input para poder subir mismo archivo otra vez si se quiere
+      });
+
+    //Exportar
+    function exportarCSV() {
+      const filas = [];
+      // Agregar encabezado
+      filas.push(['Nombre', 'Barcode', 'Precio']);
+
+      // Obtener filas de la tabla
+      document.querySelectorAll('tbody tr').forEach(tr => {
+        const cols = tr.querySelectorAll('td');
+        const nombre = cols[0].textContent.trim();
+        const barcode = cols[1].textContent.trim();
+        const precio = cols[2].textContent.trim();
+
+        filas.push([nombre, barcode, precio]);
+      });
+
+      // Convertir array a texto CSV
+      const csvContent = filas.map(e => e.map(v => `"${v.replace(/"/g, '""')}"`).join(',')).join('\n');
+
+      // Crear enlace para descargar
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'inventario_export.csv';
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+
+    // Cargar inventario cuando la página cargue
+    window.onload = cargarInventario;
+
+  </script>
+
+</body>
+</html>
