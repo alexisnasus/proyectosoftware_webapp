@@ -17,24 +17,22 @@ Repositorio para el proyecto de punto de ventas y gestión de inventario de *Man
     ```powershell
 
     python -m venv env
-    .\env\Scripts\Activate.ps1
+    .\env\Scripts\Activate.ps1 #source env/bin/activate (mac/linux)
     pip install -r requirements.txt
-     # source env/bin/activate (mac/linux)
 
     ```
 
 2. Levantar los contenedores
 
    ```powershell
-   # a) Limpiar restos de ejecuciones anteriores
+
+   # Limpiar restos de ejecuciones anteriores
    docker-compose down --volumes --remove-orphans
+
+   # levantar los contenedores
    docker-compose up --build -d
    
-   # El problema más común es que se pueden tener contenedores repetidos (sin importar si están detenidos o no)
-   # Detener de forma manual: docker rm {nombre del contenedor}
-
-
-   # b) Chequee que están los contenedores corriendo:
+   #chequear si los contenedores están corriendo
    docker ps
 
    #Hacer migraciones
@@ -49,7 +47,6 @@ Repositorio para el proyecto de punto de ventas y gestión de inventario de *Man
 3. URL´L
 
    - Test de API: <http://localhost:8000/swagger/>
-   - front-old: <http://localhost:4321/>
    - front-node: <http://localhost:3000/>
 
 ---
@@ -57,9 +54,7 @@ Repositorio para el proyecto de punto de ventas y gestión de inventario de *Man
 ### Credenciales y comandos varios
 
   ```bash
-
-  npm install dotenv --save-dev
-
+  
   username='admin'
   password='admin123'
 
