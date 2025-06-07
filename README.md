@@ -7,7 +7,7 @@ Repositorio para el proyecto de punto de ventas y gestión de inventario de *Man
 - **Backend**: Django 5.2, Django REST Framework, django-cors-headers
 - **Frontend**: Tailwind CSS
 - **Entorno**: Python 3.12+, Node.js 18+
-
+holaohola
 ---
 
 ## Levantar app
