@@ -7,6 +7,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from django.db import transaction
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from datetime import timedelta
+from .models import Transaccion
+from drf_yasg import openapi
 
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -217,7 +221,7 @@ class ConfirmarTransaccionAPIView(APIView):
                 })
 
             transaccion.estado = 'CONFIRMADA'
-            transaccion.confirmado_en = None  # Si deseas dejar fecha: timezone.now()
+            transaccion.confirmado_en = timezone.now()
             transaccion.save()
 
         # --- 4) Responder con los datos finales ---
@@ -356,3 +360,55 @@ class StockDetailAPIView(APIView):
         stock = get_object_or_404(Stock, pk=pk)
         stock.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+
+# -----------------------
+#  Metricas de venta 
+# ----------------------
+
+class MetricsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        operation_description="Retorna la suma total de ventas confirmadas del día, semana y mes actual.",
+        responses={
+            200: openapi.Response(
+                description="Totales de ventas por período",
+                examples={
+                    "application/json": {
+                        "hoy": {"ventas": 30000.0, "cantidad_transacciones": 5},
+                        "semana": {"ventas": 150000.0, "cantidad_transacciones": 22},
+                        "mes": {"ventas": 340000.0, "cantidad_transacciones": 48}
+                    }
+                }
+            )
+        }
+    )
+    def get(self, request):
+        now = timezone.now()
+
+        start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        start_of_week = start_of_day - timedelta(days=now.weekday())  # Lunes
+        start_of_month = start_of_day.replace(day=1)
+
+        def get_metrics(start_date):
+            transacciones = Transaccion.objects.filter(
+                estado='CONFIRMADA',
+                confirmado_en__gte=start_date
+            )
+
+            total_ventas = sum(t.total_final for t in transacciones)
+            cantidad = transacciones.count()
+
+            return {
+                'dinero_total': float(round(total_ventas, 2)),
+                'cantidad_de_transacciones': cantidad
+            }
+
+        return Response({
+            'hoy': get_metrics(start_of_day),
+            'semana': get_metrics(start_of_week),
+            'mes': get_metrics(start_of_month),
+        })
+
+

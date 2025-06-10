@@ -14,6 +14,8 @@ from .views import (
     ProductoDetailAPIView,
     StockListCreateAPIView,
     StockDetailAPIView,
+    #Metricas de ventas:
+     MetricsView,
 )
 from rest_framework_simplejwt.views import TokenRefreshView
 
@@ -43,4 +45,16 @@ urlpatterns = [
     # --- CRUD Stocks ---
     path('stocks/', StockListCreateAPIView.as_view(), name='stock-list-create'),
     path('stocks/<int:pk>/', StockDetailAPIView.as_view(), name='stock-detail'),
+
+
+    # --- Metricas de venta ---
+    path('metrics/', MetricsView.as_view(), name='metrics'),
 ]
+
+
+
+
+
+
+
+
