@@ -391,7 +391,7 @@ class MetricsView(APIView):
         start_of_week = start_of_day - timedelta(days=now.weekday())  # Lunes
         start_of_month = start_of_day.replace(day=1)
 
-        def get_metrics(start_date):
+        def get_metrics_for_period(start_date): # Renamed to avoid conflict and clarify scope
             transacciones = Transaccion.objects.filter(
                 estado='CONFIRMADA',
                 confirmado_en__gte=start_date
@@ -405,10 +405,153 @@ class MetricsView(APIView):
                 'cantidad_de_transacciones': cantidad
             }
 
+        return Response({ # Moved return Response to the main get method
+            'hoy': get_metrics_for_period(start_of_day),
+            'semana': get_metrics_for_period(start_of_week),
+            'mes': get_metrics_for_period(start_of_month),
+        })
+
+# -----------------------
+#  Métricas de dashboard
+# ----------------------
+    
+class DashboardMetricsView(APIView): # Un-nested
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        operation_description="Retorna métricas clave para el dashboard: ventas de hoy, total de productos y usuario actual.",
+        responses={
+            200: openapi.Response(
+                description="Métricas del dashboard",
+                examples={
+                    "application/json": {
+                        "ventas_hoy": {"monto": 55000.0, "cantidad": 3},
+                        "total_productos": 150,
+                        "usuario_actual": "admin_user"
+                    }
+                }
+            )
+        }
+    )
+    def get(self, request):
+        now = timezone.now()
+        
+        # Ventas hoy
+        start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        ventas_hoy_qs = Transaccion.objects.filter(
+            estado='CONFIRMADA',
+            confirmado_en__gte=start_of_day
+        )
+        total_ventas_hoy = sum(t.total_final for t in ventas_hoy_qs)
+        cantidad_ventas_hoy = ventas_hoy_qs.count()
+
+        # Total productos
+        total_productos = Producto.objects.count()
+
         return Response({
-            'hoy': get_metrics(start_of_day),
-            'semana': get_metrics(start_of_week),
-            'mes': get_metrics(start_of_month),
+            'ventas_hoy': {
+                'monto': float(round(total_ventas_hoy, 2)),
+                'cantidad': cantidad_ventas_hoy
+            },
+            'total_productos': total_productos,
+            'usuario_actual': request.user.username
+        })
+
+class SalesChartDataView(APIView): # Un-nested
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        operation_description="Retorna datos para el gráfico de ventas, filtrados por período (day, week, month, year).",
+        manual_parameters=[
+            openapi.Parameter('period', openapi.IN_QUERY, description="Período para los datos del gráfico (day, week, month, year)", type=openapi.TYPE_STRING, default='day')
+        ],
+        responses={
+            200: openapi.Response(
+                description="Datos para el gráfico",
+                examples={
+                    "application/json": {
+                        "labels": ["00:00", "01:00", "..."],
+                        "data": [150.0, 200.0, "..."]
+                    }
+                }
+            )
+        }
+    )
+    def get(self, request):
+        period = request.query_params.get('period', 'day')
+        now = timezone.now()
+        data = []
+        labels = []
+
+        if period == 'day':
+            # Datos por hora para el día actual
+            start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            for hour in range(24):
+                hour_start = start_of_day + timedelta(hours=hour)
+                hour_end = hour_start + timedelta(hours=1)
+                sales = Transaccion.objects.filter(
+                    estado='CONFIRMADA',
+                    confirmado_en__gte=hour_start,
+                    confirmado_en__lt=hour_end
+                )
+                total = sum(t.total_final for t in sales)
+                data.append(float(total))
+                labels.append(f"{hour}:00")
+        
+        elif period == 'week':
+            # Datos por día para la semana actual
+            start_of_week = now - timedelta(days=now.weekday())
+            for day in range(7):
+                day_start = start_of_week + timedelta(days=day)
+                day_end = day_start + timedelta(days=1)
+                sales = Transaccion.objects.filter(
+                    estado='CONFIRMADA',
+                    confirmado_en__gte=day_start,
+                    confirmado_en__lt=day_end
+                )
+                total = sum(t.total_final for t in sales)
+                data.append(float(total))
+                labels.append(day_start.strftime('%a'))
+        
+        elif period == 'month':
+            # Datos por semana para el mes actual
+            start_of_month = now.replace(day=1)
+            next_month = start_of_month.replace(month=start_of_month.month+1) if start_of_month.month < 12 else start_of_month.replace(year=start_of_month.year+1, month=1)
+            
+            current_week = start_of_month
+            while current_week < next_month:
+                week_end = current_week + timedelta(weeks=1)
+                if week_end > next_month:
+                    week_end = next_month
+                
+                sales = Transaccion.objects.filter(
+                    estado='CONFIRMADA',
+                    confirmado_en__gte=current_week,
+                    confirmado_en__lt=week_end
+                )
+                total = sum(t.total_final for t in sales)
+                data.append(float(total))
+                labels.append(f"Semana {(current_week.day // 7) + 1}")
+                current_week = week_end
+        
+        elif period == 'year':
+            # Datos por mes para el año actual
+            start_of_year = now.replace(month=1, day=1)
+            for month in range(12):
+                month_start = start_of_year.replace(month=month+1)
+                month_end = month_start.replace(month=month+2) if month < 11 else month_start.replace(year=month_start.year+1, month=1)
+                sales = Transaccion.objects.filter(
+                    estado='CONFIRMADA',
+                    confirmado_en__gte=month_start,
+                    confirmado_en__lt=month_end
+                )
+                total = sum(t.total_final for t in sales)
+                data.append(float(total))
+                labels.append(month_start.strftime('%b'))
+
+        return Response({
+            'labels': labels,
+            'data': data
         })
 
 

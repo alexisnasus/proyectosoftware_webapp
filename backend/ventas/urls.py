@@ -16,6 +16,8 @@ from .views import (
     StockDetailAPIView,
     #Metricas de ventas:
      MetricsView,
+     DashboardMetricsView, # Added import
+     SalesChartDataView,   # Added import
 )
 from rest_framework_simplejwt.views import TokenRefreshView
 
@@ -48,7 +50,10 @@ urlpatterns = [
 
 
     # --- Metricas de venta ---
+    path('dashboard/metrics/', DashboardMetricsView.as_view(), name='dashboard-metrics'),
     path('metrics/', MetricsView.as_view(), name='metrics'),
+    # En urls.py, añade esto a urlpatterns
+    path('metrics/chart/', SalesChartDataView.as_view(), name='sales-chart-data'),
 ]
 
 
