@@ -1,14 +1,13 @@
-<!-- frontend-node/public/dashboard.html -->
 <!DOCTYPE html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard – ManuMarket</title>
-    <!-- Tailwind vía CDN -->
+    <title>Historial de Compras – ManuMarket</title>
+        <!-- Tailwind vía CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   </head>
-  <body class="min-h-screen bg-gray-50">
+    <body class="min-h-screen bg-gray-50">
     <!-- Barra de navegación común -->
     <nav class="bg-gray-900 text-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -67,94 +66,91 @@
         menuResponsive.classList.toggle("hidden");
       });
     </script>
-    <!-- ================================ -->
+    <main class="max-w-6xl mx-auto px-4 py-8">
+      <h1 class="text-3xl font-bold mb-6">Historial de Compras</h1>
 
-    <!-- CONTENIDO PRINCIPAL DEL DASHBOARD -->
-    <main class="max-w-7xl mx-auto p-6">
-      <h1 class="text-3xl font-semibold text-gray-800 mb-6">Dashboard</h1>
-
-      <!-- Ejemplo de “cards” con métricas -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <!-- CARD 1: Ventas del día -->
-        <div class="bg-white p-4 rounded-lg shadow">
-          <h2 class="text-gray-600 text-sm font-medium">Ventas Hoy</h2>
-          <p id="ventasHoy" class="mt-2 text-3xl font-bold text-gray-800">—</p>
-        </div>
-        <!-- CARD 2: Total Productos -->
-        <div class="bg-white p-4 rounded-lg shadow">
-          <h2 class="text-gray-600 text-sm font-medium">Productos en Inventario</h2>
-          <p id="totalProductos" class="mt-2 text-3xl font-bold text-gray-800">—</p>
-        </div>
-        <!-- CARD 3: Transacciones Pendientes -->
-        <div class="bg-white p-4 rounded-lg shadow">
-          <h2 class="text-gray-600 text-sm font-medium">Transacciones Pendientes</h2>
-          <p id="transPendientes" class="mt-2 text-3xl font-bold text-gray-800">—</p>
-        </div>
-        <!-- CARD 4: Usuario Actual (Trabajador) -->
-        <div class="bg-white p-4 rounded-lg shadow">
-          <h2 class="text-gray-600 text-sm font-medium">Tu Usuario</h2>
-          <p id="usuarioActual" class="mt-2 text-3xl font-bold text-gray-800">—</p>
-        </div>
+      <!-- Filtros -->
+      <div class="flex flex-wrap gap-4 mb-6">
+        <input type="date" id="fechaFiltro" class="border p-2 rounded" />
+        <input type="text" id="vendedorFiltro" placeholder="Filtrar por vendedor" class="border p-2 rounded" />
+        <button onclick="cargarHistorial()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          Filtrar
+        </button>
       </div>
 
-      <!-- (Opcional) Gráfica de ventas u otros widgets -->
-      <div class="mt-8 bg-white p-6 rounded-lg shadow">
-        <h3 class="text-xl font-medium text-gray-800 mb-4">Resumen de Ventas Semanales</h3>
-        <!-- Aquí podrías insertar un <canvas> para Chart.js, etc. -->
-        <div class="h-64 flex items-center justify-center text-gray-400">
-          (Gráfica aquí)
-        </div>
+      <!-- Tabla -->
+      <div class="overflow-x-auto bg-white shadow rounded-lg">
+        <table class="min-w-full">
+          <thead class="bg-gray-200 text-gray-700 font-medium">
+            <tr>
+              <th class="px-4 py-3 border">ID</th>
+              <th class="px-4 py-3 border">Fecha</th>
+              <th class="px-4 py-3 border">Vendedor</th>
+              <th class="px-4 py-3 border">Ítems Vendidos</th>
+              <th class="px-4 py-3 border">Total (CLP)</th>
+            </tr>
+          </thead>
+          <tbody id="tablaHistorial" class="divide-y divide-gray-200">
+            <!-- Aquí se insertan las filas -->
+          </tbody>
+        </table>
       </div>
     </main>
 
     <script>
-      // BASE URL de tu API Django
       const BACKEND_URL = "http://localhost:8000";
-      document.addEventListener("DOMContentLoaded", async () => {
-        const token = localStorage.getItem("token");
-        const headers = token ? { "Authorization": `Bearer ${token}` } : {};
+      const token = localStorage.getItem("access") || localStorage.getItem("token");
+      const headers = token ? { "Authorization": `Bearer ${token}` } : {};
+
+      // Formatea CLP
+      function formatearMoneda(v) {
+        return new Intl.NumberFormat("es-CL",{style:"currency",currency:"CLP"}).format(v);
+      }
+
+      // Carga y filtra el historial
+      async function cargarHistorial() {
+        const fecha = document.getElementById('fechaFiltro').value;
+        const vendedor = document.getElementById('vendedorFiltro').value.toLowerCase();
+        const tbody = document.getElementById('tablaHistorial');
+        tbody.innerHTML = '';
 
         try {
-          // 1) Ventas Hoy: filtro por fecha (asumiendo tu view lo soporte)
-          let ventasHoy = 0;
-          const respV = await fetch(`${BACKEND_URL}/ventas/transacciones/?fecha=hoy`, { headers });
-          if (respV.ok) {
-            const data = await respV.json();
-            // si usas paginación, tal vez data.count; de lo contrario data.length
-            ventasHoy = data.count || data.length || 0;
-          }
-          document.getElementById("ventasHoy").textContent = ventasHoy;
+          // Llamamos al endpoint con filtros de fecha y vendedor
+          const params = new URLSearchParams();
+          if (fecha) params.append('fecha_inicio', fecha), params.append('fecha_fin', fecha);
+          if (vendedor) params.append('vendedor_id', vendedor);
 
-          // 2) Total Productos
-          let totalP = 0;
-          const respP = await fetch(`${BACKEND_URL}/ventas/productos/`, { headers });
-          if (respP.ok) {
-            const data = await respP.json();
-            totalP = data.length;
-          }
-          document.getElementById("totalProductos").textContent = totalP;
+          const resp = await fetch(`${BACKEND_URL}/ventas/historial/?${params}`, { headers });
+          const data = await resp.json();
 
-          // 3) Transacciones Pendientes
-          let transPend = 0;
-          const respTP = await fetch(`${BACKEND_URL}/ventas/transacciones/?estado=PENDIENTE`, { headers });
-          if (respTP.ok) {
-            const data = await respTP.json();
-            transPend = data.count || data.length || 0;
+          if (!Array.isArray(data) || data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center">No se encontraron resultados.</td></tr>`;
+            return;
           }
-          document.getElementById("transPendientes").textContent = transPend;
 
-          // 4) Usuario Actual (Me)
-          let username = "—";
-          const respUser = await fetch(`${BACKEND_URL}/ventas/user/me/`, { headers });
-          if (respUser.ok) {
-            const userData = await respUser.json();
-            username = userData.username;
-          }
-          document.getElementById("usuarioActual").textContent = username;
+          // Por cada transacción...
+          data.forEach(tx => {
+            // Construimos la lista de ítems: "cantidad×producto"
+            const itemsTexto = tx.items.map(i => `${i.cantidad}×${i.producto}`).join(', ');
+            // Insertamos fila
+            tbody.insertAdjacentHTML('beforeend', `
+              <tr>
+                <td class="px-4 py-3 border">${tx.id}</td>
+                <td class="px-4 py-3 border">${tx.fecha}</td>
+                <td class="px-4 py-3 border">${tx.vendedor}</td>
+                <td class="px-4 py-3 border">${itemsTexto}</td>
+                <td class="px-4 py-3 border">${formatearMoneda(tx.total)}</td>
+              </tr>
+            `);
+          });
         } catch (err) {
-          console.error("Error al cargar métricas del dashboard:", err);
+          console.error('Error al cargar historial:', err);
+          tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-600">Error cargando datos.</td></tr>`;
         }
-      });
+      }
+
+      // On load
+      document.addEventListener('DOMContentLoaded', cargarHistorial);
     </script>
   </body>
 </html>
