@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Historial de Ventas – ManuMarket</title>
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="min-h-screen bg-gray-50">
+  <!-- Barra de navegación común -->
+  <nav class="bg-gray-900 text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between h-16 items-center">
+        <div class="flex-shrink-0">
+          <a href="/dashboard">
+            <img class="h-8 w-auto" src="ManuLogo_WIP.png" alt="Logo ManuMarket" />
+          </a>
+        </div>
+        <div class="hidden md:flex md:space-x-8">
+          <a href="/dashboard" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Dashboard</a>
+          <a href="/inventario" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Inventario</a>
+          <a href="/pos" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Punto de Venta</a>
+          <a href="/historial-ventas" class="inline-flex items-center px-1 pt-1 border-b-2 border-blue-500 text-sm font-medium text-gray-100">Historial de Ventas</a>
+          <a href="/trabajadores" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Trabajadores</a>
+        </div>
+        <div class="flex items-center">
+          <a href="/logout" class="text-sm font-medium text-red-400 hover:text-red-300">Cerrar sesión</a>
+        </div>
+        <div class="-mr-2 flex md:hidden">
+          <button id="btnMenu" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-800">
+            <!-- icono hamburguesa -->
+            <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="menuResponsive" class="md:hidden hidden bg-gray-800 px-2 pt-2 pb-3 space-y-1">
+      <a href="/dashboard" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Dashboard</a>
+      <a href="/inventario" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Inventario</a>
+      <a href="/pos" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Punto de Venta</a>
+      <a href="/historial-ventas" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Historial de Ventas</a>
+      <a href="/trabajadores" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Trabajadores</a>
+      <a href="/logout" class="block px-3 py-2 rounded-md text-base font-medium text-red-400 hover:bg-gray-700">Cerrar sesión</a>
+    </div>
+  </nav>
+
+  <main class="max-w-screen-2xl mx-auto p-6">
+    <h1 class="text-2xl font-semibold text-gray-800 mb-4">Historial de Ventas</h1>
+
+    <!-- Bloque de filtros -->
+    <div class="flex flex-wrap gap-4 mb-6">
+      <input type="date" id="fechaFiltro" class="border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+      <input type="text" id="vendedorFiltro" placeholder="Filtrar por vendedor" class="border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+      <button id="btnFiltrar" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400">
+        Filtrar
+      </button>
+    </div>
+
+    <!-- Tabla de historial -->
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendedor</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Venta</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Detalles</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyHistorial" class="bg-white divide-y divide-gray-200">
+          <!-- JS inyectará las filas aquí -->
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <script>
+    // BASE URL de tu API Django (ventas_api)
+    const BACKEND_URL = "http://localhost:8000";
+    const token = localStorage.getItem("token");
+    // Agrega el header Authorization si hay token
+    const headers = token
+      ? { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
+      : { "Content-Type": "application/json" };
+
+    const tbody = document.getElementById("tbodyHistorial");
+    const fechaInput = document.getElementById("fechaFiltro");
+    const vendedorInput = document.getElementById("vendedorFiltro");
+    const btnFiltrar = document.getElementById("btnFiltrar");
+
+    // Función para formatear moneda CLP
+    function formatearMoneda(v) {
+      return new Intl.NumberFormat("es-CL",{ style:"currency", currency:"CLP" }).format(v);
+    }
+
+    // Carga el historial (con o sin filtros)
+    async function cargarHistorial() {
+      tbody.innerHTML = "";
+      // construir query params
+      const params = new URLSearchParams();
+      if (fechaInput.value) {
+        params.append("fecha_inicio", fechaInput.value);
+        params.append("fecha_fin", fechaInput.value);
+      }
+      if (vendedorInput.value.trim()) {
+        params.append("vendedor", vendedorInput.value.trim());
+      }
+
+      try {
+        const resp = await fetch(`${BACKEND_URL}/ventas/historial-ventas/${ params.toString() ? "?" + params : "" }`, {
+          method: "GET",
+          headers
+        });
+        if (!resp.ok) throw new Error("No se pudo cargar el historial de ventas");
+        const data = await resp.json();
+
+        if (!Array.isArray(data) || data.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No hay resultados.</td></tr>`;
+          return;
+        }
+
+        data.forEach(venta => {
+          const row = document.createElement("tr");
+          row.className = "hover:bg-gray-50";
+          row.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${venta.id}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${venta.vendedor}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${formatearMoneda(venta.total_final)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${new Date(venta.creado_en || venta.fecha).toLocaleDateString()}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-center">
+              <button data-id="${venta.id}" class="btnVerDetalles px-3 py-1 bg-yellow-400 text-white rounded hover:bg-yellow-500 text-xs">Ver Detalles</button>
+            </td>
+          `;
+          tbody.appendChild(row);
+        });
+      } catch (err) {
+        console.error("Error al cargar historial:", err);
+        tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-red-600">Error al cargar datos.</td></tr>`;
+      }
+    }
+
+    // eventos
+    btnFiltrar.addEventListener("click", cargarHistorial);
+    document.addEventListener("DOMContentLoaded", cargarHistorial);
+  </script>
+</body>
+</html>
