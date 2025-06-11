@@ -33,6 +33,9 @@ app.get("/pos", (req, res) => {
 app.get("/trabajadores", (req, res) => {
   res.sendFile(path.join(publicPath, "trabajadores.html"));
 });
+app.get("/logout", (req, res) => {
+  res.sendFile(path.join(publicPath, "logout.html"));
+});
 
 // 4) 404 por defecto
 app.use((req, res) => {

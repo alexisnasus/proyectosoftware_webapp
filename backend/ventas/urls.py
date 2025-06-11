@@ -14,6 +14,10 @@ from .views import (
     ProductoDetailAPIView,
     StockListCreateAPIView,
     StockDetailAPIView,
+    # Gestión de usuarios:
+    UserListCreateAPIView,
+    UserDetailAPIView,
+    UserProfileAPIView,
 )
 from rest_framework_simplejwt.views import TokenRefreshView
 
@@ -27,6 +31,11 @@ auth_urls = [
 urlpatterns = [
     # Rutas de autenticación
     path('user/', include(auth_urls)),
+
+    # --- Gestión de Usuarios (solo para administradores) ---
+    path('usuarios/', UserListCreateAPIView.as_view(), name='user-list-create'),
+    path('usuarios/<int:pk>/', UserDetailAPIView.as_view(), name='user-detail'),
+    path('profile/', UserProfileAPIView.as_view(), name='user-profile'),
 
     # --- Gestión de Transacciones ---
     # 1) Crear una Transacción (con lista de items y descuento global):

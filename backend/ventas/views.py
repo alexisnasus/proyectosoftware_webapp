@@ -20,6 +20,8 @@ from .serializers import (
     ProductoSerializer,
     StockSerializer,
     UserSerializer,
+    UserCreateSerializer,
+    UserUpdateSerializer,
     MyTokenObtainPairSerializer,
 )
 
@@ -346,9 +348,7 @@ class StockDetailAPIView(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    @swagger_auto_schema(
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)    @swagger_auto_schema(
         security=[{"Bearer": []}],
         responses={204: 'No Content', 404: "Stock no encontrado"}
     )
@@ -356,3 +356,103 @@ class StockDetailAPIView(APIView):
         stock = get_object_or_404(Stock, pk=pk)
         stock.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# ------------------------------
+# Gestión de Usuarios (solo para administradores)
+# ------------------------------
+from django.contrib.auth import get_user_model
+from rest_framework.permissions import BasePermission
+
+User = get_user_model()
+
+class IsAdminUser(BasePermission):
+    """
+    Permiso personalizado para permitir solo a usuarios con rol ADMIN
+    """
+    def has_permission(self, request, view):
+        return request.user and request.user.is_authenticated and request.user.role == 'ADMIN'
+
+
+class UserListCreateAPIView(APIView):
+    permission_classes = [IsAdminUser]
+
+    @swagger_auto_schema(
+        security=[{"Bearer": []}],
+        responses={200: UserSerializer(many=True)}
+    )
+    def get(self, request):
+        """Listar todos los usuarios (solo administradores)"""
+        users = User.objects.all().order_by('-date_joined')
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(
+        request_body=UserCreateSerializer,
+        responses={201: UserSerializer, 400: "Error de validación"}
+    )
+    def post(self, request):
+        """Crear un nuevo usuario (solo administradores)"""
+        serializer = UserCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserDetailAPIView(APIView):
+    permission_classes = [IsAdminUser]
+
+    @swagger_auto_schema(
+        security=[{"Bearer": []}],
+        responses={200: UserSerializer, 404: "Usuario no encontrado"}
+    )
+    def get(self, request, pk):
+        """Obtener detalle de un usuario"""
+        user = get_object_or_404(User, pk=pk)
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(
+        request_body=UserUpdateSerializer,
+        responses={200: UserSerializer, 400: "Error de validación", 404: "Usuario no encontrado"}
+    )
+    def put(self, request, pk):
+        """Actualizar un usuario"""
+        user = get_object_or_404(User, pk=pk)
+        serializer = UserUpdateSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response(UserSerializer(user).data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(
+        security=[{"Bearer": []}],
+        responses={204: 'No Content', 404: "Usuario no encontrado"}
+    )
+    def delete(self, request, pk):
+        """Eliminar un usuario"""
+        user = get_object_or_404(User, pk=pk)
+        if user == request.user:
+            return Response(
+                {"error": "No puedes eliminar tu propia cuenta"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class UserProfileAPIView(APIView):
+    """
+    Vista para que cualquier usuario autenticado pueda ver su propio perfil
+    """
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        security=[{"Bearer": []}],
+        responses={200: UserSerializer}
+    )
+    def get(self, request):
+        """Obtener perfil del usuario actual"""
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data)

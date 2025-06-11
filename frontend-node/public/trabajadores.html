@@ -54,47 +54,330 @@
         menuResponsiveTrab.classList.toggle("hidden");
       });
     </script>
-    <!-- ================================ -->
-
-    <!-- CONTENIDO: INFORMACIÓN DEL USUARIO ACTUAL -->
+    <!-- ================================ -->    <!-- CONTENIDO: GESTIÓN DE USUARIOS -->
     <main class="max-w-7xl mx-auto p-6">
-      <h1 class="text-2xl font-semibold text-gray-800 mb-4">Información de Usuario</h1>
-      <div id="infoUsuario" class="bg-white shadow rounded-lg p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-semibold text-gray-800">Gestión de Usuarios</h1>
+        <button id="btnNuevoUsuario" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium">
+          Nuevo Usuario
+        </button>
+      </div>
+
+      <!-- Tabla de usuarios -->
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tablaUsuarios" class="bg-white divide-y divide-gray-200">
+            <!-- Los usuarios se cargarán aquí dinámicamente -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Información para empleados -->
+      <div id="infoEmpleado" class="bg-white shadow rounded-lg p-6 hidden">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">Tu Información</h2>
         <p class="text-gray-600"><strong>ID:</strong> <span id="userId">—</span></p>
         <p class="text-gray-600 mt-2"><strong>Nombre de Usuario:</strong> <span id="userName">—</span></p>
+        <p class="text-gray-600 mt-2"><strong>Nombre Completo:</strong> <span id="userFullName">—</span></p>
         <p class="text-gray-600 mt-2"><strong>Correo Electrónico:</strong> <span id="userEmail">—</span></p>
         <p class="text-gray-600 mt-2"><strong>Rol:</strong> <span id="userRole">—</span></p>
       </div>
-      <p class="mt-6 text-sm text-gray-500">
-        * Actualmente, sólo mostramos al usuario autenticado (no hay listado completo en el backend).
-      </p>
     </main>
 
-    <script>
+    <!-- Modal para crear/editar usuario -->
+    <div id="modalUsuario" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-center justify-center">
+      <div class="bg-white rounded-lg p-6 w-full max-w-md">
+        <h3 id="modalTitulo" class="text-lg font-semibold text-gray-800 mb-4">Nuevo Usuario</h3>
+        <form id="formUsuario">
+          <input type="hidden" id="usuarioId" />
+          <div class="mb-4">
+            <label for="inputUsername" class="block text-sm font-medium text-gray-700">Nombre de Usuario</label>
+            <input type="text" id="inputUsername" required class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div class="mb-4">
+            <label for="inputEmail" class="block text-sm font-medium text-gray-700">Email</label>
+            <input type="email" id="inputEmail" class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div class="mb-4">
+            <label for="inputFirstName" class="block text-sm font-medium text-gray-700">Nombre</label>
+            <input type="text" id="inputFirstName" class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div class="mb-4">
+            <label for="inputLastName" class="block text-sm font-medium text-gray-700">Apellido</label>
+            <input type="text" id="inputLastName" class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div class="mb-4">
+            <label for="inputRole" class="block text-sm font-medium text-gray-700">Rol</label>
+            <select id="inputRole" required class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="ADMIN">Administrador</option>
+              <option value="EMPLOYEE">Empleado</option>
+            </select>
+          </div>
+          <div id="passwordFields">
+            <div class="mb-4">
+              <label for="inputPassword" class="block text-sm font-medium text-gray-700">Contraseña</label>
+              <input type="password" id="inputPassword" class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div class="mb-4">
+              <label for="inputPasswordConfirm" class="block text-sm font-medium text-gray-700">Confirmar Contraseña</label>
+              <input type="password" id="inputPasswordConfirm" class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+          </div>
+          <div class="flex justify-end space-x-3">
+            <button type="button" id="btnCancelar" class="px-4 py-2 text-gray-600 bg-gray-200 rounded-lg hover:bg-gray-300">Cancelar</button>
+            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>    <script>
       // BASE URL de tu API Django (ventas_api)
       const BACKEND_URL = "http://localhost:8000";
+      let currentUser = null;
+      let isEditing = false;
+
       document.addEventListener("DOMContentLoaded", async () => {
+        await loadCurrentUser();
+        
+        if (currentUser && currentUser.role === 'ADMIN') {
+          await loadUsers();
+        } else {
+          // Si es empleado, mostrar solo su información
+          showEmployeeInfo();
+        }
+
+        // Event listeners
+        document.getElementById("btnNuevoUsuario")?.addEventListener("click", openCreateModal);
+        document.getElementById("btnCancelar").addEventListener("click", closeModal);
+        document.getElementById("formUsuario").addEventListener("submit", handleFormSubmit);
+      });
+
+      async function loadCurrentUser() {
         const token = localStorage.getItem("token");
-        const headers = token
-          ? { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
-          : { "Content-Type": "application/json" };
+        if (!token) {
+          window.location.href = "/";
+          return;
+        }
 
         try {
-          const resp = await fetch(`${BACKEND_URL}/ventas/user/me/`, { headers });
+          const resp = await fetch(`${BACKEND_URL}/ventas/user/me/`, {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          
           if (!resp.ok) {
-            document.getElementById("userName").textContent = "No autenticado";
+            localStorage.removeItem("token");
+            window.location.href = "/";
             return;
           }
-          const user = await resp.json();
-          document.getElementById("userId").textContent = user.id;
-          document.getElementById("userName").textContent = user.username;
-          document.getElementById("userEmail").textContent = user.email;
-          document.getElementById("userRole").textContent = user.role;
+          
+          currentUser = await resp.json();
         } catch (err) {
-          console.error("Error al cargar datos del usuario:", err);
-          document.getElementById("userName").textContent = "Error de conexión";
+          console.error("Error al cargar usuario actual:", err);
+          window.location.href = "/";
         }
-      });
+      }
+
+      async function loadUsers() {
+        const token = localStorage.getItem("token");
+        try {
+          const resp = await fetch(`${BACKEND_URL}/ventas/usuarios/`, {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          
+          if (!resp.ok) {
+            console.error("Error al cargar usuarios");
+            return;
+          }
+          
+          const users = await resp.json();
+          renderUsersTable(users);
+        } catch (err) {
+          console.error("Error al cargar usuarios:", err);
+        }
+      }
+
+      function renderUsersTable(users) {
+        const tbody = document.getElementById("tablaUsuarios");
+        tbody.innerHTML = "";
+
+        users.forEach(user => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${user.username}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.first_name} ${user.last_name}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.email || '-'}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <span class="px-2 py-1 text-xs font-medium rounded-full ${user.role === 'ADMIN' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}">
+                ${user.role === 'ADMIN' ? 'Administrador' : 'Empleado'}
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <span class="px-2 py-1 text-xs font-medium rounded-full ${user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                ${user.is_active ? 'Activo' : 'Inactivo'}
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+              <button onclick="editUser(${user.id})" class="text-blue-600 hover:text-blue-900 mr-3">Editar</button>
+              ${user.id !== currentUser.id ? `<button onclick="deleteUser(${user.id})" class="text-red-600 hover:text-red-900">Eliminar</button>` : ''}
+            </td>
+          `;
+          tbody.appendChild(row);
+        });
+      }
+
+      function showEmployeeInfo() {
+        document.querySelector("h1").textContent = "Mi Información";
+        document.querySelector("main > div").style.display = "none";
+        document.getElementById("infoEmpleado").classList.remove("hidden");
+        
+        document.getElementById("userId").textContent = currentUser.id;
+        document.getElementById("userName").textContent = currentUser.username;
+        document.getElementById("userFullName").textContent = `${currentUser.first_name} ${currentUser.last_name}`.trim() || '-';
+        document.getElementById("userEmail").textContent = currentUser.email || '-';
+        document.getElementById("userRole").textContent = currentUser.role === 'ADMIN' ? 'Administrador' : 'Empleado';
+      }
+
+      function openCreateModal() {
+        isEditing = false;
+        document.getElementById("modalTitulo").textContent = "Nuevo Usuario";
+        document.getElementById("formUsuario").reset();
+        document.getElementById("usuarioId").value = "";
+        document.getElementById("passwordFields").style.display = "block";
+        document.getElementById("inputPassword").required = true;
+        document.getElementById("inputPasswordConfirm").required = true;
+        document.getElementById("modalUsuario").classList.remove("hidden");
+      }
+
+      async function editUser(userId) {
+        isEditing = true;
+        const token = localStorage.getItem("token");
+        
+        try {
+          const resp = await fetch(`${BACKEND_URL}/ventas/usuarios/${userId}/`, {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          
+          if (!resp.ok) {
+            alert("Error al cargar datos del usuario");
+            return;
+          }
+          
+          const user = await resp.json();
+          
+          document.getElementById("modalTitulo").textContent = "Editar Usuario";
+          document.getElementById("usuarioId").value = user.id;
+          document.getElementById("inputUsername").value = user.username;
+          document.getElementById("inputEmail").value = user.email || "";
+          document.getElementById("inputFirstName").value = user.first_name || "";
+          document.getElementById("inputLastName").value = user.last_name || "";
+          document.getElementById("inputRole").value = user.role;
+          document.getElementById("passwordFields").style.display = "none";
+          document.getElementById("inputPassword").required = false;
+          document.getElementById("inputPasswordConfirm").required = false;
+          document.getElementById("modalUsuario").classList.remove("hidden");
+        } catch (err) {
+          console.error("Error al cargar usuario:", err);
+          alert("Error al cargar datos del usuario");
+        }
+      }
+
+      async function deleteUser(userId) {
+        if (!confirm("¿Estás seguro de que quieres eliminar este usuario?")) {
+          return;
+        }
+
+        const token = localStorage.getItem("token");
+        
+        try {
+          const resp = await fetch(`${BACKEND_URL}/ventas/usuarios/${userId}/`, {
+            method: "DELETE",
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          
+          if (resp.ok) {
+            await loadUsers();
+          } else {
+            const error = await resp.json();
+            alert("Error al eliminar usuario: " + (error.error || "Error desconocido"));
+          }
+        } catch (err) {
+          console.error("Error al eliminar usuario:", err);
+          alert("Error al eliminar usuario");
+        }
+      }
+
+      function closeModal() {
+        document.getElementById("modalUsuario").classList.add("hidden");
+      }
+
+      async function handleFormSubmit(e) {
+        e.preventDefault();
+        
+        const token = localStorage.getItem("token");
+        const userId = document.getElementById("usuarioId").value;
+        
+        const formData = {
+          username: document.getElementById("inputUsername").value,
+          email: document.getElementById("inputEmail").value,
+          first_name: document.getElementById("inputFirstName").value,
+          last_name: document.getElementById("inputLastName").value,
+          role: document.getElementById("inputRole").value,
+        };
+
+        if (!isEditing) {
+          const password = document.getElementById("inputPassword").value;
+          const passwordConfirm = document.getElementById("inputPasswordConfirm").value;
+          
+          if (password !== passwordConfirm) {
+            alert("Las contraseñas no coinciden");
+            return;
+          }
+          
+          formData.password = password;
+          formData.password_confirm = passwordConfirm;
+        } else {
+          const password = document.getElementById("inputPassword").value;
+          if (password) {
+            formData.password = password;
+          }
+        }
+
+        try {
+          const url = isEditing 
+            ? `${BACKEND_URL}/ventas/usuarios/${userId}/`
+            : `${BACKEND_URL}/ventas/usuarios/`;
+          
+          const method = isEditing ? "PUT" : "POST";
+          
+          const resp = await fetch(url, {
+            method: method,
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify(formData)
+          });
+          
+          if (resp.ok) {
+            closeModal();
+            await loadUsers();
+          } else {
+            const error = await resp.json();
+            alert("Error al guardar usuario: " + JSON.stringify(error));
+          }
+        } catch (err) {
+          console.error("Error al guardar usuario:", err);
+          alert("Error al guardar usuario");
+        }
+      }
     </script>
   </body>
 </html>
