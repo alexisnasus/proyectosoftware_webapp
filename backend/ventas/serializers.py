@@ -141,7 +141,7 @@ class HistorialItemSerializer(serializers.Serializer):
     cantidad = serializers.IntegerField()
 
 class HistorialVentasSerializer(serializers.ModelSerializer):
-    vendedor = serializers.CharField(source='vendedor.username', read_only=True)
+    vendedor = serializers.CharField(source='usuario.username', read_only=True)
     total = serializers.DecimalField(source='total_final', max_digits=12, decimal_places=2, read_only=True)
     fecha = serializers.DateTimeField(source='creado_en', read_only=True)
     items = HistorialItemSerializer(source='item_set', many=True)  # Nombre 'items' coincide con tu frontend
