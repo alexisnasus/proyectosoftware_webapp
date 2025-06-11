@@ -5,6 +5,7 @@ from .models import Transaccion, Item, Producto, Stock
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
 
+
 User = get_user_model()
 
 # ------------------------------
@@ -70,6 +71,7 @@ class InputTransaccionSerializer(serializers.Serializer):
     descuento_carrito = serializers.DecimalField(
         max_digits=12, decimal_places=2, min_value=0
     )
+    porcentaje_descuento  = serializers.DecimalField(max_digits=5,  decimal_places=2, min_value=0)
     items = InputItemDTO(many=True)
 
     def validate_items(self, value):
@@ -96,6 +98,7 @@ class TransaccionDetailSerializer(serializers.ModelSerializer):
     total = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
     descuento_carrito = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
     total_final = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    porcentaje_descuento = serializers.DecimalField(max_digits=5, decimal_places=2, read_only=True)
 
     class Meta:
         model = Transaccion
@@ -105,6 +108,7 @@ class TransaccionDetailSerializer(serializers.ModelSerializer):
             'confirmado_en',
             'estado',
             'descuento_carrito',
+            'porcentaje_descuento',
             'total',
             'total_final',
             'items',
@@ -126,3 +130,33 @@ class TransaccionDetailSerializer(serializers.ModelSerializer):
                 'estado': estado_global
             })
         return resultado
+    
+# ------------------------------
+# Serializer para Historial de Ventas
+# ------------------------------
+
+
+class HistorialItemSerializer(serializers.Serializer):
+    producto = serializers.CharField(source='producto.nombre')
+    cantidad = serializers.IntegerField()
+
+class HistorialVentasSerializer(serializers.ModelSerializer):
+    vendedor = serializers.CharField(source='vendedor.username', read_only=True)
+    total = serializers.DecimalField(source='total_final', max_digits=12, decimal_places=2, read_only=True)
+    fecha = serializers.DateTimeField(source='creado_en', read_only=True)
+    items = HistorialItemSerializer(source='item_set', many=True)  # Nombre 'items' coincide con tu frontend
+
+    class Meta:
+        model = Transaccion
+        fields = [
+            'id',
+            'vendedor',
+            'total',
+            'fecha',
+            'items',
+        ]
+    def get_items_vendidos(self, obj):
+        return [
+            {'producto': i.producto.nombre, 'cantidad': i.cantidad}
+            for i in obj.item_set.all()
+        ]
