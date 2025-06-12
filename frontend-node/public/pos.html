@@ -218,6 +218,37 @@
       // 1) Estado local del carrito
       let carritoItems = [];
 
+      // Agregar variable global para almacenar datos del usuario
+let usuarioActual = null;
+
+// Función para obtener datos del usuario actual
+async function obtenerUsuarioActual() {
+    try {
+        const response = await fetch('/api/usuario-actual/', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            usuarioActual = await response.json();
+            console.log('Usuario actual:', usuarioActual);
+        } else {
+            console.error('Error al obtener usuario actual');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+// Llamar la función al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    obtenerUsuarioActual();
+    // ...existing code...
+});
+
       // 2) Referencias a elementos DOM
       const inputBuscar = document.getElementById("inputBuscar");
       const btnAgregar = document.getElementById("btnAgregar");
@@ -380,6 +411,33 @@
         });
       }
 
+      // Función para actualizar el stock de los productos después de una venta
+      async function actualizarStockProductos() {
+        try {
+          // Obtener todos los productos actualizados
+          const resp = await fetch(`${BACKEND_URL}/ventas/productos/`, {
+            method: "GET",
+            headers,
+          });
+          if (!resp.ok) throw new Error("Error al cargar productos");
+          
+          const productosActualizados = await resp.json();
+          
+          // Actualizar el stock en el carrito con los datos más recientes
+          carritoItems.forEach(item => {
+            const productoActualizado = productosActualizados.find(p => p.codigo === item.codigo);
+            if (productoActualizado) {
+              item.stock = productoActualizado.stock;
+            }
+          });
+          
+          // Re-renderizar el carrito con los stocks actualizados
+          renderizarCarrito();
+        } catch (err) {
+          console.error("Error al actualizar stock:", err);
+        }
+      }
+
       // 7) Agregar producto al carrito (ahora buscamos por coincidencia exacta)
       btnAgregar.onclick = async () => {
         const codigoBuscado = inputBuscar.value.trim();
@@ -489,8 +547,17 @@
               },
             }
           );
+          
           if (!respConfirm.ok) {
             const errJson = await respConfirm.json();
+            
+            // Verificar si es un error de permisos específico para empleados
+            if (respConfirm.status === 403 && errJson.tipo_error === 'STOCK_INSUFICIENTE_EMPLEADO') {
+              mostrarModalErrorVenta(errJson);
+              return;
+            }
+            
+            // Para otros errores
             alert("Error al confirmar transacción:\n" + JSON.stringify(errJson));
             return;
           }
@@ -507,6 +574,8 @@
 const total = carritoItems.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
 localStorage.setItem('totalCompra', JSON.stringify(total));
 
+          // Actualizar el stock de los productos después de la venta
+          await actualizarStockProductos();
 
           // Limpiar carrito
           carritoItems = [];
@@ -540,6 +609,25 @@ function cerrarModal() {
    setTimeout(() => {
       window.location.href = "compras.html";
     }, 200);
+}
+
+// Función para mostrar modal de error específico para empleados
+function mostrarModalErrorVenta(errorData) {
+    let mensaje = `❌ VENTA NO AUTORIZADA\n\n`;
+    mensaje += `${errorData.detalle}\n\n`;
+    
+    if (errorData.items_sin_stock && errorData.items_sin_stock.length > 0) {
+        mensaje += `Productos con stock insuficiente:\n`;
+        errorData.items_sin_stock.forEach(item => {
+            mensaje += `• ${item.producto} (Código: ${item.codigo})\n`;
+            mensaje += `  Stock disponible: ${item.stock_disponible}\n`;
+            mensaje += `  Cantidad solicitada: ${item.cantidad_solicitada}\n\n`;
+        });
+    }
+    
+    mensaje += `Contacta a un administrador para realizar esta venta.`;
+    
+    alert(mensaje);
 }
 
       // 9) Inicializar al cargar

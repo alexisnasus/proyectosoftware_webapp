@@ -7,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from django.db import transaction
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -139,99 +140,76 @@ class TransaccionDetailAPIView(APIView):
 class ConfirmarTransaccionAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @swagger_auto_schema(
-        security=[{"Bearer": []}],
-        responses={
-            200: "Transacción confirmada",
-            400: "Error de validación",
-            404: "Transacción no existe",
-            409: "Stock insuficiente en alguno de los productos"
-        }
-    )
     def post(self, request, pk):
-        """
-        Verifica stock para cada ítem de la transacción (que debe estar PENDIENTE),
-        descuenta si hay suficiente y cambia estado a CONFIRMADA o FALLIDA.
-        Devuelve, para cada ítem, su nombre, cantidad y “estado” (allá).
-        """
-        transaccion = get_object_or_404(Transaccion, pk=pk)
-
-        if transaccion.estado != 'PENDIENTE':
+        try:
+            transaccion = Transaccion.objects.get(pk=pk, estado='PENDIENTE')
+        except Transaccion.DoesNotExist:
             return Response(
-                {"error": "La transacción ya fue confirmada o está fallida."},
-                status=status.HTTP_400_BAD_REQUEST
+                {'error': 'Transacción no encontrada o ya procesada'},
+                status=status.HTTP_404_NOT_FOUND
             )
 
-        items = transaccion.item_set.select_related('producto').all()
-        if not items.exists():
-            return Response(
-                {"error": "La transacción no tiene ítems para confirmar."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        output_items = []
-        with transaction.atomic():
-            # --- 1) Verificar stock de todos los ítems (sin descartar nada todavía) ---
-            faltantes = []
-            for item in items:
-                try:
-                    stock = Stock.objects.select_for_update().get(producto=item.producto)
-                except Stock.DoesNotExist:
-                    faltantes.append((item, "Sin registro de stock"))
-                    continue
-
+        # Verificar stock para cada ítem
+        items_sin_stock = []
+        for item in transaccion.item_set.all():
+            try:
+                stock = Stock.objects.get(producto=item.producto)
                 if stock.cantidad < item.cantidad:
-                    faltantes.append((item, "Stock insuficiente"))
-
-            # --- 2) Si existe al menos un ítem con stock insuficiente, marcamos FALLIDA ---
-            if faltantes:
-                transaccion.estado = 'FALLIDA'
-                transaccion.confirmado_en = None
-                transaccion.save()
-
-                # Construir output_items: todos los ítems salen en estado “FALLIDA”
-                for item in items:
-                    output_items.append({
-                        "nombre": item.producto.nombre,
-                        "cantidad": item.cantidad,
-                        "estado": "FALLIDA"
+                    items_sin_stock.append({
+                        'producto': item.producto.nombre,
+                        'codigo': item.producto.codigo,
+                        'stock_disponible': stock.cantidad,
+                        'cantidad_solicitada': item.cantidad
                     })
-
-                return Response(
-                    {
-                        "transaccion_id": str(transaccion.id),
-                        "estado_transaccion": transaccion.estado,
-                        "descuento_carrito": transaccion.descuento_carrito,
-                        "items": output_items
-                    },
-                    status=status.HTTP_409_CONFLICT
-                )
-
-            # --- 3) Si todos los ítems tienen stock suficiente, se descuentan cantidades ---
-            for item in items:
-                stock = Stock.objects.select_for_update().get(producto=item.producto)
-                stock.cantidad -= item.cantidad
-                stock.save()
-                output_items.append({
-                    "nombre": item.producto.nombre,
-                    "cantidad": item.cantidad,
-                    "estado": "CONFIRMADA"
+            except Stock.DoesNotExist:
+                items_sin_stock.append({
+                    'producto': item.producto.nombre,
+                    'codigo': item.producto.codigo,
+                    'stock_disponible': 0,
+                    'cantidad_solicitada': item.cantidad
                 })
 
-            transaccion.estado = 'CONFIRMADA'
-            transaccion.confirmado_en = None  # Si deseas dejar fecha: timezone.now()
-            transaccion.save()
+        # Verificar permisos según rol del usuario
+        usuario = request.user
+        
+        if items_sin_stock:
+            if usuario.role == 'EMPLOYEE':
+                # EMPLEADOS: No pueden vender con stock insuficiente
+                productos_problemáticos = [item['producto'] for item in items_sin_stock]
+                return Response({
+                    'error': 'Venta no autorizada',
+                    'detalle': f'No puedes realizar ventas con stock insuficiente para: {", ".join(productos_problemáticos)}',
+                    'items_sin_stock': items_sin_stock,
+                    'usuario_role': usuario.role,
+                    'tipo_error': 'STOCK_INSUFICIENTE_EMPLEADO'
+                }, status=status.HTTP_403_FORBIDDEN)
+            elif usuario.role == 'ADMIN':
+                # ADMIN: Puede vender pero se registra la situación
+                productos_con_problema = [f"{item['producto']} (stock: {item['stock_disponible']}, solicitado: {item['cantidad_solicitada']})" for item in items_sin_stock]
+                print(f"[ADVERTENCIA] Admin {usuario.username} realizó venta con stock insuficiente en productos: {', '.join(productos_con_problema)}")
+                # Continúa con la venta
+        
+        # Procesar la venta (actualizar stock y confirmar transacción)
+        for item in transaccion.item_set.all():
+            try:
+                stock = Stock.objects.get(producto=item.producto)
+                stock.cantidad -= item.cantidad
+                stock.save()
+            except Stock.DoesNotExist:
+                # Si no existe stock, crear uno con cantidad negativa (solo para admins)
+                Stock.objects.create(producto=item.producto, cantidad=-item.cantidad)
 
-        # --- 4) Responder con los datos finales ---
-        return Response(
-            {
-                "transaccion_id": str(transaccion.id),
-                "estado_transaccion": transaccion.estado,
-                "descuento_carrito": transaccion.descuento_carrito,
-                "items": output_items
-            },
-            status=status.HTTP_200_OK
-        )
+        # Confirmar transacción
+        transaccion.estado = 'CONFIRMADA'
+        transaccion.confirmado_en = timezone.now()
+        transaccion.save()
+
+        return Response({
+            'mensaje': 'Transacción confirmada exitosamente',
+            'transaccion_id': transaccion.id,
+            'total_final': float(transaccion.total_final),
+            'items_sin_stock': items_sin_stock if usuario.role == 'ADMIN' and items_sin_stock else None
+        }, status=status.HTTP_200_OK)
 
 
 # ------------------------------
@@ -289,12 +267,24 @@ class ProductoDetailAPIView(APIView):
 
     @swagger_auto_schema(
         security=[{"Bearer": []}],
-        responses={204: 'No Content', 404: "Producto no encontrado"}
+        responses={204: 'No Content', 404: "Producto no encontrado", 400: "Producto en uso"}
     )
     def delete(self, request, pk):
+        from django.db.models.deletion import ProtectedError
+        
         producto = get_object_or_404(Producto, pk=pk)
-        producto.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        try:
+            producto.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except ProtectedError as e:
+            # El producto está siendo usado en transacciones
+            return Response({
+                'error': 'No se puede eliminar el producto',
+                'detalle': 'Este producto está siendo utilizado en transacciones existentes. No se puede eliminar para preservar el historial de ventas.',
+                'codigo_producto': producto.codigo,
+                'nombre_producto': producto.nombre,
+                'sugerencia': 'Considera desactivar el producto en lugar de eliminarlo si ya no quieres que esté disponible para venta.'
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 
 # ------------------------------
@@ -308,7 +298,12 @@ class StockListCreateAPIView(APIView):
         responses={200: StockSerializer(many=True)}
     )
     def get(self, request):
-        stocks = Stock.objects.all()
+        # Permitir filtrar por producto si se proporciona el parámetro
+        producto_id = request.query_params.get('producto')
+        if producto_id:
+            stocks = Stock.objects.filter(producto_id=producto_id)
+        else:
+            stocks = Stock.objects.all()
         serializer = StockSerializer(stocks, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -456,3 +451,62 @@ class UserProfileAPIView(APIView):
         """Obtener perfil del usuario actual"""
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
+
+
+class UsuarioActualAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Devuelve información del usuario autenticado"""
+        user = request.user
+        return Response({
+            'id': user.id,
+            'username': user.username,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'role': user.role,
+            'role_display': user.get_role_display()
+        })
+
+
+# ------------------------------
+# Consultas y reportes
+# ------------------------------
+class ReporteStockBajoAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        security=[{"Bearer": []}],
+        responses={200: StockSerializer(many=True)}
+    )
+    def get(self, request):
+        """
+        Reporte de productos con stock bajo (menos de 10 unidades)
+        """
+        umbral_bajo = 10
+        stocks_bajos = Stock.objects.filter(cantidad__lt=umbral_bajo)
+        serializer = StockSerializer(stocks_bajos, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ReporteVentasDiariasAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        security=[{"Bearer": []}],
+        responses={200: 'Lista de transacciones diarias'}
+    )
+    def get(self, request):
+        """
+        Reporte de ventas diarias (todas las transacciones del día actual)
+        """
+        hoy = timezone.now().date()
+        transacciones_hoy = Transaccion.objects.filter(confirmado_en__date=hoy)
+        
+        # Detalle de cada transacción
+        resultados = []
+        for transaccion in transacciones_hoy:
+            detalle = TransaccionDetailSerializer(transaccion)
+            resultados.append(detalle.data)
+        
+        return Response(resultados, status=status.HTTP_200_OK)

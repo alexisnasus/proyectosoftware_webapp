@@ -428,28 +428,27 @@
               const id = e.currentTarget.dataset.id;
               if (!confirm("¿Eliminar este producto?")) return;
               try {
-                // 1) Borrar stock primero (si existe)
-                const stocksR = await fetch(`${BACKEND_URL}/ventas/stocks/?producto=${id}`, {
-                  method: "GET",
-                  headers,
-                });
-                const stocksData = await stocksR.json();
-                if (stocksData.length > 0) {
-                  const stockId = stocksData[0].id;
-                  await fetch(`${BACKEND_URL}/ventas/stocks/${stockId}/`, {
-                    method: "DELETE",
-                    headers,
-                  });
-                }
-                // 2) Borrar producto
-                await fetch(`${BACKEND_URL}/ventas/productos/${id}/`, {
+                // Solo eliminar el producto - el stock se eliminará automáticamente por CASCADE
+                const response = await fetch(`${BACKEND_URL}/ventas/productos/${id}/`, {
                   method: "DELETE",
                   headers,
                 });
-                cargarInventario();
+                
+                if (response.status === 204) {
+                  // Eliminación exitosa
+                  alert("Producto eliminado correctamente");
+                  cargarInventario();
+                } else if (response.status === 400) {
+                  // Producto protegido
+                  const errorData = await response.json();
+                  alert(`❌ ${errorData.error}\n\n${errorData.detalle}\n\nProducto: ${errorData.nombre_producto} (${errorData.codigo_producto})\n\n💡 ${errorData.sugerencia}`);
+                } else {
+                  // Otros errores
+                  throw new Error(`Error HTTP: ${response.status}`);
+                }
               } catch (err) {
                 console.error(err);
-                alert("Error al eliminar producto.");
+                alert("Error al eliminar producto: " + err.message);
               }
             });
           });
