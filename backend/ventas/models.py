@@ -2,6 +2,7 @@
 
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 
 #
 # --- Modelo de usuario personalizado (sin cambios) ---
@@ -49,6 +50,9 @@ class Stock(models.Model):
 # --- Transacción (antes “carrito”) con DESCUENTO A NIVEL GLOBAL ---
 #
 class Transaccion(models.Model):
+
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT,related_name="transacciones",null=True,blank=True)
+
     ESTADOS = [
         ('PENDIENTE', 'Pendiente'),
         ('CONFIRMADA', 'Confirmada'),
@@ -60,7 +64,8 @@ class Transaccion(models.Model):
     creado_en = models.DateTimeField(auto_now_add=True)
     confirmado_en = models.DateTimeField(null=True, blank=True)
     estado = models.CharField(max_length=10, choices=ESTADOS, default='PENDIENTE')
-    descuento_carrito = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    descuento_carrito = models.DecimalField(max_digits=12, decimal_places=2, default=0)    
+    porcentaje_descuento = models.DecimalField(max_digits=5, decimal_places=2, default=0)
 
     class Meta:
         db_table = 'transaccion'

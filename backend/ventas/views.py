@@ -25,6 +25,7 @@ from .serializers import (
     StockSerializer,
     UserSerializer,
     MyTokenObtainPairSerializer,
+    HistorialVentasSerializer, 
 )
 
 
@@ -80,8 +81,9 @@ class TransaccionCreateAPIView(APIView):
         descuento_carrito = datos['descuento_carrito']
         items_data = datos['items']
 
-        # 1) Crear la Transaccion en estado PENDIENTE
+        # 1) Crear la Transaccion en estado PENDIENTE y asignar el vendedor
         transaccion = Transaccion.objects.create(
+            usuario=request.user,
             estado='PENDIENTE',
             descuento_carrito=descuento_carrito
         )
@@ -360,7 +362,6 @@ class StockDetailAPIView(APIView):
         stock = get_object_or_404(Stock, pk=pk)
         stock.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
 
 # -----------------------
 #  Metricas de venta 
@@ -553,5 +554,23 @@ class SalesChartDataView(APIView): # Un-nested
             'labels': labels,
             'data': data
         })
+# ------------------------------
+# Historial de Ventas
+# ------------------------------
 
+class HistorialVentasAPIView(APIView):
+    permission_classes = [IsAuthenticated]
 
+    @swagger_auto_schema(
+        security=[{"Bearer": []}],
+        responses={200: HistorialVentasSerializer(many=True)}
+    )
+    def get(self, request):
+        """
+        Devuelve todas las transacciones con vendedor, total_final, fecha y detalle de items.
+        """
+        qs = Transaccion.objects.select_related('usuario')\
+                                .prefetch_related('item_set__producto')\
+                                .all()
+        serializer = HistorialVentasSerializer(qs, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

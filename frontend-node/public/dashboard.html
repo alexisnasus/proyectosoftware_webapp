@@ -1,25 +1,82 @@
 <!-- frontend-node/public/dashboard.html -->
 <!DOCTYPE html>
 <html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard – ManuMarket</title>
+    <!-- Tailwind vía CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  </head>
+  <body class="min-h-screen bg-gray-50">
+    <!-- Barra de navegación común -->
+    <nav class="bg-gray-900 text-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16 items-center">
+          <div class="flex-shrink-0">
+            <a href="/dashboard">
+              <img class="h-8 w-auto" src="ManuLogo_WIP.png" alt="Logo ManuMarket" />
+            </a>
+          </div>
+          <div class="hidden md:flex md:space-x-8">
+            <a href="/dashboard" class="inline-flex items-center px-1 pt-1 border-b-2 border-blue-500 text-sm font-medium text-gray-100">
+              Dashboard
+            </a>
+            <a href="/inventario" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">
+              Inventario
+            </a>
+            <a href="/pos" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">
+              Punto de Venta
+            </a>
+          <!-- Aquí va Historial de Venta -->
+          <a href="/historial-ventas" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Historial de Ventas</a>
+            <a href="/trabajadores" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">
+              Trabajadores
+            </a>
+          </div>
+          <div class="flex items-center">
+            <a href="/logout" class="text-sm font-medium text-red-400 hover:text-red-300">Cerrar sesión</a>
+          </div>
+          <div class="-mr-2 flex md:hidden">
+            <button id="btnMenu" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-800">
+              <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                <path class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div id="menuResponsive" class="md:hidden hidden bg-gray-800">
+        <div class="px-2 pt-2 pb-3 space-y-1">
+          <a href="/dashboard" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Dashboard</a>
+          <a href="/inventario" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Inventario</a>
+          <a href="/pos" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Punto de Venta</a>
+          <a href="/historial-ventas" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Historial de Ventas</a>
+          <a href="/trabajadores" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Trabajadores</a>
+          <a href="/logout" class="block px-3 py-2 rounded-md text-base font-medium text-red-400 hover:bg-gray-700">Cerrar sesión</a>
+        </div>
+      </div>
+    </nav>
+    <script>
+      const btnMenu = document.getElementById("btnMenu");
+      const menuResponsive = document.getElementById("menuResponsive");
+      btnMenu && btnMenu.addEventListener("click", () => {
+        menuResponsive.classList.toggle("hidden");
+      });
+    </script>
+    <!-- ================================ -->
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard – ManuMarket</title>
-  <!-- Tailwind vía CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
+    <!-- CONTENIDO PRINCIPAL DEL DASHBOARD -->
+    <main class="max-w-7xl mx-auto p-6">
+      <h1 class="text-3xl font-semibold text-gray-800 mb-6">Dashboard</h1>
 
-<body class="min-h-screen bg-gray-50">
-  <!-- Barra de navegación común -->
-  <nav class="bg-gray-900 text-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between h-16 items-center">
-        <div class="flex-shrink-0">
-          <a href="/dashboard">
-            <img class="h-8 w-auto" src="ManuLogo_WIP.png" alt="Logo ManuMarket" />
-          </a>
+      <!-- Ejemplo de “cards” con métricas -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- CARD 1: Ventas del día -->
+        <div class="bg-white p-4 rounded-lg shadow">
+          <h2 class="text-gray-600 text-sm font-medium">Ventas Hoy</h2>
+          <p id="ventasHoy" class="mt-2 text-3xl font-bold text-gray-800">—</p>
         </div>
         <div class="hidden md:flex md:space-x-8">
           <a href="/dashboard"
