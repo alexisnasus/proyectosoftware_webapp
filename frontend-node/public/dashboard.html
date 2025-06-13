@@ -7,6 +7,8 @@
     <title>Dashboard – ManuMarket</title>
     <!-- Tailwind vía CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Chart.js para los gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
   <body class="min-h-screen bg-gray-50">
     <!-- Barra de navegación común -->
@@ -28,8 +30,9 @@
             <a href="/pos" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">
               Punto de Venta
             </a>
-          <!-- Aquí va Historial de Venta -->
-          <a href="/historial-ventas" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Historial de Ventas</a>
+            <a href="/historial-ventas" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">
+              Historial de Ventas
+            </a>
             <a href="/trabajadores" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">
               Trabajadores
             </a>
@@ -71,275 +74,207 @@
     <main class="max-w-7xl mx-auto p-6">
       <h1 class="text-3xl font-semibold text-gray-800 mb-6">Dashboard</h1>
 
-      <!-- Ejemplo de “cards” con métricas -->
+      <!-- Cards con métricas -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <!-- CARD 1: Ventas del día -->
+        <!-- CARD 1: Ventas del día (cantidad) -->
         <div class="bg-white p-4 rounded-lg shadow">
-          <h2 class="text-gray-600 text-sm font-medium">Ventas Hoy</h2>
+          <h2 class="text-gray-600 text-sm font-medium">Transacciones Hoy</h2>
           <p id="ventasHoy" class="mt-2 text-3xl font-bold text-gray-800">—</p>
         </div>
-        <div class="hidden md:flex md:space-x-8">
-          <a href="/dashboard"
-            class="inline-flex items-center px-1 pt-1 border-b-2 border-blue-500 text-sm font-medium text-gray-100">
-            Dashboard
-          </a>
-          <a href="/inventario"
-            class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">
-            Inventario
-          </a>
-          <a href="/pos"
-            class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">
-            Punto de Venta
-          </a>
-          <a href="/trabajadores"
-            class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">
-            Trabajadores
-          </a>
+        <!-- CARD 2: Monto total del día -->
+        <div class="bg-white p-4 rounded-lg shadow">
+          <h2 class="text-gray-600 text-sm font-medium">Monto Total Hoy</h2>
+          <p id="total-amount" class="mt-2 text-3xl font-bold text-gray-800">—</p>
         </div>
-        <div class="flex items-center">
-          <a href="/logout" class="text-sm font-medium text-red-400 hover:text-red-300">Cerrar sesión</a>
+        <!-- CARD 3: Total Productos -->
+        <div class="bg-white p-4 rounded-lg shadow">
+          <h2 class="text-gray-600 text-sm font-medium">Productos en Inventario</h2>
+          <p id="totalProductos" class="mt-2 text-3xl font-bold text-gray-800">—</p>
         </div>
-        <div class="-mr-2 flex md:hidden">
-          <button id="btnMenu"
-            class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-800">
-            <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-              <path class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
+        <!-- CARD 4: Usuario Actual -->
+        <div class="bg-white p-4 rounded-lg shadow">
+          <h2 class="text-gray-600 text-sm font-medium">Tu Usuario</h2>
+          <p id="usuarioActual" class="mt-2 text-3xl font-bold text-gray-800">—</p>
         </div>
       </div>
-    </div>
-    <div id="menuResponsive" class="md:hidden hidden bg-gray-800">
-      <div class="px-2 pt-2 pb-3 space-y-1">
-        <a href="/dashboard"
-          class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Dashboard</a>
-        <a href="/inventario"
-          class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Inventario</a>
-        <a href="/pos" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Punto de
-          Venta</a>
-        <a href="/trabajadores"
-          class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Trabajadores</a>
-        <a href="/logout" class="block px-3 py-2 rounded-md text-base font-medium text-red-400 hover:bg-gray-700">Cerrar
-          sesión</a>
-      </div>
-    </div>
-  </nav>
-  <script>
-    const btnMenu = document.getElementById("btnMenu");
-    const menuResponsive = document.getElementById("menuResponsive");
-    btnMenu && btnMenu.addEventListener("click", () => {
-      menuResponsive.classList.toggle("hidden");
-    });
-  </script>
-  <!-- ================================ -->
 
-  <!-- CONTENIDO PRINCIPAL DEL DASHBOARD -->
-  <main class="max-w-7xl mx-auto p-6">
-    <h1 class="text-3xl font-semibold text-gray-800 mb-6">Dashboard</h1>
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      <!-- CARD 1: Ventas del día (cantidad) -->
-      <div class="bg-white p-4 rounded-lg shadow">
-        <h2 class="text-gray-600 text-sm font-medium">Transacciones Hoy</h2>
-        <p id="ventasHoy" class="mt-2 text-3xl font-bold text-gray-800">—</p>
-      </div>
-      <!-- CARD 2: Monto total del día -->
-      <div class="bg-white p-4 rounded-lg shadow">
-        <h2 class="text-gray-600 text-sm font-medium">Monto Total Hoy</h2>
-        <p id="total-amount" class="mt-2 text-3xl font-bold text-gray-800">—</p>
-      </div>
-      <!-- CARD 3: Total Productos -->
-      <div class="bg-white p-4 rounded-lg shadow">
-        <h2 class="text-gray-600 text-sm font-medium">Productos en Inventario</h2>
-        <p id="totalProductos" class="mt-2 text-3xl font-bold text-gray-800">—</p>
-      </div>
-      <!-- CARD 4: Usuario Actual -->
-      <div class="bg-white p-4 rounded-lg shadow">
-        <h2 class="text-gray-600 text-sm font-medium">Tu Usuario</h2>
-        <p id="usuarioActual" class="mt-2 text-3xl font-bold text-gray-800">—</p>
-      </div>
-    </div>
-
-    <!-- (Opcional) Gráfica de ventas u otros widgets -->
-    <div class="mt-8 bg-white p-6 rounded-lg shadow">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-xl font-medium text-gray-800">Resumen de Ventas</h3>
-        <div class="flex space-x-2">
-          <button id="btn-day" class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm">
-            Día
-          </button>
-          <button id="btn-week" class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm">
-            Semana
-          </button>
-          <button id="btn-month" class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm">
-            Mes
-          </button>
-          <button id="btn-year" class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm">
-            Año
-          </button>
+      <!-- Gráfica de ventas -->
+      <div class="mt-8 bg-white p-6 rounded-lg shadow">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-medium text-gray-800">Resumen de Ventas</h3>
+          <div class="flex space-x-2">
+            <button id="btn-day" class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm">
+              Día
+            </button>
+            <button id="btn-week" class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm">
+              Semana
+            </button>
+            <button id="btn-month" class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm">
+              Mes
+            </button>
+            <button id="btn-year" class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm">
+              Año
+            </button>
+          </div>
+        </div>
+        <div class="h-96">
+          <canvas id="salesChart"></canvas>
         </div>
       </div>
-      <div class="h-96">
-        <canvas id="salesChart"></canvas>
-      </div>
-    </div>
-    </div>
-  </main>
+    </main>
 
-  <script>
-    // BASE URL de tu API Django
-    const BACKEND_URL = "http://localhost:8000"; // Asegúrate que este sea el puerto correcto de tu backend
+    <script>
+      // BASE URL de tu API Django
+      const BACKEND_URL = "http://localhost:8000"; // Asegúrate que este sea el puerto correcto de tu backend
 
-    // Función para formatear moneda
-    function formatearMoneda(valor) {
-      return new Intl.NumberFormat("es-CL", {
-        style: "currency",
-        currency: "CLP",
-        minimumFractionDigits: 0
-      }).format(valor);
-    }
-
-    document.addEventListener("DOMContentLoaded", async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        // Redirigir a login si no hay token
-        window.location.href = "/login.html"; // o tu página de login
-        return;
+      // Función para formatear moneda
+      function formatearMoneda(valor) {
+        return new Intl.NumberFormat("es-CL", {
+          style: "currency",
+          currency: "CLP",
+          minimumFractionDigits: 0
+        }).format(valor);
       }
-      const headers = { "Authorization": `Bearer ${token}` };
 
-      // Inicializar gráfico
-      const ctx = document.getElementById('salesChart').getContext('2d');
-      let salesChart = new Chart(ctx, {
-        type: 'bar', // o 'line'
-        data: {
-          labels: [],
-          datasets: [{
-            label: 'Ventas',
-            data: [],
-            backgroundColor: 'rgba(54, 162, 235, 0.6)', // Color de las barras
-            borderColor: 'rgba(54, 162, 235, 1)',     // Color del borde
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            y: {
-              beginAtZero: true,
-              // max: se establecerá dinámicamente
-              ticks: {
-                // stepSize: se puede ajustar o dejar automático
-                callback: function (value) {
-                  return formatearMoneda(value);
+      document.addEventListener("DOMContentLoaded", async () => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          // Redirigir a login si no hay token
+          window.location.href = "/login.html"; // o tu página de login
+          return;
+        }
+        const headers = { "Authorization": `Bearer ${token}` };
+
+        // Inicializar gráfico
+        const ctx = document.getElementById('salesChart').getContext('2d');
+        let salesChart = new Chart(ctx, {
+          type: 'bar', // o 'line'
+          data: {
+            labels: [],
+            datasets: [{
+              label: 'Ventas',
+              data: [],
+              backgroundColor: 'rgba(54, 162, 235, 0.6)', // Color de las barras
+              borderColor: 'rgba(54, 162, 235, 1)',     // Color del borde
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true,
+                // max: se establecerá dinámicamente
+                ticks: {
+                  // stepSize: se puede ajustar o dejar automático
+                  callback: function (value) {
+                    return formatearMoneda(value);
+                  }
+                },
+                title: {
+                  display: true,
+                  text: 'Monto en CLP'
                 }
               },
-              title: {
-                display: true,
-                text: 'Monto en CLP'
+              x: {
+                title: {
+                  display: true,
+                  text: 'Período' // Se actualizará según el período
+                }
               }
             },
-            x: {
-              title: {
-                display: true,
-                text: 'Período' // Se actualizará según el período
-              }
-            }
-          },
-          plugins: {
-            tooltip: {
-              callbacks: {
-                label: function (context) {
-                  let label = context.dataset.label || '';
-                  if (label) {
-                    label += ': ';
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    let label = context.dataset.label || '';
+                    if (label) {
+                      label += ': ';
+                    }
+                    label += formatearMoneda(context.raw);
+                    return label;
                   }
-                  label += formatearMoneda(context.raw);
-                  return label;
                 }
               }
             }
           }
+        });
+
+        // Función para cargar datos de las cards
+        async function loadCardData() {
+          try {
+            const resp = await fetch(`${BACKEND_URL}/ventas/dashboard/metrics/`, { headers });
+            if (!resp.ok) {
+              if (resp.status === 401) window.location.href = "/login.html";
+              throw new Error(`Error al cargar métricas del dashboard: ${resp.statusText}`);
+            }
+            const data = await resp.json();
+
+            document.getElementById("ventasHoy").textContent = data.ventas_hoy.cantidad;
+            document.getElementById("total-amount").textContent = formatearMoneda(data.ventas_hoy.monto);
+            document.getElementById("totalProductos").textContent = data.total_productos;
+            document.getElementById("usuarioActual").textContent = data.usuario_actual;
+
+          } catch (err) {
+            console.error("Error en loadCardData:", err);
+            // Considera mostrar un mensaje de error al usuario en la UI
+          }
         }
+
+        // Función para cargar datos del gráfico
+        async function loadChartData(period = 'day') {
+          try {
+            const resp = await fetch(`${BACKEND_URL}/ventas/metrics/chart/?period=${period}`, { headers });
+            if (!resp.ok) {
+              if (resp.status === 401) window.location.href = "/login.html";
+              throw new Error(`Error al cargar datos del gráfico: ${resp.statusText}`);
+            }
+            const chartData = await resp.json();
+
+            salesChart.data.labels = chartData.labels;
+            salesChart.data.datasets[0].data = chartData.data; // Asumiendo un solo dataset
+
+            // Calcular el valor máximo para la escala Y
+            const maxValue = chartData.data.length > 0 ? Math.max(...chartData.data) : 0;
+            salesChart.options.scales.y.max = maxValue > 0 ? maxValue * 1.1 : 10000; // Añade un 10% de padding o un default
+
+            // Ajustar título del eje X según el período
+            let xAxisTitle = 'Horas';
+            if (period === 'week') xAxisTitle = 'Días de la Semana';
+            else if (period === 'month') xAxisTitle = 'Semanas del Mes';
+            else if (period === 'year') xAxisTitle = 'Meses del Año';
+            salesChart.options.scales.x.title.text = xAxisTitle;
+
+            salesChart.update();
+
+            // Actualizar botones activos
+            document.querySelectorAll('[id^="btn-"]').forEach(btn => {
+              btn.classList.remove('bg-blue-600', 'text-white', 'font-semibold');
+              btn.classList.add('bg-blue-100', 'text-blue-700');
+            });
+            const activeButton = document.getElementById(`btn-${period}`);
+            if (activeButton) {
+              activeButton.classList.add('bg-blue-600', 'text-white', 'font-semibold');
+              activeButton.classList.remove('bg-blue-100', 'text-blue-700');
+            }
+
+          } catch (err) {
+            console.error(`Error en loadChartData (periodo ${period}):`, err);
+            // Considera mostrar un mensaje de error al usuario en la UI
+          }
+        }
+
+        // Cargar datos iniciales
+        await loadCardData();
+        await loadChartData('day'); // Carga el gráfico del día por defecto
+
+        // Event listeners para los botones de período del gráfico
+        document.getElementById('btn-day').addEventListener('click', () => loadChartData('day'));
+        document.getElementById('btn-week').addEventListener('click', () => loadChartData('week'));
+        document.getElementById('btn-month').addEventListener('click', () => loadChartData('month'));
+        document.getElementById('btn-year').addEventListener('click', () => loadChartData('year'));
       });
-
-      // Función para cargar datos de las cards
-      async function loadCardData() {
-        try {
-          const resp = await fetch(`${BACKEND_URL}/ventas/dashboard/metrics/`, { headers });
-          if (!resp.ok) {
-            if (resp.status === 401) window.location.href = "/login.html";
-            throw new Error(`Error al cargar métricas del dashboard: ${resp.statusText}`);
-          }
-          const data = await resp.json();
-
-          document.getElementById("ventasHoy").textContent = data.ventas_hoy.cantidad;
-          document.getElementById("total-amount").textContent = formatearMoneda(data.ventas_hoy.monto);
-          document.getElementById("totalProductos").textContent = data.total_productos;
-          document.getElementById("usuarioActual").textContent = data.usuario_actual;
-
-        } catch (err) {
-          console.error("Error en loadCardData:", err);
-          // Considera mostrar un mensaje de error al usuario en la UI
-        }
-      }
-
-      // Función para cargar datos del gráfico
-      async function loadChartData(period = 'day') {
-        try {
-          const resp = await fetch(`${BACKEND_URL}/ventas/metrics/chart/?period=${period}`, { headers });
-          if (!resp.ok) {
-            if (resp.status === 401) window.location.href = "/login.html";
-            throw new Error(`Error al cargar datos del gráfico: ${resp.statusText}`);
-          }
-          const chartData = await resp.json();
-
-          salesChart.data.labels = chartData.labels;
-          salesChart.data.datasets[0].data = chartData.data; // Asumiendo un solo dataset
-
-          // Calcular el valor máximo para la escala Y
-          const maxValue = chartData.data.length > 0 ? Math.max(...chartData.data) : 0;
-          salesChart.options.scales.y.max = maxValue > 0 ? maxValue * 1.1 : 10000; // Añade un 10% de padding o un default
-
-          // Ajustar título del eje X según el período
-          let xAxisTitle = 'Horas';
-          if (period === 'week') xAxisTitle = 'Días de la Semana';
-          else if (period === 'month') xAxisTitle = 'Semanas del Mes';
-          else if (period === 'year') xAxisTitle = 'Meses del Año';
-          salesChart.options.scales.x.title.text = xAxisTitle;
-
-          salesChart.update();
-
-          // Actualizar botones activos
-          document.querySelectorAll('[id^="btn-"]').forEach(btn => {
-            btn.classList.remove('bg-blue-600', 'text-white', 'font-semibold');
-            btn.classList.add('bg-blue-100', 'text-blue-700');
-          });
-          const activeButton = document.getElementById(`btn-${period}`);
-          if (activeButton) {
-            activeButton.classList.add('bg-blue-600', 'text-white', 'font-semibold');
-            activeButton.classList.remove('bg-blue-100', 'text-blue-700');
-          }
-
-        } catch (err) {
-          console.error(`Error en loadChartData (periodo ${period}):`, err);
-          // Considera mostrar un mensaje de error al usuario en la UI
-        }
-      }
-
-      // Cargar datos iniciales
-      await loadCardData();
-      await loadChartData('day'); // Carga el gráfico del día por defecto
-
-      // Event listeners para los botones de período del gráfico
-      document.getElementById('btn-day').addEventListener('click', () => loadChartData('day'));
-      document.getElementById('btn-week').addEventListener('click', () => loadChartData('week'));
-      document.getElementById('btn-month').addEventListener('click', () => loadChartData('month'));
-      document.getElementById('btn-year').addEventListener('click', () => loadChartData('year'));
-    });
-  </script>
-</body>
-
+    </script>
+  </body>
 </html>
