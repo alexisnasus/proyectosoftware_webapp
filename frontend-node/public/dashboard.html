@@ -19,25 +19,23 @@
             <a href="/dashboard">
               <img class="h-8 w-auto" src="ManuLogo_WIP.png" alt="Logo ManuMarket" />
             </a>
-          </div>
-          <div class="hidden md:flex md:space-x-8">
-            <a href="/dashboard" class="inline-flex items-center px-1 pt-1 border-b-2 border-blue-500 text-sm font-medium text-gray-100">
-              Dashboard
-            </a>
-            <a href="/inventario" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">
-              Inventario
-            </a>
-            <a href="/pos" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">
-              Punto de Venta
-            </a>
-            <a href="/historial-ventas" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">
+          </div>            <div id="navigationLinks" class="hidden md:flex md:space-x-8">
+              <a href="/dashboard" class="inline-flex items-center px-1 pt-1 border-b-2 border-blue-500 text-sm font-medium text-gray-100">
+                Dashboard
+              </a>
+              <a id="inventarioLink" href="/inventario" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">
+                Inventario
+              </a>
+              <a href="/pos" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">
+                Punto de Venta
+              </a>
+              <a href="/historial-ventas" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">
               Historial de Ventas
-            </a>
-            <a href="/trabajadores" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">
-              Trabajadores
-            </a>
-          </div>
-          <div class="flex items-center">
+              <a id="trabajadoresLink" href="/trabajadores" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">
+                Usuarios
+              </a>
+            </div><div class="flex items-center space-x-4">
+            <span id="userInfo" class="text-sm text-gray-300">—</span>
             <a href="/logout" class="text-sm font-medium text-red-400 hover:text-red-300">Cerrar sesión</a>
           </div>
           <div class="-mr-2 flex md:hidden">
@@ -49,14 +47,13 @@
             </button>
           </div>
         </div>
-      </div>
-      <div id="menuResponsive" class="md:hidden hidden bg-gray-800">
+      </div>      <div id="menuResponsive" class="md:hidden hidden bg-gray-800">
         <div class="px-2 pt-2 pb-3 space-y-1">
           <a href="/dashboard" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Dashboard</a>
-          <a href="/inventario" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Inventario</a>
+          <a id="inventarioLinkMobile" href="/inventario" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Inventario</a>
           <a href="/pos" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Punto de Venta</a>
           <a href="/historial-ventas" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Historial de Ventas</a>
-          <a href="/trabajadores" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Trabajadores</a>
+          <a id="trabajadoresLinkMobile" href="/trabajadores" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Usuarios</a>
           <a href="/logout" class="block px-3 py-2 rounded-md text-base font-medium text-red-400 hover:bg-gray-700">Cerrar sesión</a>
         </div>
       </div>
@@ -93,8 +90,9 @@
         </div>
         <!-- CARD 4: Usuario Actual -->
         <div class="bg-white p-4 rounded-lg shadow">
-          <h2 class="text-gray-600 text-sm font-medium">Tu Usuario</h2>
-          <p id="usuarioActual" class="mt-2 text-3xl font-bold text-gray-800">—</p>
+          <h2 class="text-gray-600 text-sm font-medium">Usuario Actual</h2>
+          <p id="usuarioActual" class="mt-2 text-lg font-bold text-gray-800">—</p>
+          <p id="rolUsuario" class="text-sm text-gray-500">—</p>
         </div>
       </div>
 
@@ -121,12 +119,10 @@
           <canvas id="salesChart"></canvas>
         </div>
       </div>
-    </main>
-
-    <script>
+    </main>    <script>
       // BASE URL de tu API Django
       const BACKEND_URL = "http://localhost:8000"; // Asegúrate que este sea el puerto correcto de tu backend
-
+      let currentUser = null;
       // Función para formatear moneda
       function formatearMoneda(valor) {
         return new Intl.NumberFormat("es-CL", {
@@ -135,8 +131,65 @@
           minimumFractionDigits: 0
         }).format(valor);
       }
-
       document.addEventListener("DOMContentLoaded", async () => {
+        await loadCurrentUser();
+        await loadDashboardData();
+        setupAccessControl();
+      });
+
+      async function loadCurrentUser() {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          window.location.href = "/";
+          return;
+        }
+
+        try {
+          const respUser = await fetch(`${BACKEND_URL}/ventas/user/me/`, {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          
+          if (!respUser.ok) {
+            localStorage.removeItem("token");
+            window.location.href = "/";
+            return;
+          }
+          
+          currentUser = await respUser.json();
+          
+          // Mostrar información del usuario en la navbar y dashboard
+          const fullName = `${currentUser.first_name} ${currentUser.last_name}`.trim();
+          const displayName = fullName || currentUser.username;
+          const roleName = currentUser.role === 'ADMIN' ? 'Administrador' : 'Empleado';
+          
+          document.getElementById("userInfo").textContent = `${displayName} (${roleName})`;
+          document.getElementById("usuarioActual").textContent = displayName;
+          document.getElementById("rolUsuario").textContent = roleName;
+          
+        } catch (err) {
+          console.error("Error al cargar usuario actual:", err);
+          window.location.href = "/";
+        }
+      }
+
+      function setupAccessControl() {
+        if (!currentUser) return;
+
+        // Si es empleado, ocultar enlaces de inventario y usuarios
+        if (currentUser.role === 'EMPLOYEE') {
+          const inventarioLink = document.getElementById("inventarioLink");
+          const trabajadoresLink = document.getElementById("trabajadoresLink");
+          const inventarioLinkMobile = document.getElementById("inventarioLinkMobile");
+          const trabajadoresLinkMobile = document.getElementById("trabajadoresLinkMobile");
+          
+          if (inventarioLink) inventarioLink.style.display = "none";
+          if (trabajadoresLink) trabajadoresLink.style.display = "none";
+          if (inventarioLinkMobile) inventarioLinkMobile.style.display = "none";
+          if (trabajadoresLinkMobile) trabajadoresLinkMobile.style.display = "none";
+        }
+      }
+
+      async function loadDashboardData() {
         const token = localStorage.getItem("token");
         if (!token) {
           // Redirigir a login si no hay token

@@ -70,10 +70,25 @@
             const errorJson = await resp.json();
             alert("Error: " + (errorJson.detail || JSON.stringify(errorJson)));
             return;
-          }
-          const data = await resp.json();
+          }          const data = await resp.json();
           // Guardar el token en localStorage para usar en otras páginas
           localStorage.setItem("token", data.access);
+          if (data.refresh) {
+            localStorage.setItem("refresh_token", data.refresh);
+          }
+          
+          // Decodificar el token para obtener información del usuario
+          try {
+            const tokenPayload = JSON.parse(atob(data.access.split('.')[1]));
+            localStorage.setItem("user_info", JSON.stringify({
+              username: tokenPayload.username,
+              role: tokenPayload.role,
+              full_name: tokenPayload.full_name
+            }));
+          } catch (err) {
+            console.error("Error al decodificar token:", err);
+          }
+          
           // Redirigir al dashboard
           window.location.href = "/dashboard";
         } catch (err) {

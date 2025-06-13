@@ -33,14 +33,12 @@ Repositorio para el proyecto de punto de ventas y gestión de inventario de *Man
    docker-compose up --build -d
    
    #chequear si los contenedores están corriendo
-   docker ps
-
-   #Hacer migraciones
+   docker ps   #Hacer migraciones
    docker-compose exec ventas_api python manage.py makemigrations ventas
    docker-compose exec ventas_api python manage.py migrate
    
-   #crear las credenciales
-   docker-compose exec ventas_api python manage.py createsuperuser
+   #crear admin
+   docker-compose exec ventas_api python manage.py create_admin
 
    ```
 

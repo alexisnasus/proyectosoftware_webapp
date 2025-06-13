@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cerrando sesión - ManuMarket</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div class="max-w-md w-full bg-white p-8 rounded-lg shadow-lg text-center">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Cerrando sesión...</h2>
+        <p class="text-gray-600 mb-6">Por favor espera mientras cerramos tu sesión.</p>
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+    </div>
+
+    <script>
+        const BACKEND_URL = "http://localhost:8000";
+        
+        document.addEventListener("DOMContentLoaded", async () => {
+            const token = localStorage.getItem("token");
+            
+            if (token) {
+                try {
+                    // Intentar cerrar sesión en el backend
+                    await fetch(`${BACKEND_URL}/ventas/user/logout/`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ refresh: localStorage.getItem("refresh_token") })
+                    });
+                } catch (err) {
+                    console.error("Error al cerrar sesión en el backend:", err);
+                }
+            }
+            
+            // Limpiar localStorage
+            localStorage.removeItem("token");
+            localStorage.removeItem("refresh_token");
+            
+            // Redirigir al login después de un breve delay
+            setTimeout(() => {
+                window.location.href = "/";
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
