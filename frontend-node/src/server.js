@@ -30,6 +30,12 @@ app.get("/inventario", (req, res) => {
 app.get("/pos", (req, res) => {
   res.sendFile(path.join(publicPath, "pos.html"));
 });
+
+// Nueva ruta para historial de compras
+app.get("/historial-ventas", (req, res) => {
+  res.sendFile(path.join(publicPath, "historial-ventas.html"));
+});
+
 app.get("/trabajadores", (req, res) => {
   res.sendFile(path.join(publicPath, "trabajadores.html"));
 });

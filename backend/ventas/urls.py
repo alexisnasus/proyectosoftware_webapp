@@ -9,11 +9,17 @@ from .views import (
     TransaccionCreateAPIView,
     TransaccionDetailAPIView,
     ConfirmarTransaccionAPIView,
+    # Nuevo endpoint historial
+    HistorialVentasAPIView,
     # CRUD Productos y Stocks:
     ProductoListCreateAPIView,
     ProductoDetailAPIView,
     StockListCreateAPIView,
     StockDetailAPIView,
+    #Metricas de ventas:
+    MetricsView,
+    DashboardMetricsView, # Added import
+    SalesChartDataView,   # Added import
     # Gestión de usuarios:
     UserListCreateAPIView,
     UserDetailAPIView,
@@ -47,6 +53,9 @@ urlpatterns = [
     # 3) Confirmar la transacción (verificar stock y descontar):
     path('transacciones/<int:pk>/confirmar/', ConfirmarTransaccionAPIView.as_view(), name='transaccion-confirmar'),
 
+    # Historial de Ventas
+    path('historial-ventas/', HistorialVentasAPIView.as_view(), name='historial-ventas'),
+
     # --- CRUD Productos ---
     path('productos/', ProductoListCreateAPIView.as_view(), name='producto-list-create'),
     path('productos/<int:pk>/', ProductoDetailAPIView.as_view(), name='producto-detail'),
@@ -54,4 +63,19 @@ urlpatterns = [
     # --- CRUD Stocks ---
     path('stocks/', StockListCreateAPIView.as_view(), name='stock-list-create'),
     path('stocks/<int:pk>/', StockDetailAPIView.as_view(), name='stock-detail'),
+
+
+    # --- Metricas de venta ---
+    path('dashboard/metrics/', DashboardMetricsView.as_view(), name='dashboard-metrics'),
+    path('metrics/', MetricsView.as_view(), name='metrics'),
+    # En urls.py, añade esto a urlpatterns
+    path('metrics/chart/', SalesChartDataView.as_view(), name='sales-chart-data'),
 ]
+
+
+
+
+
+
+
+
