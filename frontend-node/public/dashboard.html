@@ -19,7 +19,7 @@
             <a href="/dashboard">
               <img class="h-8 w-auto" src="ManuLogo_WIP.png" alt="Logo ManuMarket" />
             </a>
-          </div>            <div id="navigationLinks" class="hidden md:flex md:space-x-8">
+          </div> <div id="navigationLinks" class="hidden md:flex md:space-x-8">
               <a href="/dashboard" class="inline-flex items-center px-1 pt-1 border-b-2 border-blue-500 text-sm font-medium text-gray-100">
                 Dashboard
               </a>
@@ -36,6 +36,7 @@
               </a>
             </div><div class="flex items-center space-x-4">
             <span id="userInfo" class="text-sm text-gray-300">—</span>
+
             <a href="/logout" class="text-sm font-medium text-red-400 hover:text-red-300">Cerrar sesión</a>
           </div>
           <div class="-mr-2 flex md:hidden">
@@ -123,7 +124,6 @@
       // BASE URL de tu API Django
       const BACKEND_URL = "http://localhost:8000"; // Asegúrate que este sea el puerto correcto de tu backend
       let currentUser = null;
-      
       // Función para formatear moneda
       function formatearMoneda(valor) {
         return new Intl.NumberFormat("es-CL", {
@@ -132,7 +132,7 @@
           minimumFractionDigits: 0
         }).format(valor);
       }
-
+      
       async function loadCurrentUser() {
         console.log("Loading current user...");
         const token = localStorage.getItem("token");
@@ -416,6 +416,16 @@
           console.error("Dashboard initialization failed:", error);
           alert("Error al cargar el dashboard. Por favor, intente nuevamente.");
         }
+
+        // Cargar datos iniciales
+        await loadCardData();
+        await loadChartData('day'); // Carga el gráfico del día por defecto
+
+        // Event listeners para los botones de período del gráfico
+        document.getElementById('btn-day').addEventListener('click', () => loadChartData('day'));
+        document.getElementById('btn-week').addEventListener('click', () => loadChartData('week'));
+        document.getElementById('btn-month').addEventListener('click', () => loadChartData('month'));
+        document.getElementById('btn-year').addEventListener('click', () => loadChartData('year'));
       });
     </script>
   </body>

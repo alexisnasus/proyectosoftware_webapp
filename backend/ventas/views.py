@@ -582,9 +582,9 @@ class SalesChartDataView(APIView):
         responses={200: "Datos del gráfico de ventas"}
     )
     def get(self, request):
+      
         period = request.query_params.get('period', 'day')
         now = timezone.now()
-        
         labels = []
         data = []
         
@@ -658,7 +658,6 @@ class SalesChartDataView(APIView):
             'labels': labels,
             'data': data
         })
-
 # ------------------------------
 # Historial de Ventas
 # ------------------------------
