@@ -17,14 +17,13 @@
             <a href="/dashboard">
               <img class="h-8 w-auto" src="ManuLogo_WIP.png" alt="Logo ManuMarket" />
             </a>
-          </div>
-          <div class="hidden md:flex md:space-x-8">
+          </div>          <div id="navigationLinks" class="hidden md:flex md:space-x-8">
             <a href="/dashboard" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Dashboard</a>
-            <a href="/inventario" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Inventario</a>
+            <a id="inventarioLink" href="/inventario" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Inventario</a>
             <a href="/pos" class="inline-flex items-center px-1 pt-1 border-b-2 border-blue-500 text-sm font-medium text-gray-100">Punto de Venta</a>
               <!-- Aquí va Historial de Ventas -->
             <a href="/historial-ventas" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Historial de Ventas</a>
-            <a href="/trabajadores" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Trabajadores</a>
+            <a id="trabajadoresLink" href="/trabajadores" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Usuarios</a>
           </div>
           <div class="flex items-center">
             <a href="/logout" class="text-sm font-medium text-red-400 hover:text-red-300">Cerrar sesión</a>
@@ -38,14 +37,13 @@
             </button>
           </div>
         </div>
-      </div>
-      <div id="menuResponsivePos" class="md:hidden hidden bg-gray-800">
+      </div>      <div id="menuResponsivePos" class="md:hidden hidden bg-gray-800">
         <div class="px-2 pt-2 pb-3 space-y-1">
           <a href="/dashboard" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Dashboard</a>
-          <a href="/inventario" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Inventario</a>
+          <a id="inventarioLinkMobile" href="/inventario" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Inventario</a>
           <a href="/pos" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Punto de Venta</a>
           <a href="/historial-ventas" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Historial de Ventas</a>
-          <a href="/trabajadores" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Trabajadores</a>
+          <a id="trabajadoresLinkMobile" href="/trabajadores" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Usuarios</a>
           <a href="/logout" class="block px-3 py-2 rounded-md text-base font-medium text-red-400 hover:bg-gray-700">Cerrar sesión</a>
         </div>
       </div>
@@ -223,6 +221,37 @@
       // 1) Estado local del carrito
       let carritoItems = [];
 
+      // Agregar variable global para almacenar datos del usuario
+let usuarioActual = null;
+
+// Función para obtener datos del usuario actual
+async function obtenerUsuarioActual() {
+    try {
+        const response = await fetch('/api/usuario-actual/', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            usuarioActual = await response.json();
+            console.log('Usuario actual:', usuarioActual);
+        } else {
+            console.error('Error al obtener usuario actual');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+// Llamar la función al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    obtenerUsuarioActual();
+    // ...existing code...
+});
+
       // 2) Referencias a elementos DOM
       const inputBuscar = document.getElementById("inputBuscar");
       const btnAgregar = document.getElementById("btnAgregar");
@@ -385,6 +414,33 @@
         });
       }
 
+      // Función para actualizar el stock de los productos después de una venta
+      async function actualizarStockProductos() {
+        try {
+          // Obtener todos los productos actualizados
+          const resp = await fetch(`${BACKEND_URL}/ventas/productos/`, {
+            method: "GET",
+            headers,
+          });
+          if (!resp.ok) throw new Error("Error al cargar productos");
+          
+          const productosActualizados = await resp.json();
+          
+          // Actualizar el stock en el carrito con los datos más recientes
+          carritoItems.forEach(item => {
+            const productoActualizado = productosActualizados.find(p => p.codigo === item.codigo);
+            if (productoActualizado) {
+              item.stock = productoActualizado.stock;
+            }
+          });
+          
+          // Re-renderizar el carrito con los stocks actualizados
+          renderizarCarrito();
+        } catch (err) {
+          console.error("Error al actualizar stock:", err);
+        }
+      }
+
       // 7) Agregar producto al carrito (ahora buscamos por coincidencia exacta)
       btnAgregar.onclick = async () => {
         const codigoBuscado = inputBuscar.value.trim();
@@ -494,8 +550,17 @@
               },
             }
           );
+          
           if (!respConfirm.ok) {
             const errJson = await respConfirm.json();
+            
+            // Verificar si es un error de permisos específico para empleados
+            if (respConfirm.status === 403 && errJson.tipo_error === 'STOCK_INSUFICIENTE_EMPLEADO') {
+              mostrarModalErrorVenta(errJson);
+              return;
+            }
+            
+            // Para otros errores
             alert("Error al confirmar transacción:\n" + JSON.stringify(errJson));
             return;
           }
@@ -512,6 +577,8 @@
 const total = carritoItems.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
 localStorage.setItem('totalCompra', JSON.stringify(total));
 
+          // Actualizar el stock de los productos después de la venta
+          await actualizarStockProductos();
 
           // Limpiar carrito
           carritoItems = [];
@@ -545,6 +612,25 @@ function cerrarModal() {
    setTimeout(() => {
       window.location.href = "compras.html";
     }, 200);
+}
+
+// Función para mostrar modal de error específico para empleados
+function mostrarModalErrorVenta(errorData) {
+    let mensaje = `❌ VENTA NO AUTORIZADA\n\n`;
+    mensaje += `${errorData.detalle}\n\n`;
+    
+    if (errorData.items_sin_stock && errorData.items_sin_stock.length > 0) {
+        mensaje += `Productos con stock insuficiente:\n`;
+        errorData.items_sin_stock.forEach(item => {
+            mensaje += `• ${item.producto} (Código: ${item.codigo})\n`;
+            mensaje += `  Stock disponible: ${item.stock_disponible}\n`;
+            mensaje += `  Cantidad solicitada: ${item.cantidad_solicitada}\n\n`;
+        });
+    }
+    
+    mensaje += `Contacta a un administrador para realizar esta venta.`;
+    
+    alert(mensaje);
 }
 
       // 9) Inicializar al cargar
@@ -655,10 +741,56 @@ function cerrarModal() {
       });
       inputDescuentoPct.addEventListener("input", () => {
         actualizarTotales();
-      });
-      //——————————————————————————————
+      });      //——————————————————————————————
       // FIN ESCUCHAR CAMBIOS EN DESCUENTOS
       //——————————————————————————————
+
+      //——————————————————————————————
+      // CONTROL DE ACCESO POR ROL
+      //——————————————————————————————
+      async function setupAccessControl() {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          window.location.href = "/";
+          return;
+        }
+
+        try {
+          const resp = await fetch(`${BACKEND_URL}/ventas/user/me/`, {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          
+          if (!resp.ok) {
+            localStorage.removeItem("token");
+            window.location.href = "/";
+            return;
+          }
+          
+          const user = await resp.json();
+          
+          // Si es empleado, ocultar enlaces de inventario y usuarios
+          if (user.role === 'EMPLOYEE') {
+            const inventarioLink = document.getElementById("inventarioLink");
+            const trabajadoresLink = document.getElementById("trabajadoresLink");
+            const inventarioLinkMobile = document.getElementById("inventarioLinkMobile");
+            const trabajadoresLinkMobile = document.getElementById("trabajadoresLinkMobile");
+            
+            if (inventarioLink) inventarioLink.style.display = "none";
+            if (trabajadoresLink) trabajadoresLink.style.display = "none";
+            if (inventarioLinkMobile) inventarioLinkMobile.style.display = "none";
+            if (trabajadoresLinkMobile) trabajadoresLinkMobile.style.display = "none";
+          }
+          
+        } catch (err) {
+          console.error("Error al verificar acceso:", err);
+          window.location.href = "/";
+        }
+      }
+
+      // Ejecutar control de acceso al cargar la página
+      document.addEventListener("DOMContentLoaded", () => {
+        setupAccessControl();
+      });
 
     </script>
   </body>

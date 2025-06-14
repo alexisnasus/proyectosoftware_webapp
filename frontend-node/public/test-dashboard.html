@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="max-w-7xl mx-auto p-6">
+        <h1 class="text-3xl font-semibold text-gray-800 mb-6">Test Dashboard</h1>
+        
+        <!-- Test Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h2 class="text-gray-600 text-sm font-medium">Transacciones Hoy</h2>
+                <p id="ventasHoy" class="mt-2 text-3xl font-bold text-gray-800">—</p>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h2 class="text-gray-600 text-sm font-medium">Monto Total Hoy</h2>
+                <p id="total-amount" class="mt-2 text-3xl font-bold text-gray-800">—</p>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h2 class="text-gray-600 text-sm font-medium">Productos en Inventario</h2>
+                <p id="totalProductos" class="mt-2 text-3xl font-bold text-gray-800">—</p>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h2 class="text-gray-600 text-sm font-medium">Usuario Actual</h2>
+                <p id="usuarioActual" class="mt-2 text-lg font-bold text-gray-800">—</p>
+            </div>
+        </div>
+        
+        <div class="mt-8">
+            <button id="testButton" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                Test API Call
+            </button>
+            <button id="clearButton" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 ml-2">
+                Clear Data
+            </button>
+        </div>
+        
+        <div class="mt-4">
+            <pre id="debugOutput" class="bg-gray-100 p-4 rounded text-sm"></pre>
+        </div>
+    </div>
+
+    <script>
+        const BACKEND_URL = "http://localhost:8000";
+        
+        function formatearMoneda(valor) {
+            return new Intl.NumberFormat("es-CL", {
+                style: "currency",
+                currency: "CLP",
+                minimumFractionDigits: 0
+            }).format(valor);
+        }
+        
+        function log(message) {
+            console.log(message);
+            const debugOutput = document.getElementById('debugOutput');
+            debugOutput.textContent += new Date().toLocaleTimeString() + ': ' + message + '\n';
+        }
+        
+        async function testDashboardAPI() {
+            log("Starting API test...");
+            
+            const token = localStorage.getItem("token");
+            if (!token) {
+                log("No token found in localStorage");
+                return;
+            }
+            
+            log("Token found: " + token.substring(0, 20) + "...");
+            
+            try {
+                const headers = { "Authorization": `Bearer ${token}` };
+                const resp = await fetch(`${BACKEND_URL}/ventas/dashboard/metrics/`, { headers });
+                
+                log("Response status: " + resp.status);
+                log("Response ok: " + resp.ok);
+                
+                if (!resp.ok) {
+                    throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+                }
+                
+                const data = await resp.json();
+                log("API Response: " + JSON.stringify(data, null, 2));
+                
+                // Update DOM elements
+                const ventasHoyElement = document.getElementById("ventasHoy");
+                const totalAmountElement = document.getElementById("total-amount");
+                const totalProductosElement = document.getElementById("totalProductos");
+                const usuarioActualElement = document.getElementById("usuarioActual");
+                
+                log("DOM elements found: " + JSON.stringify({
+                    ventasHoy: !!ventasHoyElement,
+                    totalAmount: !!totalAmountElement,
+                    totalProductos: !!totalProductosElement,
+                    usuarioActual: !!usuarioActualElement
+                }));
+                
+                if (ventasHoyElement) {
+                    ventasHoyElement.textContent = data.ventas_hoy.cantidad;
+                    log("Updated ventasHoy to: " + data.ventas_hoy.cantidad);
+                }
+                
+                if (totalAmountElement) {
+                    const formattedAmount = formatearMoneda(data.ventas_hoy.monto);
+                    totalAmountElement.textContent = formattedAmount;
+                    log("Updated total-amount to: " + formattedAmount);
+                }
+                
+                if (totalProductosElement) {
+                    totalProductosElement.textContent = data.total_productos;
+                    log("Updated totalProductos to: " + data.total_productos);
+                }
+                
+                if (usuarioActualElement) {
+                    usuarioActualElement.textContent = data.usuario_actual;
+                    log("Updated usuarioActual to: " + data.usuario_actual);
+                }
+                
+                log("All updates completed successfully!");
+                
+            } catch (error) {
+                log("Error: " + error.message);
+                console.error("Detailed error:", error);
+            }
+        }
+        
+        function clearData() {
+            document.getElementById("ventasHoy").textContent = "—";
+            document.getElementById("total-amount").textContent = "—";
+            document.getElementById("totalProductos").textContent = "—";
+            document.getElementById("usuarioActual").textContent = "—";
+            document.getElementById('debugOutput').textContent = "";
+            log("Data cleared");
+        }
+        
+        document.addEventListener("DOMContentLoaded", () => {
+            log("DOM loaded");
+            document.getElementById("testButton").addEventListener("click", testDashboardAPI);
+            document.getElementById("clearButton").addEventListener("click", clearData);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Cards Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="max-w-7xl mx-auto p-6">
+        <h1 class="text-3xl font-semibold text-gray-800 mb-6">Dashboard Cards Test</h1>
+        
+        <!-- Cards with exact same structure as original dashboard -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- CARD 1: Ventas del día (cantidad) -->
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h2 class="text-gray-600 text-sm font-medium">Transacciones Hoy</h2>
+                <p id="ventasHoy" class="mt-2 text-3xl font-bold text-gray-800">—</p>
+            </div>
+            <!-- CARD 2: Monto total del día -->
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h2 class="text-gray-600 text-sm font-medium">Monto Total Hoy</h2>
+                <p id="total-amount" class="mt-2 text-3xl font-bold text-gray-800">—</p>
+            </div>
+            <!-- CARD 3: Total Productos -->
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h2 class="text-gray-600 text-sm font-medium">Productos en Inventario</h2>
+                <p id="totalProductos" class="mt-2 text-3xl font-bold text-gray-800">—</p>
+            </div>
+            <!-- CARD 4: Usuario Actual -->
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h2 class="text-gray-600 text-sm font-medium">Usuario Actual</h2>
+                <p id="usuarioActual" class="mt-2 text-lg font-bold text-gray-800">—</p>
+            </div>
+        </div>
+        
+        <div class="mt-8 space-x-4">
+            <button id="testStatic" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                Test Static Data
+            </button>
+            <button id="testAPI" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                Test API Data
+            </button>
+            <button id="clearData" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                Clear
+            </button>
+        </div>
+        
+        <div class="mt-4">
+            <h2 class="text-lg font-bold mb-2">Debug Output</h2>
+            <textarea id="debugOutput" class="w-full h-64 p-2 bg-gray-100 rounded text-sm font-mono" readonly></textarea>
+        </div>
+    </div>
+
+    <script>
+        const BACKEND_URL = "http://localhost:8000";
+        
+        function formatearMoneda(valor) {
+            return new Intl.NumberFormat("es-CL", {
+                style: "currency",
+                currency: "CLP",
+                minimumFractionDigits: 0
+            }).format(valor);
+        }
+        
+        function log(message) {
+            console.log(message);
+            const debugOutput = document.getElementById('debugOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            debugOutput.value += `${timestamp}: ${message}\n`;
+            debugOutput.scrollTop = debugOutput.scrollHeight;
+        }
+        
+        function testStaticData() {
+            log("Testing static data injection...");
+            
+            const testData = {
+                ventas_hoy: {
+                    cantidad: 5,
+                    monto: 25000
+                },
+                total_productos: 10,
+                usuario_actual: "test_user"
+            };
+            
+            try {
+                document.getElementById("ventasHoy").textContent = testData.ventas_hoy.cantidad;
+                document.getElementById("total-amount").textContent = formatearMoneda(testData.ventas_hoy.monto);
+                document.getElementById("totalProductos").textContent = testData.total_productos;
+                document.getElementById("usuarioActual").textContent = testData.usuario_actual;
+                
+                log("Static data injection successful!");
+                log(`Data: ${JSON.stringify(testData, null, 2)}`);
+            } catch (error) {
+                log("Static data injection failed: " + error.message);
+            }
+        }
+        
+        async function testAPIData() {
+            log("Testing API data...");
+            
+            const token = localStorage.getItem("token");
+            if (!token) {
+                log("No token found. Please login first.");
+                return;
+            }
+            
+            try {
+                const headers = { "Authorization": `Bearer ${token}` };
+                log("Making API request...");
+                
+                const resp = await fetch(`${BACKEND_URL}/ventas/dashboard/metrics/`, { headers });
+                log(`Response status: ${resp.status} ${resp.statusText}`);
+                
+                if (!resp.ok) {
+                    throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+                }
+                
+                const data = await resp.json();
+                log(`API Response: ${JSON.stringify(data, null, 2)}`);
+                
+                // Update elements
+                document.getElementById("ventasHoy").textContent = data.ventas_hoy.cantidad;
+                document.getElementById("total-amount").textContent = formatearMoneda(data.ventas_hoy.monto);
+                document.getElementById("totalProductos").textContent = data.total_productos;
+                document.getElementById("usuarioActual").textContent = data.usuario_actual;
+                
+                log("API data injection successful!");
+                
+            } catch (error) {
+                log("API data injection failed: " + error.message);
+                console.error("Full error:", error);
+            }
+        }
+        
+        function clearData() {
+            document.getElementById("ventasHoy").textContent = "—";
+            document.getElementById("total-amount").textContent = "—";
+            document.getElementById("totalProductos").textContent = "—";
+            document.getElementById("usuarioActual").textContent = "—";
+            log("Data cleared");
+        }
+        
+        document.addEventListener("DOMContentLoaded", () => {
+            log("DOM loaded");
+            
+            document.getElementById("testStatic").addEventListener("click", testStaticData);
+            document.getElementById("testAPI").addEventListener("click", testAPIData);
+            document.getElementById("clearData").addEventListener("click", clearData);
+            
+            // Check if token exists
+            const token = localStorage.getItem("token");
+            if (token) {
+                log("Token found: " + token.substring(0, 20) + "...");
+            } else {
+                log("No token found. Please login at /login-test.html first.");
+            }
+        });
+    </script>
+</body>
+</html>

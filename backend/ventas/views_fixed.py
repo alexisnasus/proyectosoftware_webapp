@@ -258,19 +258,13 @@ class ProductoDetailAPIView(APIView):
 
 class StockListCreateAPIView(APIView):
     permission_classes = [IsAuthenticated]
-    
+
     @swagger_auto_schema(
         security=[{"Bearer": []}],
         responses={200: StockSerializer(many=True)}
     )
     def get(self, request):
         stocks = Stock.objects.all()
-        
-        # Filtrar por producto si se proporciona el parámetro
-        producto_id = request.query_params.get('producto')
-        if producto_id:
-            stocks = stocks.filter(producto_id=producto_id)
-        
         serializer = StockSerializer(stocks, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -356,22 +350,18 @@ class TransaccionCreateAPIView(APIView):
         items_data = data['items']
         porcentaje_descuento = data.get('porcentaje_descuento', 0)
 
-        # Validar que todos los productos existan (usar codigo en lugar de producto_id)
-        productos_codigos = [item['codigo'] for item in items_data]
-        productos = {p.codigo: p for p in Producto.objects.filter(codigo__in=productos_codigos)}
+        # Validar que todos los productos existan
+        productos_ids = [item['producto_id'] for item in items_data]
+        productos = {p.id: p for p in Producto.objects.filter(id__in=productos_ids)}
         
-        if len(productos) != len(productos_codigos):
-            codigos_no_encontrados = set(productos_codigos) - set(productos.keys())
-            return Response({
-                "error": "Algunos productos no existen", 
-                "codigos_no_encontrados": list(codigos_no_encontrados)
-            }, status=status.HTTP_400_BAD_REQUEST)
+        if len(productos) != len(productos_ids):
+            return Response({"error": "Algunos productos no existen"}, status=status.HTTP_400_BAD_REQUEST)
 
         # Validar stock solo para empleados (los admins pueden vender sin stock)
         items_sin_stock = []
         if request.user.role == 'EMPLOYEE':
             for item_data in items_data:
-                producto = productos[item_data['codigo']]
+                producto = productos[item_data['producto_id']]
                 try:
                     stock = Stock.objects.get(producto=producto)
                     if stock.cantidad < item_data['cantidad']:
@@ -390,43 +380,43 @@ class TransaccionCreateAPIView(APIView):
             if items_sin_stock:
                 return Response({
                     "error": "Stock insuficiente",
-                    "tipo_error": "STOCK_INSUFICIENTE_EMPLEADO",
                     "items_sin_stock": items_sin_stock
-                }, status=status.HTTP_403_FORBIDDEN)        # Crear transacción
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Crear transacción
         try:
             with transaction.atomic():
-                # Calcular descuento en valor absoluto primero
-                subtotal_temp = 0
-                for item_data in items_data:
-                    producto = productos[item_data['codigo']]
-                    cantidad = item_data['cantidad']
-                    item_subtotal = producto.precio * cantidad
-                    subtotal_temp += item_subtotal
-                
-                descuento_valor = (subtotal_temp * porcentaje_descuento) / 100
-                
-                # Crear la transacción con el descuento calculado
                 transaccion = Transaccion.objects.create(
                     usuario=request.user,
                     porcentaje_descuento=porcentaje_descuento,
-                    descuento_carrito=descuento_valor,
                     estado='PENDIENTE'
                 )
 
-                # Crear los items
+                subtotal = 0
                 for item_data in items_data:
-                    producto = productos[item_data['codigo']]
+                    producto = productos[item_data['producto_id']]
+                    precio_unitario = item_data.get('precio_unitario', producto.precio)
                     cantidad = item_data['cantidad']
+                    
+                    item_subtotal = precio_unitario * cantidad
+                    subtotal += item_subtotal
 
-                    # Crear el Item con información histórica del producto
                     Item.objects.create(
                         transaccion=transaccion,
                         producto=producto,
-                        producto_codigo=producto.codigo,
-                        producto_nombre=producto.nombre,
-                        producto_precio=producto.precio,
-                        cantidad=cantidad
+                        cantidad=cantidad,
+                        precio_unitario=precio_unitario,
+                        subtotal=item_subtotal
                     )
+
+                # Calcular descuento y total final
+                descuento = (subtotal * porcentaje_descuento) / 100
+                total_final = subtotal - descuento
+
+                transaccion.subtotal = subtotal
+                transaccion.descuento = descuento
+                transaccion.total_final = total_final
+                transaccion.save()
 
                 serializer = TransaccionDetailSerializer(transaccion)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -460,8 +450,10 @@ class ConfirmarTransaccionAPIView(APIView):
             return Response({"error": "La transacción ya está confirmada"}, status=status.HTTP_400_BAD_REQUEST)
 
         usuario = request.user
-        items_sin_stock = []        # Actualizar stock
-        for item in transaccion.item_set.all():
+        items_sin_stock = []
+
+        # Actualizar stock
+        for item in transaccion.items.all():
             try:
                 stock = Stock.objects.get(producto=item.producto)
                 # Verificar stock solo para empleados
@@ -582,9 +574,9 @@ class SalesChartDataView(APIView):
         responses={200: "Datos del gráfico de ventas"}
     )
     def get(self, request):
-      
         period = request.query_params.get('period', 'day')
         now = timezone.now()
+        
         labels = []
         data = []
         
@@ -658,6 +650,7 @@ class SalesChartDataView(APIView):
             'labels': labels,
             'data': data
         })
+
 # ------------------------------
 # Historial de Ventas
 # ------------------------------
@@ -696,14 +689,15 @@ class HistorialVentasAPIView(APIView):
                 'id': transaccion.id,
                 'fecha': transaccion.confirmado_en,
                 'vendedor': transaccion.usuario.username,
-                'total': float(transaccion.total_final),                'items': [
+                'total': float(transaccion.total_final),
+                'items': [
                     {
-                        'producto': item.producto.nombre if item.producto else item.producto_nombre,
+                        'producto': item.producto.nombre,
                         'cantidad': item.cantidad,
-                        'precio_unitario': float(item.producto_precio) if item.producto_precio else 0,
+                        'precio_unitario': float(item.precio_unitario),
                         'subtotal': float(item.subtotal)
                     }
-                    for item in transaccion.item_set.all()
+                    for item in transaccion.items.all()
                 ]
             })
         

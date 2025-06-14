@@ -80,11 +80,15 @@ class Transaccion(models.Model):
 
 
 #
-# --- Ítem de la transacción (antes tenía campo 'descuento', que ahora removemos) ---
+# --- Ítem de la transacción (modificado para permitir eliminación de productos) ---
 #
 class Item(models.Model):
     transaccion = models.ForeignKey(Transaccion, on_delete=models.CASCADE)
-    producto = models.ForeignKey(Producto, on_delete=models.PROTECT)
+    producto = models.ForeignKey(Producto, on_delete=models.SET_NULL, null=True, blank=True)
+    # Campos para preservar información histórica cuando se elimina el producto
+    producto_codigo = models.CharField(max_length=100, null=True, blank=True)
+    producto_nombre = models.CharField(max_length=300, null=True, blank=True)
+    producto_precio = models.IntegerField(null=True, blank=True)
     cantidad = models.PositiveIntegerField(default=1)
 
     class Meta:
