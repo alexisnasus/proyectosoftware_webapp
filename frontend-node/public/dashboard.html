@@ -123,6 +123,7 @@
       // BASE URL de tu API Django
       const BACKEND_URL = "http://localhost:8000"; // Asegúrate que este sea el puerto correcto de tu backend
       let currentUser = null;
+      
       // Función para formatear moneda
       function formatearMoneda(valor) {
         return new Intl.NumberFormat("es-CL", {
@@ -131,15 +132,12 @@
           minimumFractionDigits: 0
         }).format(valor);
       }
-      document.addEventListener("DOMContentLoaded", async () => {
-        await loadCurrentUser();
-        await loadDashboardData();
-        setupAccessControl();
-      });
 
       async function loadCurrentUser() {
+        console.log("Loading current user...");
         const token = localStorage.getItem("token");
         if (!token) {
+          console.log("No token found in loadCurrentUser");
           window.location.href = "/";
           return;
         }
@@ -149,13 +147,17 @@
             headers: { "Authorization": `Bearer ${token}` }
           });
           
+          console.log("User response status:", respUser.status);
+          
           if (!respUser.ok) {
+            console.log("User request failed, removing token and redirecting");
             localStorage.removeItem("token");
             window.location.href = "/";
             return;
           }
           
           currentUser = await respUser.json();
+          console.log("Current user loaded:", currentUser);
           
           // Mostrar información del usuario en la navbar y dashboard
           const fullName = `${currentUser.first_name} ${currentUser.last_name}`.trim();
@@ -166,6 +168,8 @@
           document.getElementById("usuarioActual").textContent = displayName;
           document.getElementById("rolUsuario").textContent = roleName;
           
+          console.log("User info updated in DOM");
+          
         } catch (err) {
           console.error("Error al cargar usuario actual:", err);
           window.location.href = "/";
@@ -173,6 +177,7 @@
       }
 
       function setupAccessControl() {
+        console.log("Setting up access control for user:", currentUser);
         if (!currentUser) return;
 
         // Si es empleado, ocultar enlaces de inventario y usuarios
@@ -186,14 +191,17 @@
           if (trabajadoresLink) trabajadoresLink.style.display = "none";
           if (inventarioLinkMobile) inventarioLinkMobile.style.display = "none";
           if (trabajadoresLinkMobile) trabajadoresLinkMobile.style.display = "none";
+          
+          console.log("Access control applied for EMPLOYEE role");
         }
       }
 
       async function loadDashboardData() {
+        console.log("Loading dashboard data...");
         const token = localStorage.getItem("token");
         if (!token) {
-          // Redirigir a login si no hay token
-          window.location.href = "/login.html"; // o tu página de login
+          console.log("No token found in loadDashboardData");
+          window.location.href = "/";
           return;
         }
         const headers = { "Authorization": `Bearer ${token}` };
@@ -201,14 +209,14 @@
         // Inicializar gráfico
         const ctx = document.getElementById('salesChart').getContext('2d');
         let salesChart = new Chart(ctx, {
-          type: 'bar', // o 'line'
+          type: 'bar',
           data: {
             labels: [],
             datasets: [{
               label: 'Ventas',
               data: [],
-              backgroundColor: 'rgba(54, 162, 235, 0.6)', // Color de las barras
-              borderColor: 'rgba(54, 162, 235, 1)',     // Color del borde
+              backgroundColor: 'rgba(54, 162, 235, 0.6)',
+              borderColor: 'rgba(54, 162, 235, 1)',
               borderWidth: 1
             }]
           },
@@ -218,9 +226,7 @@
             scales: {
               y: {
                 beginAtZero: true,
-                // max: se establecerá dinámicamente
                 ticks: {
-                  // stepSize: se puede ajustar o dejar automático
                   callback: function (value) {
                     return formatearMoneda(value);
                   }
@@ -233,7 +239,7 @@
               x: {
                 title: {
                   display: true,
-                  text: 'Período' // Se actualizará según el período
+                  text: 'Período'
                 }
               }
             },
@@ -256,41 +262,96 @@
 
         // Función para cargar datos de las cards
         async function loadCardData() {
+          console.log("Starting loadCardData...");
+          
+          // Ensure DOM elements exist
+          const elements = {
+            ventasHoy: document.getElementById("ventasHoy"),
+            totalAmount: document.getElementById("total-amount"),
+            totalProductos: document.getElementById("totalProductos")
+          };
+          
+          console.log("DOM elements found:", {
+            ventasHoy: !!elements.ventasHoy,
+            totalAmount: !!elements.totalAmount,
+            totalProductos: !!elements.totalProductos
+          });
+          
+          // Check if elements exist
+          if (!elements.ventasHoy || !elements.totalAmount || !elements.totalProductos) {
+            console.error("Required DOM elements not found!", elements);
+            return;
+          }
+          
           try {
+            console.log("Fetching dashboard metrics...");
             const resp = await fetch(`${BACKEND_URL}/ventas/dashboard/metrics/`, { headers });
+            console.log("Response received:", resp.status, resp.statusText);
+            
             if (!resp.ok) {
-              if (resp.status === 401) window.location.href = "/login.html";
-              throw new Error(`Error al cargar métricas del dashboard: ${resp.statusText}`);
+              if (resp.status === 401) {
+                console.log("Unauthorized, redirecting to login");
+                window.location.href = "/";
+                return;
+              }
+              throw new Error(`Error al cargar métricas del dashboard: ${resp.status} ${resp.statusText}`);
             }
+            
             const data = await resp.json();
-
-            document.getElementById("ventasHoy").textContent = data.ventas_hoy.cantidad;
-            document.getElementById("total-amount").textContent = formatearMoneda(data.ventas_hoy.monto);
-            document.getElementById("totalProductos").textContent = data.total_productos;
-            document.getElementById("usuarioActual").textContent = data.usuario_actual;
-
+            console.log("Dashboard metrics data:", data);
+            
+            // Validate data structure
+            if (!data || !data.ventas_hoy) {
+              throw new Error("Invalid data structure received from API");
+            }
+            
+            // Update DOM elements with validation
+            const ventasValue = data.ventas_hoy.cantidad !== undefined ? data.ventas_hoy.cantidad : 0;
+            const montoValue = data.ventas_hoy.monto !== undefined ? data.ventas_hoy.monto : 0;
+            const productosValue = data.total_productos !== undefined ? data.total_productos : 0;
+            
+            elements.ventasHoy.textContent = ventasValue.toString();
+            elements.totalAmount.textContent = formatearMoneda(montoValue);
+            elements.totalProductos.textContent = productosValue.toString();
+            
+            console.log("DOM updated successfully:", {
+              ventasHoy: ventasValue,
+              totalAmount: formatearMoneda(montoValue),
+              totalProductos: productosValue
+            });
+            
           } catch (err) {
             console.error("Error en loadCardData:", err);
-            // Considera mostrar un mensaje de error al usuario en la UI
+            
+            // Show error values and ensure elements are not showing em dashes
+            elements.ventasHoy.textContent = "0";
+            elements.totalAmount.textContent = formatearMoneda(0);
+            elements.totalProductos.textContent = "0";
+            
+            console.error("Failed to load dashboard data. Please refresh the page.");
           }
         }
 
         // Función para cargar datos del gráfico
         async function loadChartData(period = 'day') {
+          console.log("Loading chart data for period:", period);
           try {
             const resp = await fetch(`${BACKEND_URL}/ventas/metrics/chart/?period=${period}`, { headers });
+            console.log("Chart data response:", resp.status, resp.statusText);
+            
             if (!resp.ok) {
-              if (resp.status === 401) window.location.href = "/login.html";
+              if (resp.status === 401) window.location.href = "/";
               throw new Error(`Error al cargar datos del gráfico: ${resp.statusText}`);
             }
             const chartData = await resp.json();
+            console.log("Chart data received:", chartData);
 
             salesChart.data.labels = chartData.labels;
-            salesChart.data.datasets[0].data = chartData.data; // Asumiendo un solo dataset
+            salesChart.data.datasets[0].data = chartData.data;
 
             // Calcular el valor máximo para la escala Y
             const maxValue = chartData.data.length > 0 ? Math.max(...chartData.data) : 0;
-            salesChart.options.scales.y.max = maxValue > 0 ? maxValue * 1.1 : 10000; // Añade un 10% de padding o un default
+            salesChart.options.scales.y.max = maxValue > 0 ? maxValue * 1.1 : 10000;
 
             // Ajustar título del eje X según el período
             let xAxisTitle = 'Horas';
@@ -314,19 +375,47 @@
 
           } catch (err) {
             console.error(`Error en loadChartData (periodo ${period}):`, err);
-            // Considera mostrar un mensaje de error al usuario en la UI
+            // Show a default empty chart on error
+            salesChart.data.labels = [];
+            salesChart.data.datasets[0].data = [];
+            salesChart.update();
           }
         }
 
         // Cargar datos iniciales
+        console.log("Loading initial data...");
         await loadCardData();
-        await loadChartData('day'); // Carga el gráfico del día por defecto
+        await loadChartData('day');
 
         // Event listeners para los botones de período del gráfico
         document.getElementById('btn-day').addEventListener('click', () => loadChartData('day'));
         document.getElementById('btn-week').addEventListener('click', () => loadChartData('week'));
         document.getElementById('btn-month').addEventListener('click', () => loadChartData('month'));
         document.getElementById('btn-year').addEventListener('click', () => loadChartData('year'));
+        
+        console.log("Dashboard data loading complete");
+      }
+
+      document.addEventListener("DOMContentLoaded", async () => {
+        console.log("DOM loaded, initializing dashboard...");
+        
+        const token = localStorage.getItem("token");
+        if (!token) {
+          console.log("No token found, redirecting to login");
+          window.location.href = "/";
+          return;
+        }
+        console.log("Token found:", token.substring(0, 20) + "...");
+
+        try {
+          await loadCurrentUser();
+          await loadDashboardData();
+          setupAccessControl();
+          console.log("Dashboard initialization complete");
+        } catch (error) {
+          console.error("Dashboard initialization failed:", error);
+          alert("Error al cargar el dashboard. Por favor, intente nuevamente.");
+        }
       });
     </script>
   </body>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-md w-96">
+        <h1 class="text-2xl font-bold mb-6">Login Test</h1>
+        
+        <form id="loginForm" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Usuario</label>
+                <input type="text" id="username" value="admin" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Contraseña</label>
+                <input type="password" id="password" value="admin123" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" required>
+            </div>
+            <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">
+                Iniciar Sesión
+            </button>
+        </form>
+        
+        <div class="mt-4">
+            <a href="/test-dashboard.html" class="text-blue-600 hover:text-blue-800">Go to Test Dashboard</a>
+        </div>
+        
+        <div class="mt-4">
+            <pre id="debugOutput" class="bg-gray-100 p-4 rounded text-sm h-32 overflow-auto"></pre>
+        </div>
+    </div>
+
+    <script>
+        const BACKEND_URL = "http://localhost:8000";
+        
+        function log(message) {
+            console.log(message);
+            const debugOutput = document.getElementById('debugOutput');
+            debugOutput.textContent += new Date().toLocaleTimeString() + ': ' + message + '\n';
+            debugOutput.scrollTop = debugOutput.scrollHeight;
+        }
+        
+        document.addEventListener("DOMContentLoaded", () => {
+            log("Login page loaded");
+            
+            // Check if already logged in
+            const token = localStorage.getItem("token");
+            if (token) {
+                log("Already logged in. Token: " + token.substring(0, 20) + "...");
+            }
+            
+            document.getElementById("loginForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                log("Login form submitted");
+                
+                const username = document.getElementById("username").value;
+                const password = document.getElementById("password").value;
+                
+                try {
+                    log("Sending login request...");
+                    const resp = await fetch(`${BACKEND_URL}/ventas/user/login/`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ username, password })
+                    });
+                    
+                    log("Response status: " + resp.status);
+                    
+                    if (!resp.ok) {
+                        throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+                    }
+                    
+                    const data = await resp.json();
+                    log("Login successful!");
+                    log("Token: " + data.access.substring(0, 20) + "...");
+                    
+                    localStorage.setItem("token", data.access);
+                    log("Token saved to localStorage");
+                    
+                } catch (error) {
+                    log("Login error: " + error.message);
+                    console.error("Detailed error:", error);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
