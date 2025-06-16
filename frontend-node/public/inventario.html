@@ -424,14 +424,12 @@
                 alert("Error al cargar datos del producto.");
               }
             });
-          });
-
-          document.querySelectorAll(".btnEliminar").forEach((btn) => {
+          });          document.querySelectorAll(".btnEliminar").forEach((btn) => {
             btn.addEventListener("click", async (e) => {
               const id = e.currentTarget.dataset.id;
-              if (!confirm("¿Eliminar este producto?")) return;
+              if (!confirm("¿Eliminar este producto del inventario? (Se mantendrá en el historial de ventas)")) return;
               try {
-                // Solo eliminar el producto - el stock se eliminará automáticamente por CASCADE
+                // Usar soft delete - el producto se marca como eliminado pero no se borra físicamente
                 const response = await fetch(`${BACKEND_URL}/ventas/productos/${id}/`, {
                   method: "DELETE",
                   headers,
@@ -439,12 +437,8 @@
                 
                 if (response.status === 204) {
                   // Eliminación exitosa
-                  alert("Producto eliminado correctamente");
+                  alert("Producto eliminado del inventario correctamente");
                   cargarInventario();
-                } else if (response.status === 400) {
-                  // Producto protegido
-                  const errorData = await response.json();
-                  alert(`❌ ${errorData.error}\n\n${errorData.detalle}\n\nProducto: ${errorData.nombre_producto} (${errorData.codigo_producto})\n\n💡 ${errorData.sugerencia}`);
                 } else {
                   // Otros errores
                   throw new Error(`Error HTTP: ${response.status}`);

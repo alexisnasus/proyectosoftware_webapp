@@ -187,7 +187,8 @@ class ProductoListCreateAPIView(APIView):
         responses={200: ProductoSerializer(many=True)}
     )
     def get(self, request):
-        productos = Producto.objects.all()
+        # Solo mostrar productos no eliminados
+        productos = Producto.objects.filter(eliminado=False)
         serializer = ProductoSerializer(productos, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -216,7 +217,7 @@ class ProductoDetailAPIView(APIView):
         responses={200: ProductoSerializer, 404: "Producto no encontrado"}
     )
     def get(self, request, pk):
-        producto = get_object_or_404(Producto, pk=pk)
+        producto = get_object_or_404(Producto, pk=pk, eliminado=False)
         serializer = ProductoSerializer(producto)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -231,14 +232,12 @@ class ProductoDetailAPIView(APIView):
             return Response({"error": "Solo los administradores pueden editar productos"}, 
                           status=status.HTTP_403_FORBIDDEN)
         
-        producto = get_object_or_404(Producto, pk=pk)
+        producto = get_object_or_404(Producto, pk=pk, eliminado=False)
         serializer = ProductoSerializer(producto, data=request.data, partial=True)
         if serializer.is_valid():
             producto = serializer.save()
             return Response(ProductoSerializer(producto).data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    @swagger_auto_schema(
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)    @swagger_auto_schema(
         security=[{"Bearer": []}],
         responses={204: "Producto eliminado", 404: "Producto no encontrado"}
     )
@@ -248,8 +247,11 @@ class ProductoDetailAPIView(APIView):
             return Response({"error": "Solo los administradores pueden eliminar productos"}, 
                           status=status.HTTP_403_FORBIDDEN)
         
-        producto = get_object_or_404(Producto, pk=pk)
-        producto.delete()
+        producto = get_object_or_404(Producto, pk=pk, eliminado=False)
+        # Soft delete: marcar como eliminado en lugar de borrar físicamente
+        producto.eliminado = True
+        producto.eliminado_en = timezone.now()
+        producto.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 # ------------------------------
@@ -354,11 +356,9 @@ class TransaccionCreateAPIView(APIView):
 
         data = serializer.validated_data
         items_data = data['items']
-        porcentaje_descuento = data.get('porcentaje_descuento', 0)
-
-        # Validar que todos los productos existan (usar codigo en lugar de producto_id)
+        porcentaje_descuento = data.get('porcentaje_descuento', 0)        # Validar que todos los productos existan y no estén eliminados (usar codigo en lugar de producto_id)
         productos_codigos = [item['codigo'] for item in items_data]
-        productos = {p.codigo: p for p in Producto.objects.filter(codigo__in=productos_codigos)}
+        productos = {p.codigo: p for p in Producto.objects.filter(codigo__in=productos_codigos, eliminado=False)}
         
         if len(productos) != len(productos_codigos):
             codigos_no_encontrados = set(productos_codigos) - set(productos.keys())
@@ -518,8 +518,7 @@ class MetricsView(APIView):
     )
     def get(self, request):
         hoy = timezone.now().date()
-        
-        # Ventas del día
+          # Ventas del día
         transacciones_hoy = Transaccion.objects.filter(
             estado='CONFIRMADA',
             confirmado_en__date=hoy
@@ -528,15 +527,16 @@ class MetricsView(APIView):
         cantidad_ventas = transacciones_hoy.count()
         monto_total = sum(t.total_final for t in transacciones_hoy)
         
-        # Total productos en inventario
-        total_productos = Producto.objects.count()
+        # Total productos en inventario (no eliminados)
+        total_productos = Producto.objects.filter(eliminado=False).count()
         
         return Response({
             'ventas_hoy': {
                 'cantidad': cantidad_ventas,
                 'monto': float(monto_total)
             },
-            'total_productos': total_productos
+            'total_productos': total_productos,
+            'usuario_actual': request.user.username
         })
 
 class DashboardMetricsView(APIView):
@@ -557,9 +557,8 @@ class DashboardMetricsView(APIView):
         
         cantidad_ventas = transacciones_hoy.count()
         monto_total = sum(t.total_final for t in transacciones_hoy)
-        
-        # Total productos en inventario
-        total_productos = Producto.objects.count()
+          # Total productos en inventario (no eliminados)
+        total_productos = Producto.objects.filter(eliminado=False).count()
         
         return Response({
             'ventas_hoy': {
