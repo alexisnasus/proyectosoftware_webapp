@@ -9,7 +9,9 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.contrib.auth import get_user_model
-from datetime import timedelta
+from django.db.models import Q
+from datetime import timedelta, datetime
+import pytz
 from .models import Transaccion, Producto, Stock, Item
 from drf_yasg import openapi
 
@@ -187,7 +189,17 @@ class ProductoListCreateAPIView(APIView):
         responses={200: ProductoSerializer(many=True)}
     )
     def get(self, request):
-        productos = Producto.objects.all()
+        # Solo mostrar productos no eliminados, ordenados por fecha de actualización (más recientes primero)
+        productos = Producto.objects.filter(eliminado=False).order_by('-actualizado_en', '-creado_en')
+        
+        # Filtrar por código si se proporciona como parámetro
+        codigo_param = request.query_params.get('codigo')
+        if codigo_param:
+            productos = productos.filter(
+                Q(codigo__icontains=codigo_param) | 
+                Q(nombre__icontains=codigo_param)
+            )
+        
         serializer = ProductoSerializer(productos, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -216,7 +228,7 @@ class ProductoDetailAPIView(APIView):
         responses={200: ProductoSerializer, 404: "Producto no encontrado"}
     )
     def get(self, request, pk):
-        producto = get_object_or_404(Producto, pk=pk)
+        producto = get_object_or_404(Producto, pk=pk, eliminado=False)
         serializer = ProductoSerializer(producto)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -231,14 +243,12 @@ class ProductoDetailAPIView(APIView):
             return Response({"error": "Solo los administradores pueden editar productos"}, 
                           status=status.HTTP_403_FORBIDDEN)
         
-        producto = get_object_or_404(Producto, pk=pk)
+        producto = get_object_or_404(Producto, pk=pk, eliminado=False)
         serializer = ProductoSerializer(producto, data=request.data, partial=True)
         if serializer.is_valid():
             producto = serializer.save()
             return Response(ProductoSerializer(producto).data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    @swagger_auto_schema(
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)    @swagger_auto_schema(
         security=[{"Bearer": []}],
         responses={204: "Producto eliminado", 404: "Producto no encontrado"}
     )
@@ -248,8 +258,11 @@ class ProductoDetailAPIView(APIView):
             return Response({"error": "Solo los administradores pueden eliminar productos"}, 
                           status=status.HTTP_403_FORBIDDEN)
         
-        producto = get_object_or_404(Producto, pk=pk)
-        producto.delete()
+        producto = get_object_or_404(Producto, pk=pk, eliminado=False)
+        # Soft delete: marcar como eliminado en lugar de borrar físicamente
+        producto.eliminado = True
+        producto.eliminado_en = timezone.now()
+        producto.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 # ------------------------------
@@ -354,11 +367,9 @@ class TransaccionCreateAPIView(APIView):
 
         data = serializer.validated_data
         items_data = data['items']
-        porcentaje_descuento = data.get('porcentaje_descuento', 0)
-
-        # Validar que todos los productos existan (usar codigo en lugar de producto_id)
+        porcentaje_descuento = data.get('porcentaje_descuento', 0)        # Validar que todos los productos existan y no estén eliminados (usar codigo en lugar de producto_id)
         productos_codigos = [item['codigo'] for item in items_data]
-        productos = {p.codigo: p for p in Producto.objects.filter(codigo__in=productos_codigos)}
+        productos = {p.codigo: p for p in Producto.objects.filter(codigo__in=productos_codigos, eliminado=False)}
         
         if len(productos) != len(productos_codigos):
             codigos_no_encontrados = set(productos_codigos) - set(productos.keys())
@@ -505,6 +516,74 @@ class ConfirmarTransaccionAPIView(APIView):
             'items_sin_stock': items_sin_stock if usuario.role == 'ADMIN' and items_sin_stock else None
         }, status=status.HTTP_200_OK)
 
+class TransaccionDetalleAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        security=[{"Bearer": []}],
+        responses={200: "Detalle de transacción", 404: "Transacción no encontrada"}
+    )
+    def get(self, request, transaccion_id):
+        """Obtener detalles completos de una transacción específica"""
+        try:
+            transaccion = Transaccion.objects.get(id=transaccion_id, estado='CONFIRMADA')
+        except Transaccion.DoesNotExist:
+            return Response(
+                {"error": "Transacción no encontrada"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Obtener información del vendedor
+        vendedor_info = {
+            'id': transaccion.usuario.id,
+            'username': transaccion.usuario.username,
+            'nombre_completo': f"{transaccion.usuario.first_name} {transaccion.usuario.last_name}".strip(),
+            'role': transaccion.usuario.role
+        }
+        
+        # Obtener todos los items de la transacción
+        items = []
+        for item in transaccion.item_set.all():
+            items.append({
+                'id': item.id,
+                'producto_codigo': item.producto.codigo if item.producto else item.producto_codigo,
+                'producto_nombre': item.producto.nombre if item.producto else item.producto_nombre,
+                'cantidad': item.cantidad,
+                'precio_unitario': float(item.producto.precio) if item.producto else float(item.producto_precio or 0),
+                'subtotal': float(item.subtotal),
+                'producto_activo': item.producto is not None  # Para saber si el producto aún existe
+            })
+        
+        # Calcular totales y descuentos
+        total_sin_descuento = float(transaccion.total)
+        descuento_aplicado = float(transaccion.descuento_carrito)
+        porcentaje_descuento = float(transaccion.porcentaje_descuento)
+        total_final = float(transaccion.total_final)
+        
+        # Convertir fechas a zona horaria local
+        chile_tz = pytz.timezone('America/Santiago')
+        fecha_creacion = transaccion.creado_en.astimezone(chile_tz) if transaccion.creado_en else None
+        fecha_confirmacion = transaccion.confirmado_en.astimezone(chile_tz) if transaccion.confirmado_en else None
+        
+        detalle = {
+            'id': transaccion.id,
+            'estado': transaccion.estado,
+            'fecha_creacion': fecha_creacion.isoformat() if fecha_creacion else None,
+            'fecha_confirmacion': fecha_confirmacion.isoformat() if fecha_confirmacion else None,
+            'fecha_creacion_local': fecha_creacion.strftime('%d/%m/%Y %H:%M:%S') if fecha_creacion else None,
+            'fecha_confirmacion_local': fecha_confirmacion.strftime('%d/%m/%Y %H:%M:%S') if fecha_confirmacion else None,
+            'vendedor': vendedor_info,
+            'items': items,
+            'total_sin_descuento': total_sin_descuento,
+            'descuento_aplicado': descuento_aplicado,
+            'porcentaje_descuento': porcentaje_descuento,
+            'total_final': total_final,
+            'cantidad_items': len(items),
+            'cantidad_productos': sum(item['cantidad'] for item in items)
+        }
+        
+        return Response(detalle, status=status.HTTP_200_OK)
+
 # ------------------------------
 # Métricas y Dashboard
 # ------------------------------
@@ -517,26 +596,38 @@ class MetricsView(APIView):
         responses={200: "Métricas básicas"}
     )
     def get(self, request):
-        hoy = timezone.now().date()
+        # Obtener timezone de Chile
+        chile_tz = pytz.timezone('America/Santiago')
+        now_chile = timezone.now().astimezone(chile_tz)
+        hoy_chile = now_chile.date()
         
-        # Ventas del día
+        # Calcular inicio y fin del día en Chile, convertir a UTC para la consulta
+        inicio_dia_chile = chile_tz.localize(datetime.combine(hoy_chile, datetime.min.time()))
+        fin_dia_chile = chile_tz.localize(datetime.combine(hoy_chile, datetime.max.time()))
+        
+        inicio_dia_utc = inicio_dia_chile.astimezone(pytz.UTC)
+        fin_dia_utc = fin_dia_chile.astimezone(pytz.UTC)
+        
+        # Ventas del día en Chile
         transacciones_hoy = Transaccion.objects.filter(
             estado='CONFIRMADA',
-            confirmado_en__date=hoy
+            confirmado_en__gte=inicio_dia_utc,
+            confirmado_en__lte=fin_dia_utc
         )
         
         cantidad_ventas = transacciones_hoy.count()
         monto_total = sum(t.total_final for t in transacciones_hoy)
         
-        # Total productos en inventario
-        total_productos = Producto.objects.count()
+        # Total productos en inventario (no eliminados)
+        total_productos = Producto.objects.filter(eliminado=False).count()
         
         return Response({
             'ventas_hoy': {
                 'cantidad': cantidad_ventas,
                 'monto': float(monto_total)
             },
-            'total_productos': total_productos
+            'total_productos': total_productos,
+            'usuario_actual': request.user.username
         })
 
 class DashboardMetricsView(APIView):
@@ -547,19 +638,29 @@ class DashboardMetricsView(APIView):
         responses={200: "Métricas del dashboard"}
     )
     def get(self, request):
-        hoy = timezone.now().date()
+        # Obtener timezone de Chile
+        chile_tz = pytz.timezone('America/Santiago')
+        now_chile = timezone.now().astimezone(chile_tz)
+        hoy_chile = now_chile.date()
         
-        # Ventas del día
+        # Calcular inicio y fin del día en Chile, convertir a UTC para la consulta
+        inicio_dia_chile = chile_tz.localize(datetime.combine(hoy_chile, datetime.min.time()))
+        fin_dia_chile = chile_tz.localize(datetime.combine(hoy_chile, datetime.max.time()))
+        
+        inicio_dia_utc = inicio_dia_chile.astimezone(pytz.UTC)
+        fin_dia_utc = fin_dia_chile.astimezone(pytz.UTC)
+        
+        # Ventas del día en Chile
         transacciones_hoy = Transaccion.objects.filter(
             estado='CONFIRMADA',
-            confirmado_en__date=hoy
+            confirmado_en__gte=inicio_dia_utc,
+            confirmado_en__lte=fin_dia_utc
         )
         
         cantidad_ventas = transacciones_hoy.count()
         monto_total = sum(t.total_final for t in transacciones_hoy)
-        
-        # Total productos en inventario
-        total_productos = Producto.objects.count()
+          # Total productos en inventario (no eliminados)
+        total_productos = Producto.objects.filter(eliminado=False).count()
         
         return Response({
             'ventas_hoy': {
@@ -578,77 +679,109 @@ class SalesChartDataView(APIView):
         manual_parameters=[
             openapi.Parameter('period', openapi.IN_QUERY, type=openapi.TYPE_STRING, 
                             description='Período: day, week, month, year')
-        ],
-        responses={200: "Datos del gráfico de ventas"}
+        ],        responses={200: "Datos del gráfico de ventas"}
     )
     def get(self, request):
-      
         period = request.query_params.get('period', 'day')
-        now = timezone.now()
+        
+        # Obtener timezone de Chile
+        chile_tz = pytz.timezone('America/Santiago')
+        now_chile = timezone.now().astimezone(chile_tz)
+        
         labels = []
         data = []
         
         if period == 'day':
-            # Datos por hora para el día actual
-            start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            # Datos por hora para el día actual en Chile
+            start_of_day_chile = now_chile.replace(hour=0, minute=0, second=0, microsecond=0)
+            
             for hour in range(24):
-                hour_start = start_of_day + timedelta(hours=hour)
-                hour_end = hour_start + timedelta(hours=1)
+                hour_start_chile = start_of_day_chile + timedelta(hours=hour)
+                hour_end_chile = hour_start_chile + timedelta(hours=1)
+                
+                # Convertir a UTC para la consulta
+                hour_start_utc = hour_start_chile.astimezone(pytz.UTC)
+                hour_end_utc = hour_end_chile.astimezone(pytz.UTC)
+                
                 sales = Transaccion.objects.filter(
                     estado='CONFIRMADA',
-                    confirmado_en__gte=hour_start,
-                    confirmado_en__lt=hour_end
+                    confirmado_en__gte=hour_start_utc,
+                    confirmado_en__lt=hour_end_utc
                 )
                 total = sum(t.total_final for t in sales)
                 data.append(float(total))
                 labels.append(f"{hour}:00")
         
         elif period == 'week':
-            # Datos por día para la semana actual
-            start_of_week = now - timedelta(days=now.weekday())
-            for day in range(7):
-                day_start = start_of_week + timedelta(days=day)
-                day_end = day_start + timedelta(days=1)
-                sales = Transaccion.objects.filter(
-                    estado='CONFIRMADA',
-                    confirmado_en__gte=day_start,
-                    confirmado_en__lt=day_end
-                )
-                total = sum(t.total_final for t in sales)
-                data.append(float(total))
-                labels.append(day_start.strftime('%a'))
-        
-        elif period == 'month':
-            # Datos por semana para el mes actual
-            start_of_month = now.replace(day=1)
-            next_month = start_of_month.replace(month=start_of_month.month+1) if start_of_month.month < 12 else start_of_month.replace(year=start_of_month.year+1, month=1)
+            # Datos por día para la semana actual en Chile
+            start_of_week_chile = now_chile - timedelta(days=now_chile.weekday())
+            start_of_week_chile = start_of_week_chile.replace(hour=0, minute=0, second=0, microsecond=0)
             
-            current_week = start_of_month
-            while current_week < next_month:
-                week_end = current_week + timedelta(weeks=1)
-                if week_end > next_month:
-                    week_end = next_month
+            for day in range(7):
+                day_start_chile = start_of_week_chile + timedelta(days=day)
+                day_end_chile = day_start_chile + timedelta(days=1)
+                
+                # Convertir a UTC para la consulta
+                day_start_utc = day_start_chile.astimezone(pytz.UTC)
+                day_end_utc = day_end_chile.astimezone(pytz.UTC)
                 
                 sales = Transaccion.objects.filter(
                     estado='CONFIRMADA',
-                    confirmado_en__gte=current_week,
-                    confirmado_en__lt=week_end
+                    confirmado_en__gte=day_start_utc,
+                    confirmado_en__lt=day_end_utc
                 )
                 total = sum(t.total_final for t in sales)
                 data.append(float(total))
-                labels.append(f"Semana {(current_week.day // 7) + 1}")
-                current_week = week_end
+                labels.append(day_start_chile.strftime('%a'))
         
-        elif period == 'year':
-            # Datos por mes para el año actual
-            start_of_year = now.replace(month=1, day=1)
-            for month in range(12):
-                month_start = start_of_year.replace(month=month+1)
-                month_end = month_start.replace(month=month+2) if month < 11 else month_start.replace(year=month_start.year+1, month=1)
+        elif period == 'month':
+            # Datos por semana para el mes actual en Chile
+            start_of_month_chile = now_chile.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            if start_of_month_chile.month == 12:
+                next_month_chile = start_of_month_chile.replace(year=start_of_month_chile.year+1, month=1)
+            else:
+                next_month_chile = start_of_month_chile.replace(month=start_of_month_chile.month+1)
+            
+            current_week = start_of_month_chile
+            week_number = 1
+            while current_week < next_month_chile:
+                week_end = current_week + timedelta(weeks=1)
+                if week_end > next_month_chile:
+                    week_end = next_month_chile
+                
+                # Convertir a UTC para la consulta
+                week_start_utc = current_week.astimezone(pytz.UTC)
+                week_end_utc = week_end.astimezone(pytz.UTC)
+                
                 sales = Transaccion.objects.filter(
                     estado='CONFIRMADA',
-                    confirmado_en__gte=month_start,
-                    confirmado_en__lt=month_end
+                    confirmado_en__gte=week_start_utc,
+                    confirmado_en__lt=week_end_utc
+                )
+                total = sum(t.total_final for t in sales)
+                data.append(float(total))
+                labels.append(f"Semana {week_number}")
+                current_week = week_end
+                week_number += 1
+        
+        elif period == 'year':
+            # Datos por mes para el año actual en Chile
+            start_of_year_chile = now_chile.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+            
+            for month in range(12):
+                month_start = start_of_year_chile.replace(month=month+1)
+                if month == 11:  # Diciembre
+                    month_end = month_start.replace(year=month_start.year+1, month=1)
+                else:
+                    month_end = month_start.replace(month=month+2)
+                  # Convertir a UTC para la consulta
+                month_start_utc = month_start.astimezone(pytz.UTC)
+                month_end_utc = month_end.astimezone(pytz.UTC)
+                
+                sales = Transaccion.objects.filter(
+                    estado='CONFIRMADA',
+                    confirmado_en__gte=month_start_utc,
+                    confirmado_en__lt=month_end_utc
                 )
                 total = sum(t.total_final for t in sales)
                 data.append(float(total))
@@ -688,15 +821,21 @@ class HistorialVentasAPIView(APIView):
             transacciones = transacciones.filter(confirmado_en__date__lte=fecha_fin)
         if vendedor:
             transacciones = transacciones.filter(usuario__username__icontains=vendedor)
-        
-        # Serializar datos
+          # Serializar datos
         historial = []
         for transaccion in transacciones:
+            # Convertir fecha a zona horaria local
+            chile_tz = pytz.timezone('America/Santiago')
+            fecha_local = transaccion.confirmado_en.astimezone(chile_tz) if transaccion.confirmado_en else None
+            
             historial.append({
                 'id': transaccion.id,
-                'fecha': transaccion.confirmado_en,
-                'vendedor': transaccion.usuario.username,
-                'total': float(transaccion.total_final),                'items': [
+                'creado_en': transaccion.creado_en.isoformat() if transaccion.creado_en else None,
+                'fecha': fecha_local.isoformat() if fecha_local else None,
+                'fecha_local': fecha_local.strftime('%d/%m/%Y %H:%M:%S') if fecha_local else None,
+                'vendedor': f"{transaccion.usuario.first_name} {transaccion.usuario.last_name}".strip() or transaccion.usuario.username,
+                'vendedor_username': transaccion.usuario.username,
+                'total': float(transaccion.total_final),'items': [
                     {
                         'producto': item.producto.nombre if item.producto else item.producto_nombre,
                         'cantidad': item.cantidad,

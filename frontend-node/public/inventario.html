@@ -51,9 +51,9 @@
           <a href="/historial-ventas" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Historial de Ventas</a>
             <a href="/trabajadores" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">
               Trabajadores
-            </a>
-          </div>
-          <div class="flex items-center">
+            </a>          </div>
+          <div class="flex items-center space-x-4">
+            <span id="userInfo" class="text-sm text-gray-300">—</span>
             <a href="/logout" class="text-sm font-medium text-red-400 hover:text-red-300">
               Cerrar sesión
             </a>
@@ -424,14 +424,12 @@
                 alert("Error al cargar datos del producto.");
               }
             });
-          });
-
-          document.querySelectorAll(".btnEliminar").forEach((btn) => {
+          });          document.querySelectorAll(".btnEliminar").forEach((btn) => {
             btn.addEventListener("click", async (e) => {
               const id = e.currentTarget.dataset.id;
-              if (!confirm("¿Eliminar este producto?")) return;
+              if (!confirm("¿Eliminar este producto del inventario? (Se mantendrá en el historial de ventas)")) return;
               try {
-                // Solo eliminar el producto - el stock se eliminará automáticamente por CASCADE
+                // Usar soft delete - el producto se marca como eliminado pero no se borra físicamente
                 const response = await fetch(`${BACKEND_URL}/ventas/productos/${id}/`, {
                   method: "DELETE",
                   headers,
@@ -439,12 +437,8 @@
                 
                 if (response.status === 204) {
                   // Eliminación exitosa
-                  alert("Producto eliminado correctamente");
+                  alert("Producto eliminado del inventario correctamente");
                   cargarInventario();
-                } else if (response.status === 400) {
-                  // Producto protegido
-                  const errorData = await response.json();
-                  alert(`❌ ${errorData.error}\n\n${errorData.detalle}\n\nProducto: ${errorData.nombre_producto} (${errorData.codigo_producto})\n\n💡 ${errorData.sugerencia}`);
                 } else {
                   // Otros errores
                   throw new Error(`Error HTTP: ${response.status}`);
@@ -569,8 +563,10 @@
             window.location.href = "/";
             return;
           }
+            const user = await resp.json();
           
-          const user = await resp.json();
+          // Mostrar información del usuario
+          document.getElementById("userInfo").textContent = `${user.first_name} ${user.last_name} (${user.role})`;
           
           // Si es empleado, mostrar mensaje de acceso denegado
           if (user.role === 'EMPLOYEE') {

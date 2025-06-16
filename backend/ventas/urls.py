@@ -8,9 +8,9 @@ from .views import (
     # Transacciones:
     TransaccionCreateAPIView,
     TransaccionDetailAPIView,
-    ConfirmarTransaccionAPIView,
-    # Nuevo endpoint historial
+    ConfirmarTransaccionAPIView,    # Nuevo endpoint historial
     HistorialVentasAPIView,
+    TransaccionDetalleAPIView,
     # CRUD Productos y Stocks:
     ProductoListCreateAPIView,
     ProductoDetailAPIView,
@@ -51,10 +51,9 @@ urlpatterns = [
     # 2) Obtener detalle de transacción (incluye items, totales y descuento):
     path('transacciones/<int:pk>/', TransaccionDetailAPIView.as_view(), name='transaccion-detail'),
     # 3) Confirmar la transacción (verificar stock y descontar):
-    path('transacciones/<int:pk>/confirmar/', ConfirmarTransaccionAPIView.as_view(), name='transaccion-confirmar'),
-
-    # Historial de Ventas
+    path('transacciones/<int:pk>/confirmar/', ConfirmarTransaccionAPIView.as_view(), name='transaccion-confirmar'),    # Historial de Ventas
     path('historial-ventas/', HistorialVentasAPIView.as_view(), name='historial-ventas'),
+    path('transacciones/<int:transaccion_id>/detalle/', TransaccionDetalleAPIView.as_view(), name='transaccion-detalle'),
 
     # --- CRUD Productos ---
     path('productos/', ProductoListCreateAPIView.as_view(), name='producto-list-create'),

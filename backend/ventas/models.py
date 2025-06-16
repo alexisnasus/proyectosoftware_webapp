@@ -26,6 +26,10 @@ class Producto(models.Model):
     nombre = models.CharField(max_length=300)
     # precio = models.DecimalField(max_digits=10, decimal_places=2) decimales
     precio = models.IntegerField()    # Antes DecimalField; ahora IntegerField
+    eliminado = models.BooleanField(default=False)  # Soft delete
+    eliminado_en = models.DateTimeField(null=True, blank=True)  # Fecha de eliminación
+    creado_en = models.DateTimeField(auto_now_add=True, null=True)  # Fecha de creación
+    actualizado_en = models.DateTimeField(auto_now=True, null=True)  # Fecha de última actualización
 
     
     class Meta:
