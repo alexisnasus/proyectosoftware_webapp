@@ -9,6 +9,7 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 from datetime import timedelta, datetime
 import pytz
 from .models import Transaccion, Producto, Stock, Item
@@ -188,8 +189,17 @@ class ProductoListCreateAPIView(APIView):
         responses={200: ProductoSerializer(many=True)}
     )
     def get(self, request):
-        # Solo mostrar productos no eliminados
-        productos = Producto.objects.filter(eliminado=False)
+        # Solo mostrar productos no eliminados, ordenados por fecha de actualización (más recientes primero)
+        productos = Producto.objects.filter(eliminado=False).order_by('-actualizado_en', '-creado_en')
+        
+        # Filtrar por código si se proporciona como parámetro
+        codigo_param = request.query_params.get('codigo')
+        if codigo_param:
+            productos = productos.filter(
+                Q(codigo__icontains=codigo_param) | 
+                Q(nombre__icontains=codigo_param)
+            )
+        
         serializer = ProductoSerializer(productos, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
