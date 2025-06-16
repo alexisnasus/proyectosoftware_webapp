@@ -85,17 +85,15 @@
               stroke-width="2"
               d="M21 21l-4.35-4.35M16.65 16.65A7 7 0 1110 3a7 7 0 016.65 13.65z"
             />
-          </svg>
-
-          <!-- CONTENEDOR DE SUGERENCIAS (oculto inicialmente) -->
+          </svg>          <!-- CONTENEDOR DE SUGERENCIAS (oculto inicialmente) -->
           <div
             id="contenedorSugerencias"
-            class="absolute z-10 w-full bg-white border border-gray-300 rounded-b-lg shadow-md mt-1 hidden max-h-60 overflow-auto"
+            class="absolute z-10 w-full bg-white border border-gray-300 rounded-b-lg shadow-lg mt-1 hidden max-h-60 overflow-auto"
           ></div>
         </div>
         <button
           id="btnAgregar"
-          class="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
           Agregar
         </button>
@@ -439,9 +437,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (err) {
           console.error("Error al actualizar stock:", err);
         }
-      }
-
-      // 7) Agregar producto al carrito (ahora buscamos por coincidencia exacta)
+      }      // 7) Agregar producto al carrito (solo con coincidencia exacta)
       btnAgregar.onclick = async () => {
         const codigoBuscado = inputBuscar.value.trim();
         if (!codigoBuscado) {
@@ -468,12 +464,24 @@ document.addEventListener('DOMContentLoaded', function() {
           // ———> BUSCAR COINCIDENCIA EXACTA (por código o por nombre)
           let prod = productos.find(
             (p) =>
-              p.codigo.toString() === codigoBuscado ||
+              p.codigo.toString().toLowerCase() === codigoBuscado.toLowerCase() ||
               p.nombre.toLowerCase() === codigoBuscado.toLowerCase()
           );
-          // Si no hay coincidencia exacta, tomar el primero como fallback
+            // Si NO hay coincidencia exacta, no agregar nada
           if (!prod) {
-            prod = productos[0];
+            // Verificar si hay productos similares para dar sugerencias
+            const similares = productos.filter(p => 
+              p.nombre.toLowerCase().includes(codigoBuscado.toLowerCase()) ||
+              p.codigo.toString().includes(codigoBuscado)
+            );
+            
+            if (similares.length > 0) {
+              const sugerencia = similares[0];
+              alert(`❌ No se encontró coincidencia exacta para "${codigoBuscado}".\n\n💡 ¿Quizás buscabas?\n• ${sugerencia.nombre} (Código: ${sugerencia.codigo})\n\nUsa el autocompletado o escribe el código/nombre exacto.`);
+            } else {
+              alert(`❌ No se encontró ningún producto con "${codigoBuscado}".\n\n💡 Verifica:\n• El código de barras\n• El nombre del producto\n• Que el producto esté registrado en el sistema`);
+            }
+            return;
           }
 
           const existe = carritoItems.find((p) => p.codigo === prod.codigo);
@@ -484,12 +492,13 @@ document.addEventListener('DOMContentLoaded', function() {
               codigo: prod.codigo,
               nombre: prod.nombre,
               precio: parseFloat(prod.precio),
-              stock: prod.stock,      // mantenemos stock
+              stock: prod.stock,
               cantidad: 1,
             });
           }
 
           inputBuscar.value = "";
+          contenedorSugerencias.classList.add("hidden"); // Ocultar sugerencias
           renderizarCarrito();
           actualizarTotales();
         } catch (err) {
@@ -666,10 +675,8 @@ function mostrarModalErrorVenta(errorData) {
             fn.apply(this, args);
           }, delay);
         };
-      }
-
-      async function buscarSugerencias(texto) {
-        if (!texto) {
+      }      async function buscarSugerencias(texto) {
+        if (!texto || texto.length < 2) {
           contenedorSugerencias.innerHTML = "";
           contenedorSugerencias.classList.add("hidden");
           return;
@@ -677,21 +684,23 @@ function mostrarModalErrorVenta(errorData) {
 
         try {
           const resp = await fetch(
-            `${BACKEND_URL}/ventas/productos/?codigo=${encodeURIComponent(texto)}`,
+            `${BACKEND_URL}/ventas/productos/`,
             { method: "GET", headers }
           );
           if (!resp.ok) throw new Error("Error al buscar sugerencias");
 
           const productos = await resp.json();
+          const txt = texto.toLowerCase();
+          
+          // Filtrar productos que contengan el texto en nombre o código
           const filtrados = productos.filter((p) => {
-            const txt = texto.toLowerCase();
             return (
               p.nombre.toLowerCase().includes(txt) ||
               p.codigo.toString().toLowerCase().includes(txt)
             );
-          });
+          }).slice(0, 8); // Limitar a 8 resultados para mejor rendimiento
 
-          renderizarSugerencias(filtrados);
+          renderizarSugerencias(filtrados, texto);
         } catch (err) {
           console.error("Error en buscarSugerencias:", err);
           contenedorSugerencias.innerHTML = "";
@@ -699,26 +708,45 @@ function mostrarModalErrorVenta(errorData) {
         }
       }
 
-      function renderizarSugerencias(lista) {
+      function renderizarSugerencias(lista, textoBuscado) {
         contenedorSugerencias.innerHTML = "";
 
         if (lista.length === 0) {
-          contenedorSugerencias.classList.add("hidden");
+          // Mostrar mensaje cuando no hay resultados
+          const noResults = document.createElement("div");
+          noResults.className = "px-4 py-3 text-sm text-gray-500 text-center";
+          noResults.textContent = `No se encontraron productos que contengan "${textoBuscado}"`;
+          contenedorSugerencias.appendChild(noResults);
+          contenedorSugerencias.classList.remove("hidden");
           return;
         }
 
         lista.forEach((prod) => {
           const item = document.createElement("div");
           item.className =
-            "px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm flex justify-between";
+            "px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm border-b border-gray-100 last:border-b-0";
+          
+          // Highlight del texto coincidente
+          const nombreHighlight = highlightText(prod.nombre, textoBuscado);
+          const codigoHighlight = highlightText(prod.codigo.toString(), textoBuscado);
+          
           item.innerHTML = `
-            <span>${prod.nombre}</span>
-            <span class="text-gray-500 font-mono">${prod.codigo}</span>
+            <div class="flex justify-between items-center">
+              <span>${nombreHighlight}</span>
+              <div class="text-right">
+                <span class="text-gray-500 font-mono text-xs">${codigoHighlight}</span>
+                <br>
+                <span class="text-green-600 font-medium">${formatearMoneda(prod.precio)}</span>
+              </div>
+            </div>
           `;
+          
           item.addEventListener("click", () => {
-            // Ahora inyectamos el CÓDIGO en el input
+            // Inyectar el CÓDIGO exacto en el input para garantizar coincidencia
             inputBuscar.value = prod.codigo.toString();
             contenedorSugerencias.classList.add("hidden");
+            // Opcional: agregar automáticamente al hacer clic
+            // btnAgregar.click();
           });
           contenedorSugerencias.appendChild(item);
         });
@@ -726,13 +754,26 @@ function mostrarModalErrorVenta(errorData) {
         contenedorSugerencias.classList.remove("hidden");
       }
 
-      inputBuscar.addEventListener(
+      // Función auxiliar para resaltar texto coincidente
+      function highlightText(text, searchText) {
+        if (!searchText) return text;
+        const regex = new RegExp(`(${searchText})`, 'gi');
+        return text.replace(regex, '<mark class="bg-yellow-200">$1</mark>');
+      }      inputBuscar.addEventListener(
         "input",
         debounce((e) => {
           const texto = e.target.value.trim();
           buscarSugerencias(texto);
         }, 300)
       );
+
+      // Agregar funcionalidad con Enter
+      inputBuscar.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          btnAgregar.click();
+        }
+      });
 
       document.addEventListener("click", (e) => {
         if (
