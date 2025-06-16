@@ -97,9 +97,11 @@
       </div>
 
       <!-- Gráfica de ventas -->
-      <div class="mt-8 bg-white p-6 rounded-lg shadow">
-        <div class="flex justify-between items-center mb-4">
+      <div class="mt-8 bg-white p-6 rounded-lg shadow">        <div class="flex justify-between items-center mb-4">        <div>
           <h3 class="text-xl font-medium text-gray-800">Resumen de Ventas</h3>
+          <p class="text-sm text-gray-500">Datos mostrados en hora local de Chile</p>
+          <p class="text-xs text-gray-400" id="currentTime">--</p>
+        </div>
           <div class="flex space-x-2">
             <button id="btn-day" class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm">
               Día
@@ -118,6 +120,12 @@
         <div class="h-96">
           <canvas id="salesChart"></canvas>
         </div>
+      </div>
+
+      <!-- Información adicional -->
+      <div class="mt-6 bg-white p-4 rounded-lg shadow">
+        <h2 class="text-gray-600 text-sm font-medium">Información Adicional</h2>
+        <p id="currentTime" class="mt-2 text-sm text-gray-800">—</p>
       </div>
     </main>    <script>
       // BASE URL de tu API Django
@@ -350,10 +358,8 @@
 
             // Calcular el valor máximo para la escala Y
             const maxValue = chartData.data.length > 0 ? Math.max(...chartData.data) : 0;
-            salesChart.options.scales.y.max = maxValue > 0 ? maxValue * 1.1 : 10000;
-
-            // Ajustar título del eje X según el período
-            let xAxisTitle = 'Horas';
+            salesChart.options.scales.y.max = maxValue > 0 ? maxValue * 1.1 : 10000;            // Ajustar título del eje X según el período
+            let xAxisTitle = 'Horas (Hora Local)';
             if (period === 'week') xAxisTitle = 'Días de la Semana';
             else if (period === 'month') xAxisTitle = 'Semanas del Mes';
             else if (period === 'year') xAxisTitle = 'Meses del Año';
@@ -404,12 +410,15 @@
           window.location.href = "/";
           return;
         }
-        console.log("Token found:", token.substring(0, 20) + "...");
-
-        try {
+        console.log("Token found:", token.substring(0, 20) + "...");        try {
           await loadCurrentUser();
           await loadDashboardData();
           setupAccessControl();
+          
+          // Actualizar hora actual cada segundo
+          updateCurrentTime();
+          setInterval(updateCurrentTime, 1000);
+          
           console.log("Dashboard initialization complete");
         } catch (error) {
           console.error("Dashboard initialization failed:", error);
@@ -425,6 +434,29 @@
         document.getElementById('btn-week').addEventListener('click', () => loadChartData('week'));
         document.getElementById('btn-month').addEventListener('click', () => loadChartData('month'));
         document.getElementById('btn-year').addEventListener('click', () => loadChartData('year'));
+
+        // Función para mostrar la hora actual
+        function updateCurrentTime() {
+          const now = new Date();
+          const timeString = now.toLocaleString('es-CL', {
+            timeZone: 'America/Santiago',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          });
+          
+          const timeElement = document.getElementById('currentTime');
+          if (timeElement) {
+            timeElement.textContent = `Hora actual: ${timeString}`;
+          }
+        }
+
+        // Actualizar la hora cada segundo
+        setInterval(updateCurrentTime, 1000);
+        updateCurrentTime(); // Llamar una vez al cargar para evitar espera del primer intervalo
       });
     </script>
   </body>

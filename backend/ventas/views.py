@@ -9,7 +9,8 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.contrib.auth import get_user_model
-from datetime import timedelta
+from datetime import timedelta, datetime
+import pytz
 from .models import Transaccion, Producto, Stock, Item
 from drf_yasg import openapi
 
@@ -517,11 +518,23 @@ class MetricsView(APIView):
         responses={200: "Métricas básicas"}
     )
     def get(self, request):
-        hoy = timezone.now().date()
-          # Ventas del día
+        # Obtener timezone de Chile
+        chile_tz = pytz.timezone('America/Santiago')
+        now_chile = timezone.now().astimezone(chile_tz)
+        hoy_chile = now_chile.date()
+        
+        # Calcular inicio y fin del día en Chile, convertir a UTC para la consulta
+        inicio_dia_chile = chile_tz.localize(datetime.combine(hoy_chile, datetime.min.time()))
+        fin_dia_chile = chile_tz.localize(datetime.combine(hoy_chile, datetime.max.time()))
+        
+        inicio_dia_utc = inicio_dia_chile.astimezone(pytz.UTC)
+        fin_dia_utc = fin_dia_chile.astimezone(pytz.UTC)
+        
+        # Ventas del día en Chile
         transacciones_hoy = Transaccion.objects.filter(
             estado='CONFIRMADA',
-            confirmado_en__date=hoy
+            confirmado_en__gte=inicio_dia_utc,
+            confirmado_en__lte=fin_dia_utc
         )
         
         cantidad_ventas = transacciones_hoy.count()
@@ -547,12 +560,23 @@ class DashboardMetricsView(APIView):
         responses={200: "Métricas del dashboard"}
     )
     def get(self, request):
-        hoy = timezone.now().date()
+        # Obtener timezone de Chile
+        chile_tz = pytz.timezone('America/Santiago')
+        now_chile = timezone.now().astimezone(chile_tz)
+        hoy_chile = now_chile.date()
         
-        # Ventas del día
+        # Calcular inicio y fin del día en Chile, convertir a UTC para la consulta
+        inicio_dia_chile = chile_tz.localize(datetime.combine(hoy_chile, datetime.min.time()))
+        fin_dia_chile = chile_tz.localize(datetime.combine(hoy_chile, datetime.max.time()))
+        
+        inicio_dia_utc = inicio_dia_chile.astimezone(pytz.UTC)
+        fin_dia_utc = fin_dia_chile.astimezone(pytz.UTC)
+        
+        # Ventas del día en Chile
         transacciones_hoy = Transaccion.objects.filter(
             estado='CONFIRMADA',
-            confirmado_en__date=hoy
+            confirmado_en__gte=inicio_dia_utc,
+            confirmado_en__lte=fin_dia_utc
         )
         
         cantidad_ventas = transacciones_hoy.count()
@@ -577,77 +601,109 @@ class SalesChartDataView(APIView):
         manual_parameters=[
             openapi.Parameter('period', openapi.IN_QUERY, type=openapi.TYPE_STRING, 
                             description='Período: day, week, month, year')
-        ],
-        responses={200: "Datos del gráfico de ventas"}
+        ],        responses={200: "Datos del gráfico de ventas"}
     )
     def get(self, request):
-      
         period = request.query_params.get('period', 'day')
-        now = timezone.now()
+        
+        # Obtener timezone de Chile
+        chile_tz = pytz.timezone('America/Santiago')
+        now_chile = timezone.now().astimezone(chile_tz)
+        
         labels = []
         data = []
         
         if period == 'day':
-            # Datos por hora para el día actual
-            start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            # Datos por hora para el día actual en Chile
+            start_of_day_chile = now_chile.replace(hour=0, minute=0, second=0, microsecond=0)
+            
             for hour in range(24):
-                hour_start = start_of_day + timedelta(hours=hour)
-                hour_end = hour_start + timedelta(hours=1)
+                hour_start_chile = start_of_day_chile + timedelta(hours=hour)
+                hour_end_chile = hour_start_chile + timedelta(hours=1)
+                
+                # Convertir a UTC para la consulta
+                hour_start_utc = hour_start_chile.astimezone(pytz.UTC)
+                hour_end_utc = hour_end_chile.astimezone(pytz.UTC)
+                
                 sales = Transaccion.objects.filter(
                     estado='CONFIRMADA',
-                    confirmado_en__gte=hour_start,
-                    confirmado_en__lt=hour_end
+                    confirmado_en__gte=hour_start_utc,
+                    confirmado_en__lt=hour_end_utc
                 )
                 total = sum(t.total_final for t in sales)
                 data.append(float(total))
                 labels.append(f"{hour}:00")
         
         elif period == 'week':
-            # Datos por día para la semana actual
-            start_of_week = now - timedelta(days=now.weekday())
-            for day in range(7):
-                day_start = start_of_week + timedelta(days=day)
-                day_end = day_start + timedelta(days=1)
-                sales = Transaccion.objects.filter(
-                    estado='CONFIRMADA',
-                    confirmado_en__gte=day_start,
-                    confirmado_en__lt=day_end
-                )
-                total = sum(t.total_final for t in sales)
-                data.append(float(total))
-                labels.append(day_start.strftime('%a'))
-        
-        elif period == 'month':
-            # Datos por semana para el mes actual
-            start_of_month = now.replace(day=1)
-            next_month = start_of_month.replace(month=start_of_month.month+1) if start_of_month.month < 12 else start_of_month.replace(year=start_of_month.year+1, month=1)
+            # Datos por día para la semana actual en Chile
+            start_of_week_chile = now_chile - timedelta(days=now_chile.weekday())
+            start_of_week_chile = start_of_week_chile.replace(hour=0, minute=0, second=0, microsecond=0)
             
-            current_week = start_of_month
-            while current_week < next_month:
-                week_end = current_week + timedelta(weeks=1)
-                if week_end > next_month:
-                    week_end = next_month
+            for day in range(7):
+                day_start_chile = start_of_week_chile + timedelta(days=day)
+                day_end_chile = day_start_chile + timedelta(days=1)
+                
+                # Convertir a UTC para la consulta
+                day_start_utc = day_start_chile.astimezone(pytz.UTC)
+                day_end_utc = day_end_chile.astimezone(pytz.UTC)
                 
                 sales = Transaccion.objects.filter(
                     estado='CONFIRMADA',
-                    confirmado_en__gte=current_week,
-                    confirmado_en__lt=week_end
+                    confirmado_en__gte=day_start_utc,
+                    confirmado_en__lt=day_end_utc
                 )
                 total = sum(t.total_final for t in sales)
                 data.append(float(total))
-                labels.append(f"Semana {(current_week.day // 7) + 1}")
-                current_week = week_end
+                labels.append(day_start_chile.strftime('%a'))
         
-        elif period == 'year':
-            # Datos por mes para el año actual
-            start_of_year = now.replace(month=1, day=1)
-            for month in range(12):
-                month_start = start_of_year.replace(month=month+1)
-                month_end = month_start.replace(month=month+2) if month < 11 else month_start.replace(year=month_start.year+1, month=1)
+        elif period == 'month':
+            # Datos por semana para el mes actual en Chile
+            start_of_month_chile = now_chile.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            if start_of_month_chile.month == 12:
+                next_month_chile = start_of_month_chile.replace(year=start_of_month_chile.year+1, month=1)
+            else:
+                next_month_chile = start_of_month_chile.replace(month=start_of_month_chile.month+1)
+            
+            current_week = start_of_month_chile
+            week_number = 1
+            while current_week < next_month_chile:
+                week_end = current_week + timedelta(weeks=1)
+                if week_end > next_month_chile:
+                    week_end = next_month_chile
+                
+                # Convertir a UTC para la consulta
+                week_start_utc = current_week.astimezone(pytz.UTC)
+                week_end_utc = week_end.astimezone(pytz.UTC)
+                
                 sales = Transaccion.objects.filter(
                     estado='CONFIRMADA',
-                    confirmado_en__gte=month_start,
-                    confirmado_en__lt=month_end
+                    confirmado_en__gte=week_start_utc,
+                    confirmado_en__lt=week_end_utc
+                )
+                total = sum(t.total_final for t in sales)
+                data.append(float(total))
+                labels.append(f"Semana {week_number}")
+                current_week = week_end
+                week_number += 1
+        
+        elif period == 'year':
+            # Datos por mes para el año actual en Chile
+            start_of_year_chile = now_chile.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+            
+            for month in range(12):
+                month_start = start_of_year_chile.replace(month=month+1)
+                if month == 11:  # Diciembre
+                    month_end = month_start.replace(year=month_start.year+1, month=1)
+                else:
+                    month_end = month_start.replace(month=month+2)
+                  # Convertir a UTC para la consulta
+                month_start_utc = month_start.astimezone(pytz.UTC)
+                month_end_utc = month_end.astimezone(pytz.UTC)
+                
+                sales = Transaccion.objects.filter(
+                    estado='CONFIRMADA',
+                    confirmado_en__gte=month_start_utc,
+                    confirmado_en__lt=month_end_utc
                 )
                 total = sum(t.total_final for t in sales)
                 data.append(float(total))
