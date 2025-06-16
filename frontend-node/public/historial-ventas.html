@@ -22,9 +22,9 @@
           <a href="/inventario" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Inventario</a>
           <a href="/pos" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Punto de Venta</a>
           <a href="/historial-ventas" class="inline-flex items-center px-1 pt-1 border-b-2 border-blue-500 text-sm font-medium text-gray-100">Historial de Ventas</a>
-          <a href="/trabajadores" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Trabajadores</a>
-        </div>
-        <div class="flex items-center">
+          <a href="/trabajadores" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Trabajadores</a>        </div>
+        <div class="flex items-center space-x-4">
+          <span id="userInfo" class="text-sm text-gray-300">—</span>
           <a href="/logout" class="text-sm font-medium text-red-400 hover:text-red-300">Cerrar sesión</a>
         </div>
         <div class="-mr-2 flex md:hidden">
@@ -142,11 +142,50 @@
         console.error("Error al cargar historial:", err);
         tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-red-600">Error al cargar datos.</td></tr>`;
       }
-    }
-
-    // eventos
+    }    // eventos
     btnFiltrar.addEventListener("click", cargarHistorial);
-    document.addEventListener("DOMContentLoaded", cargarHistorial);
+    document.addEventListener("DOMContentLoaded", async () => {
+      await initializeNavbar();
+      cargarHistorial();
+    });
+
+    // Función para inicializar el navbar con información del usuario y control de roles
+    async function initializeNavbar() {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        window.location.href = "/";
+        return;
+      }
+
+      try {
+        const resp = await fetch(`${BACKEND_URL}/ventas/user/me/`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        
+        if (!resp.ok) {
+          localStorage.removeItem("token");
+          window.location.href = "/";
+          return;
+        }
+        
+        const user = await resp.json();
+        
+        // Mostrar información del usuario
+        document.getElementById("userInfo").textContent = `${user.first_name} ${user.last_name} (${user.role})`;
+          // Controlar visibilidad de enlaces según el rol
+        const inventarioLinks = document.querySelectorAll('a[href="/inventario"]');
+        const trabajadoresLinks = document.querySelectorAll('a[href="/trabajadores"]');
+        
+        if (user.role === 'EMPLOYEE') {
+          // Los empleados no pueden ver inventario ni trabajadores
+          inventarioLinks.forEach(link => link.style.display = 'none');
+          trabajadoresLinks.forEach(link => link.style.display = 'none');
+        }
+      } catch (err) {
+        console.error("Error al verificar usuario:", err);
+        window.location.href = "/";
+      }
+    }
   </script>
 </body>
 </html>
