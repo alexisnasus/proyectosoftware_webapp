@@ -564,18 +564,32 @@ document.addEventListener('DOMContentLoaded', function() {
             alert("Error al confirmar transacción:\n" + JSON.stringify(errJson));
             return;
           }
-          const resultado = await respConfirm.json();
-
-          // 8.3) Mostrar resultado
+          const resultado = await respConfirm.json();          // 8.3) Mostrar resultado
           if (resultado.estado === "CONFIRMADA") {
             mostrarModal("¡Venta exitosa", `Transacción confirmada correctamente!`);
           } else {
             mostrarModal("¡Venta exitosa", `Transacción confirmada correctamente!`);
           }
 
-          localStorage.setItem('ultimaCompra', JSON.stringify(carritoItems));
-const total = carritoItems.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
-localStorage.setItem('totalCompra', JSON.stringify(total));
+          // Guardar información completa de la compra incluyendo descuentos
+          const totalSinDescuento = carritoItems.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
+          const descuentoClp = parseFloat(inputDescuentoClp.value) || 0;
+          const descuentoPct = parseFloat(inputDescuentoPct.value) || 0;
+          const descuentoPctMonto = (totalSinDescuento * descuentoPct) / 100;
+          const totalFinal = totalSinDescuento - descuentoClp - descuentoPctMonto;
+
+          const datosCompra = {
+            productos: carritoItems,
+            totalSinDescuento: totalSinDescuento,
+            descuentoClp: descuentoClp,
+            descuentoPorcentaje: descuentoPct,
+            descuentoPorcentajeMonto: descuentoPctMonto,
+            totalDescuentos: descuentoClp + descuentoPctMonto,
+            totalFinal: totalFinal,
+            fecha: new Date().toISOString()
+          };
+
+          localStorage.setItem('ultimaCompra', JSON.stringify(datosCompra));
 
           // Actualizar el stock de los productos después de la venta
           await actualizarStockProductos();

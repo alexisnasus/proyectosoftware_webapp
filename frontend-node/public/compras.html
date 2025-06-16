@@ -5,8 +5,7 @@
     <title>Compras Realizadas - ManuMarket</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- Tailwind CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>    <style>
       .fade-in {
         animation: fadeIn 0.5s ease-in;
       }
@@ -14,15 +13,38 @@
         from { opacity: 0; }
         to { opacity: 1; }
       }
+      .descuento-badge {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        display: inline-block;
+        margin-left: 0.5rem;
+      }
     </style>
   </head>
-  <body class="bg-gray-100 min-h-screen p-6">
-    <div class="max-w-3xl mx-auto fade-in">
-      <!-- Encabezado con total -->
-      <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold text-gray-800">Productos Comprados</h1>
-        <div class="bg-green-100 px-4 py-2 rounded-lg">
-          <p class="text-green-800 font-semibold">Total: <span id="totalCompra">₱0</span></p>
+  <body class="bg-gray-100 min-h-screen p-6">    <div class="max-w-3xl mx-auto fade-in">
+      <!-- Encabezado con totales -->
+      <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <h1 class="text-3xl font-bold text-gray-800 mb-4">Productos Comprados</h1>
+        
+        <!-- Información de totales y descuentos -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="space-y-2">
+            <p class="text-gray-600">Total sin descuento: <span id="totalSinDescuento" class="font-semibold">₱0</span></p>
+            <p class="text-gray-600" id="descuentoInfo" style="display: none;">
+              Descuentos aplicados: <span id="totalDescuentos" class="font-semibold text-red-600">₱0</span>
+            </p>
+            <div id="detalleDescuentos" class="ml-4 text-sm text-gray-500" style="display: none;">
+              <!-- Aquí se mostrarán los detalles de descuentos -->
+            </div>
+          </div>
+          <div class="text-right">
+            <p class="text-2xl font-bold text-green-600">Total Final: <span id="totalFinal">₱0</span></p>
+            <p class="text-sm text-gray-500" id="fechaCompra">Fecha: --</p>
+          </div>
         </div>
       </div>
 
@@ -36,49 +58,106 @@
       <button class="fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-700 transition-colors">
         Volver a punto de venta
       </button> 
-    </a>
-
-    <script>
-      // Obtener los productos del localStorage
+    </a>    <script>
+      // Obtener los datos de la compra del localStorage
       document.addEventListener('DOMContentLoaded', () => {
-        const carritoGuardado = localStorage.getItem('ultimaCompra');
-        const totalGuardado = localStorage.getItem('totalCompra');
+        const datosCompraStr = localStorage.getItem('ultimaCompra');
         
-        if (carritoGuardado && totalGuardado) {
-          const carrito = JSON.parse(carritoGuardado);
-          const total = JSON.parse(totalGuardado);
+        if (datosCompraStr) {
+          const datosCompra = JSON.parse(datosCompraStr);
           
-          // Mostrar total
-          document.getElementById('totalCompra').textContent = formatearMoneda(total);
-          
-          // Generar lista de productos
-          const lista = document.getElementById('listaProductos');
-          lista.innerHTML = '';
-          
-          carrito.forEach(item => {
-            const li = document.createElement('li');
-            li.className = 'bg-white p-4 rounded-lg shadow flex justify-between items-center hover:bg-gray-50 transition-colors';
-            li.innerHTML = `
-              <div>
-                <p class="font-semibold">${item.nombre} <span class="text-gray-500">x${item.cantidad}</span></p>
-                <p class="text-sm text-gray-500">#${item.codigo}</p>
-              </div>
-              <div class="font-medium text-right text-green-600">
-                ${formatearMoneda(item.precio * item.cantidad)}
-              </div>
-            `;
-            lista.appendChild(li);
-          });
+          // Verificar si tenemos la nueva estructura o la antigua
+          if (datosCompra.productos) {
+            // Nueva estructura con información de descuentos
+            mostrarCompraCompleta(datosCompra);
+          } else {
+            // Estructura antigua (compatibilidad hacia atrás)
+            mostrarCompraSimple(datosCompra);
+          }
         } else {
-          // Si no hay datos, mostrar mensaje
-          const lista = document.getElementById('listaProductos');
-          lista.innerHTML = `
-            <li class="bg-white p-4 rounded-lg shadow text-center text-gray-500">
-              No hay productos en esta compra
-            </li>
-          `;
+          mostrarSinDatos();
         }
       });
+
+      function mostrarCompraCompleta(datosCompra) {
+        // Mostrar totales
+        document.getElementById('totalSinDescuento').textContent = formatearMoneda(datosCompra.totalSinDescuento);
+        document.getElementById('totalFinal').textContent = formatearMoneda(datosCompra.totalFinal);
+        
+        // Mostrar fecha
+        if (datosCompra.fecha) {
+          const fecha = new Date(datosCompra.fecha);
+          document.getElementById('fechaCompra').textContent = `Fecha: ${fecha.toLocaleDateString()} ${fecha.toLocaleTimeString()}`;
+        }
+          // Mostrar información de descuentos si existen
+        if (datosCompra.totalDescuentos > 0) {
+          document.getElementById('descuentoInfo').style.display = 'block';
+          document.getElementById('totalDescuentos').textContent = formatearMoneda(datosCompra.totalDescuentos);
+          
+          const detalleDescuentos = document.getElementById('detalleDescuentos');
+          detalleDescuentos.style.display = 'block';
+          detalleDescuentos.innerHTML = '';
+          
+          if (datosCompra.descuentoClp > 0) {
+            const descuentoClpElement = document.createElement('p');
+            descuentoClpElement.innerHTML = `• Descuento fijo: ${formatearMoneda(datosCompra.descuentoClp)} <span class="descuento-badge">FIJO</span>`;
+            detalleDescuentos.appendChild(descuentoClpElement);
+          }
+            if (datosCompra.descuentoPorcentaje > 0) {
+            const descuentoPctElement = document.createElement('p');
+            descuentoPctElement.innerHTML = `• Descuento ${datosCompra.descuentoPorcentaje}%: ${formatearMoneda(datosCompra.descuentoPorcentajeMonto)} <span class="descuento-badge">${datosCompra.descuentoPorcentaje}%</span>`;
+            detalleDescuentos.appendChild(descuentoPctElement);
+          }
+        }
+        
+        // Mostrar productos
+        mostrarListaProductos(datosCompra.productos);
+      }
+
+      function mostrarCompraSimple(carrito) {
+        // Compatibilidad con estructura antigua
+        const total = carrito.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
+        
+        document.getElementById('totalSinDescuento').textContent = formatearMoneda(total);
+        document.getElementById('totalFinal').textContent = formatearMoneda(total);
+        document.getElementById('fechaCompra').textContent = 'Fecha: --';
+        
+        mostrarListaProductos(carrito);
+      }
+
+      function mostrarListaProductos(productos) {
+        const lista = document.getElementById('listaProductos');
+        lista.innerHTML = '';
+        
+        productos.forEach(item => {
+          const li = document.createElement('li');
+          li.className = 'bg-white p-4 rounded-lg shadow flex justify-between items-center hover:bg-gray-50 transition-colors';
+          li.innerHTML = `
+            <div>
+              <p class="font-semibold">${item.nombre} <span class="text-gray-500">x${item.cantidad}</span></p>
+              <p class="text-sm text-gray-500">#${item.codigo}</p>
+              <p class="text-sm text-gray-600">Precio unitario: ${formatearMoneda(item.precio)}</p>
+            </div>
+            <div class="font-medium text-right text-green-600">
+              ${formatearMoneda(item.precio * item.cantidad)}
+            </div>
+          `;
+          lista.appendChild(li);
+        });
+      }
+
+      function mostrarSinDatos() {
+        document.getElementById('totalSinDescuento').textContent = formatearMoneda(0);
+        document.getElementById('totalFinal').textContent = formatearMoneda(0);
+        document.getElementById('fechaCompra').textContent = 'Fecha: --';
+        
+        const lista = document.getElementById('listaProductos');
+        lista.innerHTML = `
+          <li class="bg-white p-4 rounded-lg shadow text-center text-gray-500">
+            No hay datos de compra disponibles
+          </li>
+        `;
+      }
 
       // Función para formatear moneda (igual que en pos.html)
       function formatearMoneda(valor) {
