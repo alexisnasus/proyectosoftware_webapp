@@ -16,13 +16,13 @@
           <a href="/dashboard">
             <img class="h-8 w-auto" src="ManuLogo_WIP.png" alt="Logo ManuMarket" />
           </a>
-        </div>
-        <div class="hidden md:flex md:space-x-8">
+        </div>        <div class="hidden md:flex md:space-x-8">
           <a href="/dashboard" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Dashboard</a>
-          <a href="/inventario" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Inventario</a>
+          <a id="inventarioLink" href="/inventario" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Inventario</a>
           <a href="/pos" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Punto de Venta</a>
           <a href="/historial-ventas" class="inline-flex items-center px-1 pt-1 border-b-2 border-blue-500 text-sm font-medium text-gray-100">Historial de Ventas</a>
-          <a href="/trabajadores" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Trabajadores</a>        </div>
+          <a id="trabajadoresLink" href="/trabajadores" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Trabajadores</a>
+        </div>
         <div class="flex items-center space-x-4">
           <span id="userInfo" class="text-sm text-gray-300">—</span>
           <a href="/logout" class="text-sm font-medium text-red-400 hover:text-red-300">Cerrar sesión</a>
@@ -37,16 +37,26 @@
           </button>
         </div>
       </div>
-    </div>
-    <div id="menuResponsive" class="md:hidden hidden bg-gray-800 px-2 pt-2 pb-3 space-y-1">
+    </div>    <div id="menuResponsive" class="md:hidden hidden bg-gray-800 px-2 pt-2 pb-3 space-y-1">
       <a href="/dashboard" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Dashboard</a>
-      <a href="/inventario" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Inventario</a>
+      <a id="inventarioLinkMobile" href="/inventario" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Inventario</a>
       <a href="/pos" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Punto de Venta</a>
       <a href="/historial-ventas" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Historial de Ventas</a>
-      <a href="/trabajadores" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Trabajadores</a>
+      <a id="trabajadoresLinkMobile" href="/trabajadores" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Trabajadores</a>
       <a href="/logout" class="block px-3 py-2 rounded-md text-base font-medium text-red-400 hover:bg-gray-700">Cerrar sesión</a>
     </div>
   </nav>
+
+  <script>
+    // Menú hamburguesa responsive
+    const btnMenu = document.getElementById("btnMenu");
+    const menuResponsive = document.getElementById("menuResponsive");
+    if (btnMenu && menuResponsive) {
+      btnMenu.addEventListener("click", () => {
+        menuResponsive.classList.toggle("hidden");
+      });
+    }
+  </script>
 
   <main class="max-w-screen-2xl mx-auto p-6">
     <h1 class="text-2xl font-semibold text-gray-800 mb-4">Historial de Ventas</h1>
@@ -73,9 +83,81 @@
           </tr>
         </thead>
         <tbody id="tbodyHistorial" class="bg-white divide-y divide-gray-200">
-          <!-- JS inyectará las filas aquí -->
-        </tbody>
+          <!-- JS inyectará las filas aquí -->        </tbody>
       </table>
+    </div>    <!-- Modal para mostrar detalles de la venta -->
+    <div id="modalDetalle" class="fixed inset-0 bg-gray-400 bg-opacity-5 flex items-center justify-center z-50 hidden">
+      <div class="bg-white rounded-lg shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto border-2 border-gray-300 ring-4 ring-blue-100"><div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center rounded-t-lg">
+          <h2 class="text-xl font-semibold text-gray-800">Detalles de la Venta</h2>
+          <button id="btnCerrarModal" class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 text-3xl leading-none">&times;</button>
+        </div>
+        
+        <div class="p-6">
+          <!-- Información de la venta -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <h3 class="text-lg font-medium text-gray-800 mb-3">Información General</h3>
+              <div class="space-y-2">
+                <p><span class="font-medium">ID Transacción:</span> <span id="modalTransaccionId">-</span></p>
+                <p><span class="font-medium">Estado:</span> <span id="modalEstado" class="px-2 py-1 rounded text-sm bg-green-100 text-green-800">-</span></p>
+                <p><span class="font-medium">Fecha de Venta:</span> <span id="modalFecha">-</span></p>
+                <p><span class="font-medium">Cantidad de Productos:</span> <span id="modalCantidadProductos">-</span></p>
+              </div>
+            </div>
+            
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <h3 class="text-lg font-medium text-gray-800 mb-3">Vendedor</h3>
+              <div class="space-y-2">
+                <p><span class="font-medium">Nombre:</span> <span id="modalVendedorNombre">-</span></p>
+                <p><span class="font-medium">Usuario:</span> <span id="modalVendedorUsuario">-</span></p>
+                <p><span class="font-medium">Rol:</span> <span id="modalVendedorRol">-</span></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Resumen de totales -->
+          <div class="bg-blue-50 p-4 rounded-lg mb-6">
+            <h3 class="text-lg font-medium text-gray-800 mb-3">Resumen de Totales</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="text-center">
+                <p class="text-sm text-gray-600">Total sin Descuento</p>
+                <p class="text-xl font-bold text-gray-800" id="modalTotalSinDescuento">-</p>
+              </div>
+              <div class="text-center" id="modalDescuentoContainer">
+                <p class="text-sm text-gray-600">Descuento Aplicado</p>
+                <p class="text-xl font-bold text-red-600" id="modalDescuento">-</p>
+                <p class="text-xs text-gray-500" id="modalPorcentajeDescuento">-</p>
+              </div>
+              <div class="text-center">
+                <p class="text-sm text-gray-600">Total Final</p>
+                <p class="text-2xl font-bold text-green-600" id="modalTotalFinal">-</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lista de productos -->
+          <div class="bg-white border border-gray-200 rounded-lg">
+            <h3 class="text-lg font-medium text-gray-800 p-4 border-b border-gray-200">Productos Vendidos</h3>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Código</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
+                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Cantidad</th>
+                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Precio Unit.</th>
+                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Subtotal</th>
+                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Estado</th>
+                  </tr>
+                </thead>
+                <tbody id="modalProductosLista" class="bg-white divide-y divide-gray-200">
+                  <!-- JS llenará esta tabla -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </main>
 
@@ -126,23 +208,146 @@
 
         data.forEach(venta => {
           const row = document.createElement("tr");
-          row.className = "hover:bg-gray-50";
-          row.innerHTML = `
+          row.className = "hover:bg-gray-50";          row.innerHTML = `
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${venta.id}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${venta.vendedor}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${formatearMoneda(venta.total)}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${new Date(venta.creado_en || venta.fecha).toLocaleDateString()}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${venta.fecha_local || new Date(venta.fecha || venta.creado_en).toLocaleDateString()}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-center">
-              <button data-id="${venta.id}" class="btnVerDetalles px-3 py-1 bg-yellow-400 text-white rounded hover:bg-yellow-500 text-xs">Ver Detalles</button>
+              <button data-id="${venta.id}" class="btnVerDetalles px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-xs transition-colors duration-200">Ver Detalles</button>
             </td>
           `;
           tbody.appendChild(row);
         });
       } catch (err) {
         console.error("Error al cargar historial:", err);
-        tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-red-600">Error al cargar datos.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-red-600">Error al cargar datos.</td></tr>`;      }
+    }
+
+    // Funciones del modal
+    const modal = document.getElementById("modalDetalle");
+    const btnCerrarModal = document.getElementById("btnCerrarModal");
+
+    function abrirModal() {
+      modal.classList.remove("hidden");
+    }
+
+    function cerrarModal() {
+      modal.classList.add("hidden");
+    }    // Event listeners del modal
+    btnCerrarModal.addEventListener("click", cerrarModal);
+    
+    // Opcional: cerrar modal al hacer clic fuera (puedes comentar esta línea si no quieres esta funcionalidad)
+    // modal.addEventListener("click", (e) => {
+    //   if (e.target === modal) cerrarModal();
+    // });
+
+    // Cerrar modal con tecla Escape
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !modal.classList.contains("hidden")) {
+        cerrarModal();
       }
-    }    // eventos
+    });
+
+    // Función para cargar y mostrar los detalles de una venta
+    async function verDetallesVenta(transaccionId) {
+      try {
+        const resp = await fetch(`${BACKEND_URL}/ventas/transacciones/${transaccionId}/detalle/`, {
+          method: "GET",
+          headers
+        });
+
+        if (!resp.ok) {
+          throw new Error("No se pudieron cargar los detalles de la venta");
+        }
+
+        const detalle = await resp.json();
+        console.log("Detalles de la venta:", detalle);
+
+        // Llenar información general
+        document.getElementById("modalTransaccionId").textContent = detalle.id;
+        document.getElementById("modalEstado").textContent = detalle.estado;
+        document.getElementById("modalFecha").textContent = detalle.fecha_confirmacion_local || "No disponible";
+        document.getElementById("modalCantidadProductos").textContent = detalle.cantidad_productos;
+
+        // Llenar información del vendedor
+        const vendedor = detalle.vendedor;
+        document.getElementById("modalVendedorNombre").textContent = vendedor.nombre_completo || vendedor.username;
+        document.getElementById("modalVendedorUsuario").textContent = vendedor.username;
+        document.getElementById("modalVendedorRol").textContent = vendedor.role === 'ADMIN' ? 'Administrador' : 'Empleado';
+
+        // Llenar totales
+        document.getElementById("modalTotalSinDescuento").textContent = formatearMoneda(detalle.total_sin_descuento);
+        document.getElementById("modalTotalFinal").textContent = formatearMoneda(detalle.total_final);
+
+        // Manejar descuentos
+        const descuentoContainer = document.getElementById("modalDescuentoContainer");
+        const descuentoElement = document.getElementById("modalDescuento");
+        const porcentajeElement = document.getElementById("modalPorcentajeDescuento");
+
+        if (detalle.descuento_aplicado > 0 || detalle.porcentaje_descuento > 0) {
+          descuentoContainer.style.display = "block";
+          let textoDescuento = "";
+          
+          if (detalle.descuento_aplicado > 0) {
+            textoDescuento = formatearMoneda(detalle.descuento_aplicado);
+          }
+          
+          if (detalle.porcentaje_descuento > 0) {
+            if (textoDescuento) textoDescuento += " + ";
+            textoDescuento += `${detalle.porcentaje_descuento}%`;
+          }
+          
+          descuentoElement.textContent = textoDescuento;
+          
+          // Calcular el total de descuentos aplicados
+          const totalDescuentos = detalle.total_sin_descuento - detalle.total_final;
+          porcentajeElement.textContent = `Total ahorrado: ${formatearMoneda(totalDescuentos)}`;
+        } else {
+          descuentoContainer.style.display = "none";
+        }
+
+        // Llenar tabla de productos
+        const tablaProductos = document.getElementById("modalProductosLista");
+        tablaProductos.innerHTML = "";
+
+        detalle.items.forEach(item => {
+          const fila = document.createElement("tr");
+          fila.className = "hover:bg-gray-50";
+          
+          const estadoProducto = item.producto_activo ? 
+            '<span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">Activo</span>' :
+            '<span class="px-2 py-1 text-xs bg-red-100 text-red-800 rounded">Eliminado</span>';
+
+          fila.innerHTML = `
+            <td class="px-4 py-3 text-sm text-gray-900">${item.producto_codigo || 'N/A'}</td>
+            <td class="px-4 py-3 text-sm text-gray-900">${item.producto_nombre}</td>
+            <td class="px-4 py-3 text-sm text-gray-900 text-center">${item.cantidad}</td>
+            <td class="px-4 py-3 text-sm text-gray-900 text-right">${formatearMoneda(item.precio_unitario)}</td>
+            <td class="px-4 py-3 text-sm text-gray-900 text-right font-medium">${formatearMoneda(item.subtotal)}</td>
+            <td class="px-4 py-3 text-center">${estadoProducto}</td>
+          `;
+          
+          tablaProductos.appendChild(fila);
+        });
+
+        abrirModal();
+
+      } catch (err) {
+        console.error("Error al cargar detalles:", err);
+        alert("Error al cargar los detalles de la venta. Por favor, intente nuevamente.");
+      }
+    }
+
+    // Event listener para los botones "Ver Detalles"
+    document.addEventListener("click", (e) => {
+      if (e.target.classList.contains("btnVerDetalles")) {
+        const transaccionId = e.target.getAttribute("data-id");
+        verDetallesVenta(transaccionId);
+      }
+    });
+
+    // eventos
     btnFiltrar.addEventListener("click", cargarHistorial);
     document.addEventListener("DOMContentLoaded", async () => {
       await initializeNavbar();
@@ -169,17 +374,25 @@
         }
         
         const user = await resp.json();
+          // Mostrar información del usuario
+        const fullName = `${user.first_name} ${user.last_name}`.trim();
+        const displayName = fullName || user.username;
+        const roleName = user.role === 'ADMIN' ? 'Administrador' : 'Empleado';
         
-        // Mostrar información del usuario
-        document.getElementById("userInfo").textContent = `${user.first_name} ${user.last_name} (${user.role})`;
-          // Controlar visibilidad de enlaces según el rol
-        const inventarioLinks = document.querySelectorAll('a[href="/inventario"]');
-        const trabajadoresLinks = document.querySelectorAll('a[href="/trabajadores"]');
+        document.getElementById("userInfo").textContent = `${displayName} (${roleName})`;
         
+        // Controlar visibilidad de enlaces según el rol
         if (user.role === 'EMPLOYEE') {
           // Los empleados no pueden ver inventario ni trabajadores
-          inventarioLinks.forEach(link => link.style.display = 'none');
-          trabajadoresLinks.forEach(link => link.style.display = 'none');
+          const inventarioLink = document.getElementById("inventarioLink");
+          const trabajadoresLink = document.getElementById("trabajadoresLink");
+          const inventarioLinkMobile = document.getElementById("inventarioLinkMobile");
+          const trabajadoresLinkMobile = document.getElementById("trabajadoresLinkMobile");
+          
+          if (inventarioLink) inventarioLink.style.display = 'none';
+          if (trabajadoresLink) trabajadoresLink.style.display = 'none';
+          if (inventarioLinkMobile) inventarioLinkMobile.style.display = 'none';
+          if (trabajadoresLinkMobile) trabajadoresLinkMobile.style.display = 'none';
         }
       } catch (err) {
         console.error("Error al verificar usuario:", err);

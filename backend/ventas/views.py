@@ -506,6 +506,74 @@ class ConfirmarTransaccionAPIView(APIView):
             'items_sin_stock': items_sin_stock if usuario.role == 'ADMIN' and items_sin_stock else None
         }, status=status.HTTP_200_OK)
 
+class TransaccionDetalleAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        security=[{"Bearer": []}],
+        responses={200: "Detalle de transacción", 404: "Transacción no encontrada"}
+    )
+    def get(self, request, transaccion_id):
+        """Obtener detalles completos de una transacción específica"""
+        try:
+            transaccion = Transaccion.objects.get(id=transaccion_id, estado='CONFIRMADA')
+        except Transaccion.DoesNotExist:
+            return Response(
+                {"error": "Transacción no encontrada"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Obtener información del vendedor
+        vendedor_info = {
+            'id': transaccion.usuario.id,
+            'username': transaccion.usuario.username,
+            'nombre_completo': f"{transaccion.usuario.first_name} {transaccion.usuario.last_name}".strip(),
+            'role': transaccion.usuario.role
+        }
+        
+        # Obtener todos los items de la transacción
+        items = []
+        for item in transaccion.item_set.all():
+            items.append({
+                'id': item.id,
+                'producto_codigo': item.producto.codigo if item.producto else item.producto_codigo,
+                'producto_nombre': item.producto.nombre if item.producto else item.producto_nombre,
+                'cantidad': item.cantidad,
+                'precio_unitario': float(item.producto.precio) if item.producto else float(item.producto_precio or 0),
+                'subtotal': float(item.subtotal),
+                'producto_activo': item.producto is not None  # Para saber si el producto aún existe
+            })
+        
+        # Calcular totales y descuentos
+        total_sin_descuento = float(transaccion.total)
+        descuento_aplicado = float(transaccion.descuento_carrito)
+        porcentaje_descuento = float(transaccion.porcentaje_descuento)
+        total_final = float(transaccion.total_final)
+        
+        # Convertir fechas a zona horaria local
+        chile_tz = pytz.timezone('America/Santiago')
+        fecha_creacion = transaccion.creado_en.astimezone(chile_tz) if transaccion.creado_en else None
+        fecha_confirmacion = transaccion.confirmado_en.astimezone(chile_tz) if transaccion.confirmado_en else None
+        
+        detalle = {
+            'id': transaccion.id,
+            'estado': transaccion.estado,
+            'fecha_creacion': fecha_creacion.isoformat() if fecha_creacion else None,
+            'fecha_confirmacion': fecha_confirmacion.isoformat() if fecha_confirmacion else None,
+            'fecha_creacion_local': fecha_creacion.strftime('%d/%m/%Y %H:%M:%S') if fecha_creacion else None,
+            'fecha_confirmacion_local': fecha_confirmacion.strftime('%d/%m/%Y %H:%M:%S') if fecha_confirmacion else None,
+            'vendedor': vendedor_info,
+            'items': items,
+            'total_sin_descuento': total_sin_descuento,
+            'descuento_aplicado': descuento_aplicado,
+            'porcentaje_descuento': porcentaje_descuento,
+            'total_final': total_final,
+            'cantidad_items': len(items),
+            'cantidad_productos': sum(item['cantidad'] for item in items)
+        }
+        
+        return Response(detalle, status=status.HTTP_200_OK)
+
 # ------------------------------
 # Métricas y Dashboard
 # ------------------------------
@@ -743,15 +811,21 @@ class HistorialVentasAPIView(APIView):
             transacciones = transacciones.filter(confirmado_en__date__lte=fecha_fin)
         if vendedor:
             transacciones = transacciones.filter(usuario__username__icontains=vendedor)
-        
-        # Serializar datos
+          # Serializar datos
         historial = []
         for transaccion in transacciones:
+            # Convertir fecha a zona horaria local
+            chile_tz = pytz.timezone('America/Santiago')
+            fecha_local = transaccion.confirmado_en.astimezone(chile_tz) if transaccion.confirmado_en else None
+            
             historial.append({
                 'id': transaccion.id,
-                'fecha': transaccion.confirmado_en,
-                'vendedor': transaccion.usuario.username,
-                'total': float(transaccion.total_final),                'items': [
+                'creado_en': transaccion.creado_en.isoformat() if transaccion.creado_en else None,
+                'fecha': fecha_local.isoformat() if fecha_local else None,
+                'fecha_local': fecha_local.strftime('%d/%m/%Y %H:%M:%S') if fecha_local else None,
+                'vendedor': f"{transaccion.usuario.first_name} {transaccion.usuario.last_name}".strip() or transaccion.usuario.username,
+                'vendedor_username': transaccion.usuario.username,
+                'total': float(transaccion.total_final),'items': [
                     {
                         'producto': item.producto.nombre if item.producto else item.producto_nombre,
                         'cantidad': item.cantidad,
