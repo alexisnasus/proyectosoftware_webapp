@@ -10,10 +10,11 @@ from .views import (
     TransaccionDetailAPIView,
     ConfirmarTransaccionAPIView,    # Nuevo endpoint historial
     HistorialVentasAPIView,
-    TransaccionDetalleAPIView,
-    # CRUD Productos y Stocks:
+    TransaccionDetalleAPIView,    # CRUD Productos y Stocks:
     ProductoListCreateAPIView,
     ProductoDetailAPIView,
+    ProductoBulkImportAPIView,
+    ProductoBulkUpdateAPIView,
     StockListCreateAPIView,
     StockDetailAPIView,
     #Metricas de ventas:
@@ -53,11 +54,11 @@ urlpatterns = [
     # 3) Confirmar la transacción (verificar stock y descontar):
     path('transacciones/<int:pk>/confirmar/', ConfirmarTransaccionAPIView.as_view(), name='transaccion-confirmar'),    # Historial de Ventas
     path('historial-ventas/', HistorialVentasAPIView.as_view(), name='historial-ventas'),
-    path('transacciones/<int:transaccion_id>/detalle/', TransaccionDetalleAPIView.as_view(), name='transaccion-detalle'),
-
-    # --- CRUD Productos ---
+    path('transacciones/<int:transaccion_id>/detalle/', TransaccionDetalleAPIView.as_view(), name='transaccion-detalle'),    # --- CRUD Productos ---
     path('productos/', ProductoListCreateAPIView.as_view(), name='producto-list-create'),
     path('productos/<int:pk>/', ProductoDetailAPIView.as_view(), name='producto-detail'),
+    path('productos/bulk-import/', ProductoBulkImportAPIView.as_view(), name='producto-bulk-import'),
+    path('productos/bulk-update/', ProductoBulkUpdateAPIView.as_view(), name='producto-bulk-update'),
 
     # --- CRUD Stocks ---
     path('stocks/', StockListCreateAPIView.as_view(), name='stock-list-create'),

@@ -7,6 +7,20 @@
     <title>Inventario – ManuMarket</title>
     <!-- Tailwind CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+      /* Estilos adicionales para los encabezados ordenables */
+      .sortable-header {
+        transition: background-color 0.2s ease;
+      }
+      .sortable-header:hover {
+        background-color: #f3f4f6;
+      }
+      .sort-indicator {
+        font-size: 12px;
+        font-weight: bold;
+        user-select: none;
+      }
+    </style>
   </head>
   <body class="min-h-screen bg-gray-50">
     <!-- Verificación de acceso -->
@@ -28,6 +42,7 @@
         </div>
       </div>
     </div>
+
     <!-- Barra de navegación común -->
     <nav class="bg-gray-900 text-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -47,11 +62,11 @@
             <a href="/pos" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">
               Punto de Venta
             </a>
-          <!-- Aquí va Historial de Ventas -->
-          <a href="/historial-ventas" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Historial de Ventas</a>
+            <a href="/historial-ventas" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Historial de Ventas</a>
             <a href="/trabajadores" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">
               Trabajadores
-            </a>          </div>
+            </a>
+          </div>
           <div class="flex items-center space-x-4">
             <span id="userInfo" class="text-sm text-gray-300">—</span>
             <a href="/logout" class="text-sm font-medium text-red-400 hover:text-red-300">
@@ -79,6 +94,7 @@
         </div>
       </div>
     </nav>
+
     <script>
       const btnMenuInv = document.getElementById("btnMenuInv");
       const menuResponsiveInv = document.getElementById("menuResponsiveInv");
@@ -86,7 +102,6 @@
         menuResponsiveInv.classList.toggle("hidden");
       });
     </script>
-    <!-- ================================ -->
 
     <!-- CONTENIDO: LISTADO DE PRODUCTOS -->
     <main class="max-w-screen-2xl mx-auto p-6">
@@ -103,8 +118,17 @@
           <button
             id="btnImportar"
             class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            title="Importar productos nuevos desde CSV (no actualiza existentes)"
           >
             Importar
+          </button>
+          <!-- Botón Actualizar (naranja) -->
+          <button
+            id="btnActualizar"
+            class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-400"
+            title="Actualizar inventario desde CSV (crea nuevos y actualiza existentes)"
+          >
+            Actualizar
           </button>
           <!-- Botón Exportar (morado) -->
           <button
@@ -129,9 +153,18 @@
             <tr>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código de Barra</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none" 
+                  onclick="ordenarTabla('nombre')" title="Clic para ordenar por nombre">
+                Nombre <span id="sort-nombre" class="ml-1 text-gray-400">↕</span>
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none" 
+                  onclick="ordenarTabla('precio')" title="Clic para ordenar por precio">
+                Precio <span id="sort-precio" class="ml-1 text-gray-400">↕</span>
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none" 
+                  onclick="ordenarTabla('stock')" title="Clic para ordenar por stock">
+                Stock <span id="sort-stock" class="ml-1 text-gray-400">↕</span>
+              </th>
               <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
             </tr>
           </thead>
@@ -142,8 +175,9 @@
       </div>
     </main>
 
-    <!-- Input oculto para importar CSV -->
+    <!-- Inputs ocultos para importar CSV -->
     <input type="file" id="inputImportarCSV" accept=".csv" class="hidden" />
+    <input type="file" id="inputActualizarCSV" accept=".csv" class="hidden" />
 
     <!-- Modal HTML para crear/editar producto (hidden por defecto) -->
     <div id="modalProducto" class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 hidden">
@@ -213,13 +247,183 @@
       const formProducto = document.getElementById("formProducto");
       const modalTitle = document.getElementById("modalTitle");
       const btnCerrarModal = document.getElementById("btnCerrarModal");
-
       const btnImportar = document.getElementById("btnImportar");
+      const btnActualizar = document.getElementById("btnActualizar");
       const btnExportar = document.getElementById("btnExportar");
       const inputImportarCSV = document.getElementById("inputImportarCSV");
+      const inputActualizarCSV = document.getElementById("inputActualizarCSV");
       const searchInput = document.getElementById("searchInput");
 
       let editandoProductoId = null;
+      
+      // Variables para el ordenamiento
+      let ordenActual = {
+        campo: null,        // 'nombre', 'precio', 'stock'
+        direccion: 'asc'    // 'asc' o 'desc'
+      };
+      let productosOriginales = []; // Array para mantener los datos originales
+
+      // Función para ordenar la tabla
+      function ordenarTabla(campo) {
+        // Si hacemos clic en el mismo campo, cambiar dirección
+        if (ordenActual.campo === campo) {
+          ordenActual.direccion = ordenActual.direccion === 'asc' ? 'desc' : 'asc';
+        } else {
+          // Nuevo campo, empezar con ascendente
+          ordenActual.campo = campo;
+          ordenActual.direccion = 'asc';
+        }
+
+        // Actualizar indicadores visuales
+        actualizarIndicadoresOrden();
+
+        // Ordenar los datos
+        const productosOrdenados = [...productosOriginales].sort((a, b) => {
+          let valorA, valorB;
+
+          switch (campo) {
+            case 'nombre':
+              valorA = a.nombre.toLowerCase();
+              valorB = b.nombre.toLowerCase();
+              break;
+            case 'precio':
+              valorA = parseFloat(a.precio) || 0;
+              valorB = parseFloat(b.precio) || 0;
+              break;
+            case 'stock':
+              valorA = parseInt(a.stock) || 0;
+              valorB = parseInt(b.stock) || 0;
+              break;
+            default:
+              return 0;
+          }
+
+          let resultado = 0;
+          if (valorA < valorB) resultado = -1;
+          else if (valorA > valorB) resultado = 1;
+
+          return ordenActual.direccion === 'desc' ? -resultado : resultado;
+        });
+
+        // Renderizar la tabla ordenada
+        renderizarTabla(productosOrdenados);
+      }
+
+      // Función para actualizar los indicadores visuales de ordenamiento
+      function actualizarIndicadoresOrden() {
+        // Resetear todos los indicadores
+        ['nombre', 'precio', 'stock'].forEach(campo => {
+          const indicador = document.getElementById(`sort-${campo}`);
+          if (indicador) {
+            indicador.textContent = '↕';
+            indicador.className = 'ml-1 text-gray-400';
+          }
+        });
+
+        // Actualizar el indicador activo
+        if (ordenActual.campo) {
+          const indicadorActivo = document.getElementById(`sort-${ordenActual.campo}`);
+          if (indicadorActivo) {
+            indicadorActivo.textContent = ordenActual.direccion === 'asc' ? '↑' : '↓';
+            indicadorActivo.className = 'ml-1 text-blue-600 font-bold';
+          }
+        }
+      }
+
+      // Función para renderizar la tabla con los productos dados
+      function renderizarTabla(productos) {
+        tbodyInventario.innerHTML = "";
+
+        productos.forEach((prod) => {
+          const tr = document.createElement("tr");
+          tr.className = "hover:bg-gray-50";
+
+          tr.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${prod.id}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${prod.codigo}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${prod.nombre}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+              ${new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP" }).format(parseFloat(prod.precio))}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${prod.stock || 0}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-center">
+              <button data-id="${prod.id}" class="btnEditar inline-flex px-2 py-1 bg-yellow-400 text-white rounded hover:bg-yellow-500 text-xs mr-2">
+                Editar
+              </button>
+              <button data-id="${prod.id}" class="btnEliminar inline-flex px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs">
+                Eliminar
+              </button>
+            </td>
+          `;
+          tbodyInventario.appendChild(tr);
+        });
+
+        // Aplicar filtro después de renderizar
+        filterTable();
+        // Reagregar listeners a los botones
+        agregarListenersProductos();
+      }
+
+      // Función para agregar listeners a los botones de Editar y Eliminar
+      function agregarListenersProductos() {
+        // Agregar listeners a los botones Editar
+        document.querySelectorAll(".btnEditar").forEach((btn) => {
+          btn.addEventListener("click", async (e) => {
+            const id = e.currentTarget.dataset.id;
+            try {
+              // 1) Obtener datos del producto
+              const r = await fetch(`${BACKEND_URL}/ventas/productos/${id}/`, {
+                method: "GET",
+                headers,
+              });
+              const producto = await r.json();
+              // 2) Obtener stock asociado (si existe)
+              const stocksR = await fetch(`${BACKEND_URL}/ventas/stocks/?producto=${id}`, { headers });
+              const stocksData = await stocksR.json();
+              const cantidadStock = stocksData.length > 0 ? stocksData[0].cantidad : 0;
+
+              // 3) Abrir modal con datos precargados
+              abrirModal(false, {
+                id: producto.id,
+                codigo: producto.codigo,
+                nombre: producto.nombre,
+                precio: producto.precio,
+                stock: cantidadStock
+              });
+            } catch (err) {
+              console.error(err);
+              alert("Error al cargar datos del producto.");
+            }
+          });
+        });
+
+        // Agregar listeners a los botones Eliminar
+        document.querySelectorAll(".btnEliminar").forEach((btn) => {
+          btn.addEventListener("click", async (e) => {
+            const id = e.currentTarget.dataset.id;
+            if (!confirm("¿Eliminar este producto del inventario? (Se mantendrá en el historial de ventas)")) return;
+            try {
+              // Usar soft delete - el producto se marca como eliminado pero no se borra físicamente
+              const response = await fetch(`${BACKEND_URL}/ventas/productos/${id}/`, {
+                method: "DELETE",
+                headers,
+              });
+              
+              if (response.status === 204) {
+                // Eliminación exitosa
+                alert("Producto eliminado del inventario correctamente");
+                cargarInventario();
+              } else {
+                // Otros errores
+                throw new Error(`Error HTTP: ${response.status}`);
+              }
+            } catch (err) {
+              console.error(err);
+              alert("Error al eliminar producto: " + err.message);
+            }
+          });
+        });
+      }
 
       // Función para abrir modal (crear o editar)
       function abrirModal(nuevo = true, producto = {}) {
@@ -245,7 +449,7 @@
         modalProducto.classList.add("hidden");
       }
 
-      // Listener para “+ Nuevo Producto”
+      // Listener para "+ Nuevo Producto"
       btnNuevoProducto.addEventListener("click", () => abrirModal());
       btnCerrarModal.addEventListener("click", cerrarModal);
 
@@ -255,70 +459,254 @@
         document.querySelectorAll("#tbodyInventario tr").forEach((row) => {
           const codigo = row.children[1].textContent.toLowerCase();
           const nombre = row.children[2].textContent.toLowerCase();
-        if (codigo.includes(term) || nombre.includes(term)) {
-              row.style.display = "";   // muéstralo
-            } else {
-              row.style.display = "none"; // lo oculta
-            }
+          if (codigo.includes(term) || nombre.includes(term)) {
+            row.style.display = "";   // muéstralo
+          } else {
+            row.style.display = "none"; // lo oculta
+          }
         });
       }
 
-
-
-
-      // --- Importar Inventario desde CSV ---
-      btnImportar.addEventListener("click", () => {
-        // Abrir diálogo para elegir archivo CSV
-        inputImportarCSV.click();
-      });
-
-      inputImportarCSV.addEventListener("change", async function (e) {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const text = await file.text();
-      const lines = text.trim().split("\n");
-      lines.shift(); // quitamos la cabecera
-
-      for (const line of lines) {
-        const values = line.split(",").map(v => v.replace(/^"|"$/g, ""));
-        const codigo = values[1]?.trim();
-        const nombre = values[2]?.trim();
-
-        // 1) Tomamos el valor "crudo" de precio (puede ser "null", vacío o un número)
-        let precioRaw = values[3]?.trim() || "";
-
-        // 2) Si viene "null" (o está vacío), lo volcamos a "0"
-        if (precioRaw.toLowerCase() === "null" || precioRaw === "") {
-          precioRaw = "0";
+      // --- Importar y Actualizar Inventario desde CSV (OPTIMIZADO) ---
+      
+      // Función para comprimir datos con base64 y gzip (si está disponible)
+      async function comprimirDatos(jsonString) {
+        try {
+          // Usar solo base64 para mayor compatibilidad
+          // El uso de unescape/encodeURIComponent maneja caracteres especiales
+          return btoa(unescape(encodeURIComponent(jsonString)));
+        } catch (error) {
+          console.warn('Error en compresión base64:', error);
+          return jsonString; // Fallback a texto plano
         }
-        // 3) Intentamos parsear a entero; si parseInt da NaN, dejamos 0
-        let precio = parseInt(precioRaw, 10);
-        if (isNaN(precio)) precio = 0;
-
-        if (!codigo) continue; // si no hay código, lo saltamos
+      }
+      
+      // Función optimizada para archivos grandes
+      async function procesarCSVOptimizado(file, esActualizacion = false) {
+        if (!file) return;
 
         try {
-          // Sólo creamos cada producto (POST), sin comprobar existencia
-          const urlPost = `${BACKEND_URL}/ventas/productos/`;
-          const resPost = await fetch(urlPost, {
-            method: "POST",
-            headers,
-            body: JSON.stringify({ codigo, nombre, precio })
-          });
-          if (!resPost.ok) {
-            console.error("Error al crear producto:", await resPost.text());
+          // Validar tamaño del archivo
+          const maxSize = 50 * 1024 * 1024; // 50MB
+          if (file.size > maxSize) {
+            alert("Archivo muy grande. Máximo permitido: 50MB");
+            return;
           }
+
+          const text = await file.text();
+          const lines = text.trim().split("\n");
+          
+          if (lines.length <= 1) {
+            alert("El archivo CSV está vacío o solo contiene cabeceras.");
+            return;
+          }
+
+          lines.shift(); // quitar cabecera
+          
+          // Procesar en chunks para archivos grandes
+          const chunkSize = 500; // 500 productos por chunk
+          const totalProductos = lines.length;
+          const totalChunks = Math.ceil(totalProductos / chunkSize);
+          
+          if (totalProductos > chunkSize) {
+            if (!confirm(`El archivo contiene ${totalProductos} productos. Se procesará en ${totalChunks} lotes de ${chunkSize} productos. ¿Continuar?`)) {
+              return;
+            }
+          }
+
+          // Botón loading
+          const btn = esActualizacion ? btnActualizar : btnImportar;
+          const textoOriginal = btn.textContent;
+          
+          let productosCreados = 0;
+          let productosActualizados = 0;
+          let errores = 0;
+
+          // Procesar chunks secuencialmente
+          for (let i = 0; i < totalChunks; i++) {
+            const start = i * chunkSize;
+            const end = Math.min(start + chunkSize, totalProductos);
+            const chunk = lines.slice(start, end);
+            
+            // Actualizar progreso
+            btn.textContent = `Procesando ${i + 1}/${totalChunks} (${Math.round(((i + 1) / totalChunks) * 100)}%)`;
+            
+            const productos = [];
+            
+            // Procesar chunk actual
+            for (const line of chunk) {
+              const values = line.split(",").map(v => v.replace(/^"|"$/g, "").trim());
+              const codigo = values[1];
+              const nombre = values[2];
+              let precioRaw = values[3] || "";
+
+              if (precioRaw.toLowerCase() === "null" || precioRaw === "") {
+                precioRaw = "0";
+              }
+              let precio = parseInt(precioRaw, 10);
+              if (isNaN(precio)) precio = 0;
+
+              if (!codigo) continue;
+
+              productos.push({
+                codigo: codigo,
+                nombre: nombre || "",
+                precio: precio
+              });
+            }
+
+            if (productos.length === 0) continue;
+
+            // VERSIÓN COMPRIMIDA: Convertir a base64 comprimido
+            const jsonString = JSON.stringify(productos);
+            const compressed = await comprimirDatos(jsonString);
+            
+            // Enviar chunk al backend
+            const endpoint = esActualizacion ? 'bulk-update' : 'bulk-import';
+            
+            try {
+              const response = await fetch(`${BACKEND_URL}/ventas/productos/${endpoint}/`, {
+                method: "POST",
+                headers: {
+                  ...headers
+                },
+                body: JSON.stringify({ 
+                  productos_compressed: compressed,
+                  chunk_info: {
+                    current: i + 1,
+                    total: totalChunks,
+                    productos_en_chunk: productos.length
+                  }
+                })
+              });
+
+              if (!response.ok) {
+                console.error(`Error HTTP ${response.status}:`, response.statusText);
+                throw new Error(`Error HTTP ${response.status}: ${response.statusText}`);
+              }
+
+              const result = await response.json();
+
+              if (response.ok) {
+                productosCreados += result.productos_creados || 0;
+                productosActualizados += result.productos_actualizados || 0;
+                errores += result.errores || 0;
+              } else {
+                console.error(`Error en chunk ${i + 1}:`, result);
+                errores += productos.length;
+              }
+
+            } catch (fetchError) {
+              console.error(`Error de red en chunk ${i + 1}:`, fetchError);
+              
+              // Si es un error de red, intentar una vez más con datos sin comprimir
+              if (fetchError.message.includes('NetworkError') || fetchError.message.includes('fetch')) {
+                console.log(`Reintentando chunk ${i + 1} sin compresión...`);
+                try {
+                  const response = await fetch(`${BACKEND_URL}/ventas/productos/${endpoint}/`, {
+                    method: "POST",
+                    headers: {
+                      ...headers
+                    },
+                    body: JSON.stringify({ 
+                      productos: productos,
+                      chunk_info: {
+                        current: i + 1,
+                        total: totalChunks,
+                        productos_en_chunk: productos.length
+                      }
+                    })
+                  });
+
+                  if (!response.ok) {
+                    throw new Error(`Error HTTP ${response.status}: ${response.statusText}`);
+                  }
+
+                  const result = await response.json();
+                  productosCreados += result.productos_creados || 0;
+                  productosActualizados += result.productos_actualizados || 0;
+                  errores += result.errores || 0;
+                  
+                  console.log(`✅ Chunk ${i + 1} procesado sin compresión`);
+                } catch (retryError) {
+                  console.error(`Error en reintento de chunk ${i + 1}:`, retryError);
+                  errores += productos.length;
+                }
+              } else {
+                errores += productos.length;
+              }
+            }
+
+            // Pequeña pausa para no saturar el servidor
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
+
+          // Mostrar resultado final
+          let mensaje = `✅ Procesamiento completado!\n\n`;
+          mensaje += `📊 Resumen:\n`;
+          mensaje += `• Total productos: ${totalProductos}\n`;
+          mensaje += `• Productos creados: ${productosCreados}\n`;
+          if (esActualizacion) {
+            mensaje += `• Productos actualizados: ${productosActualizados}\n`;
+          }
+          mensaje += `• Errores: ${errores}\n`;
+          mensaje += `• Procesado en ${totalChunks} lotes`;
+
+          alert(mensaje);
+          cargarInventario();
+
         } catch (error) {
-          console.error("Error de red al importar producto:", error.message);
+          console.error("Error completo al procesar CSV:", {
+            error: error,
+            message: error.message,
+            stack: error.stack,
+            backendUrl: BACKEND_URL,
+            token: token ? "presente" : "ausente"
+          });
+          
+          // Mostrar error más específico al usuario
+          let errorMsg = "Error al procesar el archivo CSV: ";
+          if (error.message.includes('NetworkError')) {
+            errorMsg += "No se puede conectar al servidor. Verifique que:\n";
+            errorMsg += "• El servidor backend esté ejecutándose\n";
+            errorMsg += "• La URL del backend sea correcta\n";
+            errorMsg += "• No haya problemas de red";
+          } else if (error.message.includes('401')) {
+            errorMsg += "Token de autenticación expirado. Inicie sesión nuevamente.";
+          } else if (error.message.includes('403')) {
+            errorMsg += "No tiene permisos para realizar esta operación.";
+          } else {
+            errorMsg += error.message;
+          }
+          
+          alert(errorMsg);
+        } finally {
+          // Restaurar botón
+          const btn = esActualizacion ? btnActualizar : btnImportar;
+          const textoOriginal = esActualizacion ? "Actualizar" : "Importar";
+          btn.textContent = textoOriginal;
+          btn.disabled = false;
         }
       }
 
-      alert("Importación finalizada");
-      cargarInventario();
-      this.value = ""; // limpiar el input para poder re-subir el mismo CSV
-    });
+      // Event listeners optimizados
+      btnImportar.addEventListener("click", () => {
+        inputImportarCSV.click();
+      });
 
+      btnActualizar.addEventListener("click", () => {
+        inputActualizarCSV.click();
+      });
+
+      inputImportarCSV.addEventListener("change", async function (e) {
+        await procesarCSVOptimizado(e.target.files[0], false);
+        this.value = "";
+      });
+
+      inputActualizarCSV.addEventListener("change", async function (e) {
+        await procesarCSVOptimizado(e.target.files[0], true);
+        this.value = "";
+      });
 
       // --- Exportar Inventario a CSV ---
       function exportarCSV() {
@@ -366,89 +754,18 @@
           });
           if (!res.ok) throw new Error("Error al cargar inventario");
           const productos = await res.json();
-          tbodyInventario.innerHTML = "";
+          
+          // Guardar los productos originales
+          productosOriginales = productos;
+          
+          // Si hay un ordenamiento activo, aplicarlo
+          if (ordenActual.campo) {
+            ordenarTabla(ordenActual.campo);
+          } else {
+            // Si no hay ordenamiento, renderizar normalmente
+            renderizarTabla(productos);
+          }
 
-          productos.forEach((prod) => {
-            const tr = document.createElement("tr");
-            tr.className = "hover:bg-gray-50";
-
-            tr.innerHTML = `
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${prod.id}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${prod.codigo}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${prod.nombre}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                ${new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP" }).format(parseFloat(prod.precio))}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${prod.stock || 0}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-center">
-                <button data-id="${prod.id}" class="btnEditar inline-flex px-2 py-1 bg-yellow-400 text-white rounded hover:bg-yellow-500 text-xs mr-2">
-                  Editar
-                </button>
-                <button data-id="${prod.id}" class="btnEliminar inline-flex px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs">
-                  Eliminar
-                </button>
-              </td>
-            `;
-            tbodyInventario.appendChild(tr);
-          });
-
-          // Aplicar filtro después de rellenar la tabla
-          filterTable();
-
-          // Agregar listeners a los botones Editar y Eliminar
-          document.querySelectorAll(".btnEditar").forEach((btn) => {
-            btn.addEventListener("click", async (e) => {
-              const id = e.currentTarget.dataset.id;
-              try {
-                // 1) Obtener datos del producto
-                const r = await fetch(`${BACKEND_URL}/ventas/productos/${id}/`, {
-                  method: "GET",
-                  headers,
-                });
-                const producto = await r.json();
-                // 2) Obtener stock asociado (si existe)
-                const stocksR = await fetch(`${BACKEND_URL}/ventas/stocks/?producto=${id}`, { headers });
-                const stocksData = await stocksR.json();
-                const cantidadStock = stocksData.length > 0 ? stocksData[0].cantidad : 0;
-
-                // 3) Abrir modal con datos precargados
-                abrirModal(false, {
-                  id: producto.id,
-                  codigo: producto.codigo,
-                  nombre: producto.nombre,
-                  precio: producto.precio,
-                  stock: cantidadStock
-                });
-              } catch (err) {
-                console.error(err);
-                alert("Error al cargar datos del producto.");
-              }
-            });
-          });          document.querySelectorAll(".btnEliminar").forEach((btn) => {
-            btn.addEventListener("click", async (e) => {
-              const id = e.currentTarget.dataset.id;
-              if (!confirm("¿Eliminar este producto del inventario? (Se mantendrá en el historial de ventas)")) return;
-              try {
-                // Usar soft delete - el producto se marca como eliminado pero no se borra físicamente
-                const response = await fetch(`${BACKEND_URL}/ventas/productos/${id}/`, {
-                  method: "DELETE",
-                  headers,
-                });
-                
-                if (response.status === 204) {
-                  // Eliminación exitosa
-                  alert("Producto eliminado del inventario correctamente");
-                  cargarInventario();
-                } else {
-                  // Otros errores
-                  throw new Error(`Error HTTP: ${response.status}`);
-                }
-              } catch (err) {
-                console.error(err);
-                alert("Error al eliminar producto: " + err.message);
-              }
-            });
-          });
         } catch (err) {
           console.error(err);
           alert("Error al cargar inventario.");
@@ -462,13 +779,6 @@
         const nombre = document.getElementById("nombreProd").value.trim();
         const precio = parseFloat(document.getElementById("precioProd").value);
         const stockCantidad = parseInt(document.getElementById("stockProd").value, 10);
-
-        /*
-        if (!codigo || !nombre || isNaN(precio) || isNaN(stockCantidad)) {
-          alert("Rellena todos los campos correctamente.");
-          return;
-        }
-        */
 
         try {
           let prodId = editandoProductoId;
@@ -537,13 +847,13 @@
           console.error(err);
           alert("Error al guardar producto.");
         }
-      });      // Al cargar la página, verificar acceso y obtener el inventario
+      });
+
+      // Al cargar la página, verificar acceso y obtener el inventario
       document.addEventListener("DOMContentLoaded", async () => {
         await checkAccess();
         cargarInventario();
         searchInput.addEventListener("input", filterTable);
-        // Escuchar el input de búsqueda para filtrar en tiempo real
-        document.getElementById("searchInput").addEventListener("input", filterTable);
       });
 
       async function checkAccess() {
@@ -563,7 +873,8 @@
             window.location.href = "/";
             return;
           }
-            const user = await resp.json();
+          
+          const user = await resp.json();
           
           // Mostrar información del usuario
           document.getElementById("userInfo").textContent = `${user.first_name} ${user.last_name} (${user.role})`;

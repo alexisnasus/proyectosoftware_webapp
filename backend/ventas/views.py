@@ -14,6 +14,9 @@ from datetime import timedelta, datetime
 import pytz
 from .models import Transaccion, Producto, Stock, Item
 from drf_yasg import openapi
+import base64
+import gzip
+import json
 
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -230,9 +233,7 @@ class ProductoDetailAPIView(APIView):
     def get(self, request, pk):
         producto = get_object_or_404(Producto, pk=pk, eliminado=False)
         serializer = ProductoSerializer(producto)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    @swagger_auto_schema(
+        return Response(serializer.data, status=status.HTTP_200_OK)    @swagger_auto_schema(
         security=[{"Bearer": []}],
         request_body=ProductoSerializer,
         responses={200: ProductoSerializer, 400: "Error de validación", 404: "Producto no encontrado"}
@@ -248,7 +249,9 @@ class ProductoDetailAPIView(APIView):
         if serializer.is_valid():
             producto = serializer.save()
             return Response(ProductoSerializer(producto).data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)    @swagger_auto_schema(
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @swagger_auto_schema(
         security=[{"Bearer": []}],
         responses={204: "Producto eliminado", 404: "Producto no encontrado"}
     )
@@ -264,6 +267,341 @@ class ProductoDetailAPIView(APIView):
         producto.eliminado_en = timezone.now()
         producto.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ProductoBulkImportAPIView(APIView):
+    """
+    Vista para importación bulk de productos desde CSV.
+    Solo agrega productos nuevos (no actualiza existentes).
+    Soporta datos comprimidos para archivos grandes.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def _descomprimir_datos(self, compressed_data):
+        """Descomprime datos base64 + gzip (con fallbacks)"""
+        try:
+            # Intentar decodificar base64 + gzip
+            try:
+                compressed_bytes = base64.b64decode(compressed_data)
+                decompressed_bytes = gzip.decompress(compressed_bytes)
+                json_string = decompressed_bytes.decode('utf-8')
+                return json.loads(json_string)
+            except:
+                # Fallback 1: solo base64 estándar
+                try:
+                    decoded_bytes = base64.b64decode(compressed_data)
+                    json_string = decoded_bytes.decode('utf-8')
+                    return json.loads(json_string)
+                except:
+                    # Fallback 2: base64 con URL encoding (compatible con unescape/encodeURIComponent)
+                    try:
+                        decoded_string = base64.b64decode(compressed_data).decode('utf-8')
+                        import urllib.parse
+                        unescaped = urllib.parse.unquote(decoded_string)
+                        return json.loads(unescaped)
+                    except:
+                        # Fallback 3: interpretar como JSON directo
+                        return json.loads(compressed_data)
+        except Exception as e:
+            raise ValueError(f"Error al descomprimir datos: {str(e)}")
+
+    @swagger_auto_schema(
+        security=[{"Bearer": []}],
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'productos': openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            'codigo': openapi.Schema(type=openapi.TYPE_STRING),
+                            'nombre': openapi.Schema(type=openapi.TYPE_STRING),
+                            'precio': openapi.Schema(type=openapi.TYPE_INTEGER),
+                        }
+                    )
+                ),
+                'productos_compressed': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description="Datos de productos comprimidos en base64"
+                ),
+                'chunk_info': openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    description="Información del chunk actual"
+                )
+            }
+        ),
+        responses={201: "Productos importados exitosamente", 400: "Error de validación"}
+    )
+    def post(self, request):
+        # Solo administradores pueden importar productos
+        if request.user.role != 'ADMIN':
+            return Response({"error": "Solo los administradores pueden importar productos"}, 
+                          status=status.HTTP_403_FORBIDDEN)
+        
+        # Obtener datos (comprimidos o normales)
+        productos_data = []
+        chunk_info = request.data.get('chunk_info', {})
+        
+        if 'productos_compressed' in request.data:
+            # Datos comprimidos
+            try:
+                productos_data = self._descomprimir_datos(request.data['productos_compressed'])
+            except ValueError as e:
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            # Datos normales
+            productos_data = request.data.get('productos', [])
+        
+        if not productos_data:
+            return Response({"error": "No se proporcionaron productos para importar"}, 
+                          status=status.HTTP_400_BAD_REQUEST)
+        
+        productos_creados = []
+        productos_omitidos = []
+        errores = []
+        
+        # Log del chunk si está disponible
+        if chunk_info:
+            print(f"Procesando chunk {chunk_info.get('current', '?')}/{chunk_info.get('total', '?')} "
+                  f"con {len(productos_data)} productos")
+        
+        with transaction.atomic():
+            for producto_data in productos_data:
+                codigo = producto_data.get('codigo', '').strip()
+                nombre = producto_data.get('nombre', '').strip()
+                precio_raw = producto_data.get('precio', '')
+                
+                # Validar datos básicos
+                if not codigo:
+                    errores.append(f"Producto sin código: {nombre}")
+                    continue
+                
+                # Procesar precio (manejar valores "null", vacíos o inválidos)
+                if precio_raw in [None, '', 'null', 'NULL']:
+                    precio = 0
+                else:
+                    try:
+                        precio = int(precio_raw)
+                    except (ValueError, TypeError):
+                        precio = 0
+                
+                # Verificar si el producto ya existe
+                if Producto.objects.filter(codigo=codigo, eliminado=False).exists():
+                    productos_omitidos.append({
+                        'codigo': codigo,
+                        'nombre': nombre,
+                        'razon': 'Ya existe'
+                    })
+                    continue
+                
+                # Crear producto
+                try:
+                    producto = Producto.objects.create(
+                        codigo=codigo,
+                        nombre=nombre,
+                        precio=precio
+                    )
+                    productos_creados.append({
+                        'id': producto.id,
+                        'codigo': producto.codigo,
+                        'nombre': producto.nombre,
+                        'precio': producto.precio
+                    })
+                except Exception as e:
+                    errores.append(f"Error al crear producto {codigo}: {str(e)}")
+        
+        # Respuesta optimizada para chunks
+        chunk_msg = ""
+        if chunk_info:
+            chunk_msg = f" (Chunk {chunk_info.get('current')}/{chunk_info.get('total')})"
+        
+        return Response({
+            'mensaje': f'Importación completada{chunk_msg}. {len(productos_creados)} productos creados.',
+            'productos_creados': len(productos_creados),
+            'productos_omitidos': len(productos_omitidos),
+            'errores': len(errores),
+            'chunk_info': chunk_info,
+            'detalle': {
+                'creados': productos_creados[:10],  # Solo primeros 10 para evitar respuestas enormes
+                'omitidos': productos_omitidos[:10],
+                'errores': errores[:10]
+            }
+        }, status=status.HTTP_201_CREATED)
+
+
+class ProductoBulkUpdateAPIView(APIView):
+    """
+    Vista para actualización bulk de productos desde CSV.
+    Actualiza productos existentes y crea los que no existen.
+    Soporta datos comprimidos para archivos grandes.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def _descomprimir_datos(self, compressed_data):
+        """Descomprime datos base64 + gzip (con fallbacks)"""
+        try:
+            # Intentar decodificar base64 + gzip
+            try:
+                compressed_bytes = base64.b64decode(compressed_data)
+                decompressed_bytes = gzip.decompress(compressed_bytes)
+                json_string = decompressed_bytes.decode('utf-8')
+                return json.loads(json_string)
+            except:
+                # Fallback 1: solo base64 estándar
+                try:
+                    decoded_bytes = base64.b64decode(compressed_data)
+                    json_string = decoded_bytes.decode('utf-8')
+                    return json.loads(json_string)
+                except:
+                    # Fallback 2: base64 con URL encoding (compatible con unescape/encodeURIComponent)
+                    try:
+                        decoded_string = base64.b64decode(compressed_data).decode('utf-8')
+                        import urllib.parse
+                        unescaped = urllib.parse.unquote(decoded_string)
+                        return json.loads(unescaped)
+                    except:
+                        # Fallback 3: interpretar como JSON directo
+                        return json.loads(compressed_data)
+        except Exception as e:
+            raise ValueError(f"Error al descomprimir datos: {str(e)}")
+
+    @swagger_auto_schema(
+        security=[{"Bearer": []}],
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'productos': openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            'codigo': openapi.Schema(type=openapi.TYPE_STRING),
+                            'nombre': openapi.Schema(type=openapi.TYPE_STRING),
+                            'precio': openapi.Schema(type=openapi.TYPE_INTEGER),
+                        }
+                    )
+                ),
+                'productos_compressed': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description="Datos de productos comprimidos en base64"
+                ),
+                'chunk_info': openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    description="Información del chunk actual"
+                )
+            }
+        ),
+        responses={200: "Productos actualizados exitosamente", 400: "Error de validación"}
+    )
+    def post(self, request):
+        # Solo administradores pueden actualizar productos
+        if request.user.role != 'ADMIN':
+            return Response({"error": "Solo los administradores pueden actualizar productos"}, 
+                          status=status.HTTP_403_FORBIDDEN)
+        
+        # Obtener datos (comprimidos o normales)
+        productos_data = []
+        chunk_info = request.data.get('chunk_info', {})
+        
+        if 'productos_compressed' in request.data:
+            # Datos comprimidos
+            try:
+                productos_data = self._descomprimir_datos(request.data['productos_compressed'])
+            except ValueError as e:
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            # Datos normales
+            productos_data = request.data.get('productos', [])
+        
+        if not productos_data:
+            return Response({"error": "No se proporcionaron productos para actualizar"}, 
+                          status=status.HTTP_400_BAD_REQUEST)        
+        productos_creados = []
+        productos_actualizados = []
+        errores = []
+        
+        # Log del chunk si está disponible
+        if chunk_info:
+            print(f"Procesando chunk {chunk_info.get('current', '?')}/{chunk_info.get('total', '?')} "
+                  f"con {len(productos_data)} productos")
+        
+        with transaction.atomic():
+            for producto_data in productos_data:
+                codigo = producto_data.get('codigo', '').strip()
+                nombre = producto_data.get('nombre', '').strip()
+                precio_raw = producto_data.get('precio', '')
+                
+                # Validar datos básicos
+                if not codigo:
+                    errores.append(f"Producto sin código: {nombre}")
+                    continue
+                
+                # Procesar precio (manejar valores "null", vacíos o inválidos)
+                if precio_raw in [None, '', 'null', 'NULL']:
+                    precio = 0
+                else:
+                    try:
+                        precio = int(precio_raw)
+                    except (ValueError, TypeError):
+                        precio = 0
+                
+                try:
+                    # Buscar producto existente (incluyendo eliminados para poder restaurarlos)
+                    producto = Producto.objects.filter(codigo=codigo).first()
+                    
+                    if producto:
+                        # Actualizar producto existente
+                        restaurado = producto.eliminado
+                        producto.nombre = nombre
+                        producto.precio = precio
+                        # Si estaba eliminado, restaurarlo
+                        if producto.eliminado:
+                            producto.eliminado = False
+                            producto.eliminado_en = None
+                        producto.save()
+                        
+                        productos_actualizados.append({
+                            'id': producto.id,
+                            'codigo': producto.codigo,
+                            'nombre': producto.nombre,
+                            'precio': producto.precio,
+                            'accion': 'restaurado' if restaurado else 'actualizado'
+                        })
+                    else:
+                        # Crear producto nuevo
+                        producto = Producto.objects.create(
+                            codigo=codigo,
+                            nombre=nombre,
+                            precio=precio
+                        )
+                        productos_creados.append({
+                            'id': producto.id,
+                            'codigo': producto.codigo,
+                            'nombre': producto.nombre,
+                            'precio': producto.precio
+                        })
+                        
+                except Exception as e:
+                    errores.append(f"Error al procesar producto {codigo}: {str(e)}")
+        
+        # Respuesta optimizada para chunks
+        chunk_msg = ""
+        if chunk_info:
+            chunk_msg = f" (Chunk {chunk_info.get('current')}/{chunk_info.get('total')})"
+        
+        return Response({
+            'mensaje': f'Actualización completada{chunk_msg}. {len(productos_creados)} productos creados, {len(productos_actualizados)} actualizados.',
+            'productos_creados': len(productos_creados),
+            'productos_actualizados': len(productos_actualizados),
+            'errores': len(errores),
+            'chunk_info': chunk_info,
+            'detalle': {
+                'creados': productos_creados[:10],  # Solo primeros 10 para evitar respuestas enormes
+                'actualizados': productos_actualizados[:10],
+                'errores': errores[:10]
+            }
+        }, status=status.HTTP_200_OK)
 
 # ------------------------------
 # CRUD de Stock
