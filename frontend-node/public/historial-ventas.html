@@ -59,15 +59,33 @@
   </script>
 
   <main class="max-w-screen-2xl mx-auto p-6">
-    <h1 class="text-2xl font-semibold text-gray-800 mb-4">Historial de Ventas</h1>
-
-    <!-- Bloque de filtros -->
+    <h1 class="text-2xl font-semibold text-gray-800 mb-4">Historial de Ventas</h1>    <!-- Bloque de filtros -->
     <div class="flex flex-wrap gap-4 mb-6">
       <input type="date" id="fechaFiltro" class="border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/>
       <input type="text" id="vendedorFiltro" placeholder="Filtrar por vendedor" class="border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+      <input type="text" id="productoFiltro" placeholder="Filtrar por producto (código o nombre)" class="border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/>
       <button id="btnFiltrar" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400">
         Filtrar
       </button>
+      <button id="btnLimpiarFiltros" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400">
+        Limpiar Filtros
+      </button>    </div>
+
+    <!-- Indicador de filtros activos -->
+    <div id="filtrosActivos" class="mb-4 hidden">
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <svg class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            <span class="text-sm font-medium text-blue-800">Filtros aplicados:</span>
+            <div id="listaFiltros" class="flex flex-wrap gap-2">
+              <!-- Los filtros activos se mostrarán aquí -->
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Tabla de historial -->
@@ -168,20 +186,21 @@
     // Agrega el header Authorization si hay token
     const headers = token
       ? { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
-      : { "Content-Type": "application/json" };
-
-    const tbody = document.getElementById("tbodyHistorial");
+      : { "Content-Type": "application/json" };    const tbody = document.getElementById("tbodyHistorial");
     const fechaInput = document.getElementById("fechaFiltro");
     const vendedorInput = document.getElementById("vendedorFiltro");
+    const productoInput = document.getElementById("productoFiltro");
     const btnFiltrar = document.getElementById("btnFiltrar");
+    const btnLimpiarFiltros = document.getElementById("btnLimpiarFiltros");
 
     // Función para formatear moneda CLP
     function formatearMoneda(v) {
       return new Intl.NumberFormat("es-CL",{ style:"currency", currency:"CLP" }).format(v);
-    }
-
-    // Carga el historial (con o sin filtros)
+    }    // Carga el historial (con o sin filtros)
     async function cargarHistorial() {
+      // Actualizar indicadores de filtros
+      actualizarIndicadoresFiltros();
+      
       tbody.innerHTML = "";
       // construir query params
       const params = new URLSearchParams();
@@ -191,6 +210,9 @@
       }
       if (vendedorInput.value.trim()) {
         params.append("vendedor", vendedorInput.value.trim());
+      }
+      if (productoInput.value.trim()) {
+        params.append("producto", productoInput.value.trim());
       }
 
       try {
@@ -222,6 +244,13 @@
       } catch (err) {
         console.error("Error al cargar historial:", err);
         tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-red-600">Error al cargar datos.</td></tr>`;      }
+    }    // Función para limpiar todos los filtros
+    function limpiarFiltros() {
+      fechaInput.value = "";
+      vendedorInput.value = "";
+      productoInput.value = "";
+      actualizarIndicadoresFiltros(); // Actualizar indicadores
+      cargarHistorial(); // Recargar sin filtros
     }
 
     // Funciones del modal
@@ -345,10 +374,19 @@
         const transaccionId = e.target.getAttribute("data-id");
         verDetallesVenta(transaccionId);
       }
-    });
-
-    // eventos
+    });    // eventos
     btnFiltrar.addEventListener("click", cargarHistorial);
+    btnLimpiarFiltros.addEventListener("click", limpiarFiltros);
+    
+    // Permitir filtrar con Enter en los campos de texto
+    [fechaInput, vendedorInput, productoInput].forEach(input => {
+      input.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          cargarHistorial();
+        }
+      });
+    });
+    
     document.addEventListener("DOMContentLoaded", async () => {
       await initializeNavbar();
       cargarHistorial();
@@ -397,6 +435,54 @@
       } catch (err) {
         console.error("Error al verificar usuario:", err);
         window.location.href = "/";
+      }
+    }
+
+    // Función para actualizar los indicadores de filtros activos
+    function actualizarIndicadoresFiltros() {
+      const filtrosActivosDiv = document.getElementById("filtrosActivos");
+      const listaFiltros = document.getElementById("listaFiltros");
+      
+      // Limpiar lista actual
+      listaFiltros.innerHTML = "";
+      
+      const filtros = [];
+      
+      // Verificar cada filtro
+      if (fechaInput.value) {
+        filtros.push({
+          tipo: "Fecha",
+          valor: new Date(fechaInput.value).toLocaleDateString('es-CL')
+        });
+      }
+      
+      if (vendedorInput.value.trim()) {
+        filtros.push({
+          tipo: "Vendedor",
+          valor: vendedorInput.value.trim()
+        });
+      }
+      
+      if (productoInput.value.trim()) {
+        filtros.push({
+          tipo: "Producto",
+          valor: productoInput.value.trim()
+        });
+      }
+      
+      if (filtros.length > 0) {
+        // Mostrar indicadores
+        filtrosActivosDiv.classList.remove("hidden");
+        
+        filtros.forEach(filtro => {
+          const badge = document.createElement("span");
+          badge.className = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800";
+          badge.innerHTML = `${filtro.tipo}: ${filtro.valor}`;
+          listaFiltros.appendChild(badge);
+        });
+      } else {
+        // Ocultar indicadores si no hay filtros
+        filtrosActivosDiv.classList.add("hidden");
       }
     }
   </script>

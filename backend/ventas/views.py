@@ -1135,13 +1135,14 @@ class SalesChartDataView(APIView):
 
 class HistorialVentasAPIView(APIView):
     permission_classes = [IsAuthenticated]
-
+    
     @swagger_auto_schema(
         security=[{"Bearer": []}],
         manual_parameters=[
             openapi.Parameter('fecha_inicio', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Fecha inicio (YYYY-MM-DD)'),
             openapi.Parameter('fecha_fin', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Fecha fin (YYYY-MM-DD)'),
             openapi.Parameter('vendedor', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Filtrar por vendedor'),
+            openapi.Parameter('producto', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Filtrar por producto (código o nombre)'),
         ]
     )
     def get(self, request):
@@ -1152,6 +1153,7 @@ class HistorialVentasAPIView(APIView):
         fecha_inicio = request.query_params.get('fecha_inicio')
         fecha_fin = request.query_params.get('fecha_fin')
         vendedor = request.query_params.get('vendedor')
+        producto = request.query_params.get('producto')
         
         if fecha_inicio:
             transacciones = transacciones.filter(confirmado_en__date__gte=fecha_inicio)
@@ -1159,6 +1161,14 @@ class HistorialVentasAPIView(APIView):
             transacciones = transacciones.filter(confirmado_en__date__lte=fecha_fin)
         if vendedor:
             transacciones = transacciones.filter(usuario__username__icontains=vendedor)
+        if producto:
+            # Filtrar por transacciones que contengan productos con el código o nombre especificado
+            from django.db.models import Q
+            transacciones = transacciones.filter(
+                Q(item__producto__codigo__icontains=producto) |
+                Q(item__producto__nombre__icontains=producto) |
+                Q(item__producto_nombre__icontains=producto)
+            ).distinct()
           # Serializar datos
         historial = []
         for transaccion in transacciones:
