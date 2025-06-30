@@ -7,48 +7,222 @@
     <title>Iniciar Sesión – ManuMarket</title>
     <!-- Tailwind vía CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Lucide Icons para los iconos -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+      /* Animaciones personalizadas */
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      
+      .animate-fade-in {
+        animation: fadeIn 0.6s ease-out;
+      }
+      
+      .animate-spin {
+        animation: spin 1s linear infinite;
+      }
+      
+      /* Gradiente personalizado */
+      .bg-gradient-custom {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #334155 50%, #1e40af 100%);
+      }
+      
+      /* Efectos de vidrio */
+      .glass-effect {
+        backdrop-filter: blur(16px);
+        background: rgba(15, 23, 42, 0.8);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+      }
+    </style>
   </head>
-  <body class="min-h-screen flex items-center justify-center bg-gray-50">
-    <div class="max-w-md w-full bg-white p-8 rounded-lg shadow-lg">
-      <h2 class="text-center text-2xl font-semibold text-gray-800 mb-6">Iniciar Sesión</h2>
-      <form id="formLogin" class="space-y-4">
-        <div>
-          <label for="inputUsuario" class="block text-sm font-medium text-gray-700">Usuario</label>
-          <input
-            id="inputUsuario"
-            name="username"
-            type="text"
-            required
-            class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+  <body class="min-h-screen bg-gradient-custom flex items-center justify-center p-4">
+    <!-- Toast container para alertas -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+    
+    <!-- Loading overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 hidden items-center justify-center">
+      <div class="glass-effect rounded-2xl p-8 text-center animate-fade-in">
+        <div class="w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p class="text-white font-medium">Iniciando sesión...</p>
+      </div>
+    </div>
+    
+    <div class="w-full max-w-md animate-fade-in">
+      <!-- Logo y título -->
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl mb-4 shadow-lg">
+          <i data-lucide="shopping-cart" class="w-8 h-8 text-white"></i>
         </div>
-        <div>
-          <label for="inputPassword" class="block text-sm font-medium text-gray-700">Contraseña</label>
-          <input
-            id="inputPassword"
-            name="password"
-            type="password"
-            required
-            class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+        <h1 class="text-3xl font-bold text-white mb-2">ManuMarket</h1>
+        <p class="text-slate-300">Bienvenido de vuelta</p>
+      </div>
+      
+      <!-- Formulario de login -->
+      <div class="glass-effect rounded-2xl p-8 shadow-2xl">
+        <form id="formLogin" class="space-y-6">
+          <!-- Campo Usuario -->
+          <div class="space-y-2">
+            <label for="inputUsuario" class="text-sm font-medium text-slate-200 block">
+              Usuario
+            </label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i data-lucide="user" class="w-5 h-5 text-slate-400"></i>
+              </div>
+              <input
+                id="inputUsuario"
+                name="username"
+                type="text"
+                required
+                class="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                placeholder="Ingresa tu usuario"
+              />
+            </div>
+          </div>
+          
+          <!-- Campo Contraseña -->
+          <div class="space-y-2">
+            <label for="inputPassword" class="text-sm font-medium text-slate-200 block">
+              Contraseña
+            </label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i data-lucide="lock" class="w-5 h-5 text-slate-400"></i>
+              </div>
+              <input
+                id="inputPassword"
+                name="password"
+                type="password"
+                required
+                class="w-full pl-10 pr-12 py-3 bg-slate-800/50 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                placeholder="Ingresa tu contraseña"
+              />
+              <button
+                type="button"
+                id="togglePassword"
+                class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white transition-colors"
+              >
+                <i data-lucide="eye" class="w-5 h-5"></i>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Botón de login -->
+          <button
+            type="submit"
+            id="loginButton"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+          >
+            <span id="loginButtonText">Iniciar Sesión</span>
+            <i data-lucide="log-in" class="w-5 h-5" id="loginIcon"></i>
+          </button>
+        </form>
+        
+        <!-- Footer -->
+        <div class="mt-8 pt-6 border-t border-slate-600">
+          <p class="text-center text-sm text-slate-400">
+            &copy; 2025 ManuMarket. Todos los derechos reservados.
+          </p>
         </div>
-        <button
-          type="submit"
-          class="w-full flex justify-center py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          Ingresar
-        </button>
-      </form>
-      <p class="mt-4 text-center text-sm text-gray-500">
-        &copy; 2025 ManuMarket. Todos los derechos reservados.
-      </p>
+      </div>
     </div>
 
     <script>
+      // Inicializar los iconos de Lucide
+      lucide.createIcons();
+      
       // Base URL de tu API Django (ventas_api)
       const BACKEND_URL = "http://localhost:8000";
 
+      // Elementos DOM
       const formLogin = document.getElementById("formLogin");
+      const loginButton = document.getElementById("loginButton");
+      const loginButtonText = document.getElementById("loginButtonText");
+      const loginIcon = document.getElementById("loginIcon");
+      const loadingOverlay = document.getElementById("loading-overlay");
+      const togglePasswordButton = document.getElementById("togglePassword");
+      const passwordInput = document.getElementById("inputPassword");
+
+      // Función para mostrar/ocultar contraseña
+      togglePasswordButton.addEventListener("click", () => {
+        const isPassword = passwordInput.type === "password";
+        passwordInput.type = isPassword ? "text" : "password";
+        
+        const icon = togglePasswordButton.querySelector("i");
+        icon.setAttribute("data-lucide", isPassword ? "eye-off" : "eye");
+        lucide.createIcons();
+      });
+
+      // Función para mostrar toast/alerta
+      function showToast(message, type = "info") {
+        const toastContainer = document.getElementById("toast-container");
+        const toast = document.createElement("div");
+        
+        const colors = {
+          success: "bg-green-600 border-green-500",
+          error: "bg-red-600 border-red-500",
+          info: "bg-blue-600 border-blue-500",
+          warning: "bg-yellow-600 border-yellow-500"
+        };
+        
+        const icons = {
+          success: "check-circle",
+          error: "x-circle",
+          info: "info",
+          warning: "alert-triangle"
+        };
+        
+        toast.className = `${colors[type]} border backdrop-blur-sm rounded-xl p-4 text-white shadow-lg transform transition-all duration-300 translate-x-full opacity-0 flex items-center space-x-3 min-w-[300px]`;
+        toast.innerHTML = `
+          <i data-lucide="${icons[type]}" class="w-5 h-5 flex-shrink-0"></i>
+          <span class="flex-1 text-sm font-medium">${message}</span>
+          <button onclick="this.parentElement.remove()" class="text-white/80 hover:text-white">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        `;
+        
+        toastContainer.appendChild(toast);
+        lucide.createIcons();
+        
+        // Animación de entrada
+        setTimeout(() => {
+          toast.classList.remove("translate-x-full", "opacity-0");
+        }, 100);
+        
+        // Auto-remover después de 5 segundos
+        setTimeout(() => {
+          toast.classList.add("translate-x-full", "opacity-0");
+          setTimeout(() => toast.remove(), 300);
+        }, 5000);
+      }
+
+      // Función para mostrar/ocultar loading
+      function setLoading(isLoading) {
+        if (isLoading) {
+          loadingOverlay.classList.remove("hidden");
+          loadingOverlay.classList.add("flex");
+          loginButton.disabled = true;
+          loginButtonText.textContent = "Iniciando...";
+          loginIcon.setAttribute("data-lucide", "loader-2");
+          loginIcon.classList.add("animate-spin");
+        } else {
+          loadingOverlay.classList.add("hidden");
+          loadingOverlay.classList.remove("flex");
+          loginButton.disabled = false;
+          loginButtonText.textContent = "Iniciar Sesión";
+          loginIcon.setAttribute("data-lucide", "log-in");
+          loginIcon.classList.remove("animate-spin");
+        }
+        lucide.createIcons();
+      }
+
+      // Manejo del formulario de login
       formLogin.addEventListener("submit", async (e) => {
         e.preventDefault();
 
@@ -56,9 +230,11 @@
         const password = document.getElementById("inputPassword").value;
 
         if (!username || !password) {
-          alert("Complete ambos campos.");
+          showToast("Por favor complete todos los campos", "warning");
           return;
         }
+
+        setLoading(true);
 
         try {
           const resp = await fetch(`${BACKEND_URL}/ventas/user/login/`, {
@@ -66,11 +242,18 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username, password }),
           });
+          
           if (!resp.ok) {
             const errorJson = await resp.json();
-            alert("Error: " + (errorJson.detail || JSON.stringify(errorJson)));
+            showToast(errorJson.detail || "Error al iniciar sesión", "error");
             return;
-          }          const data = await resp.json();
+          }
+          
+          const data = await resp.json();
+          
+          // Mostrar mensaje de éxito
+          showToast("¡Inicio de sesión exitoso!", "success");
+          
           // Guardar el token en localStorage para usar en otras páginas
           localStorage.setItem("token", data.access);
           if (data.refresh) {
@@ -89,12 +272,24 @@
             console.error("Error al decodificar token:", err);
           }
           
-          // Redirigir al dashboard
-          window.location.href = "/dashboard";
+          // Esperar un momento para mostrar el mensaje de éxito
+          setTimeout(() => {
+            window.location.href = "/dashboard";
+          }, 1500);
+          
         } catch (err) {
           console.error(err);
-          alert("Error de conexión al servidor.");
+          showToast("Error de conexión al servidor", "error");
+        } finally {
+          setLoading(false);
         }
+      });
+
+      // Efecto de entrada suave
+      document.addEventListener("DOMContentLoaded", () => {
+        setTimeout(() => {
+          document.body.classList.add("loaded");
+        }, 100);
       });
     </script>
   </body>
