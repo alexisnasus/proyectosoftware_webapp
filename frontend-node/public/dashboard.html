@@ -9,128 +9,474 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <!-- Chart.js para los gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+      /* Animaciones personalizadas */
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      
+      @keyframes slideIn {
+        from { opacity: 0; transform: translateX(-20px); }
+        to { opacity: 1; transform: translateX(0); }
+      }
+      
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+      }
+      
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      
+      .animate-fade-in {
+        animation: fadeIn 0.6s ease-out;
+      }
+      
+      .animate-slide-in {
+        animation: slideIn 0.5s ease-out;
+      }
+      
+      .animate-pulse-custom {
+        animation: pulse 2s infinite;
+      }
+      
+      .animate-spin {
+        animation: spin 1s linear infinite;
+      }
+      
+      /* Gradiente personalizado */
+      .bg-gradient-custom {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #334155 50%, #1e40af 100%);
+      }
+      
+      .bg-gradient-card {
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.9) 100%);
+      }
+      
+      /* Efectos de vidrio */
+      .glass-effect {
+        backdrop-filter: blur(16px);
+        background: rgba(15, 23, 42, 0.8);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+      }
+      
+      .glass-card {
+        backdrop-filter: blur(8px);
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      
+      /* Efectos hover */
+      .card-hover {
+        transition: all 0.3s ease;
+      }
+      
+      .card-hover:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      }
+    </style>
   </head>
-  <body class="min-h-screen bg-gray-50">
-    <!-- Barra de navegación común -->
-    <nav class="bg-gray-900 text-white">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16 items-center">
-          <div class="flex-shrink-0">
-            <a href="/dashboard">
-              <img class="h-8 w-auto" src="ManuLogo_WIP.png" alt="Logo ManuMarket" />
-            </a>
-          </div> <div id="navigationLinks" class="hidden md:flex md:space-x-8">
-              <a href="/dashboard" class="inline-flex items-center px-1 pt-1 border-b-2 border-blue-500 text-sm font-medium text-gray-100">
-                Dashboard
-              </a>
-              <a id="inventarioLink" href="/inventario" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">
-                Inventario
-              </a>
-              <a href="/pos" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">
-                Punto de Venta
-              </a>
-              <a href="/historial-ventas" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">
-              Historial de Ventas              <a id="trabajadoresLink" href="/trabajadores" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">
-                Trabajadores
-              </a>
-            </div><div class="flex items-center space-x-4">
-            <span id="userInfo" class="text-sm text-gray-300">—</span>
+  <body class="min-h-screen bg-gradient-custom">
+    <!-- Toast container para alertas -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+    
+    <!-- Loading overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 hidden items-center justify-center">
+      <div class="glass-effect rounded-2xl p-8 text-center animate-fade-in">
+        <div class="w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p class="text-white font-medium">Cargando dashboard...</p>
+      </div>
+    </div>
 
-            <a href="/logout" class="text-sm font-medium text-red-400 hover:text-red-300">Cerrar sesión</a>
+    <!-- Barra de navegación moderna -->
+    <nav class="glass-effect border-b border-white/10 animate-slide-in">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-20 items-center">
+          <!-- Logo y brand -->
+          <div class="flex items-center space-x-4">
+            <div class="flex-shrink-0 bg-blue-600 p-3 rounded-xl shadow-lg">
+              <i data-lucide="shopping-cart" class="w-7 h-7 text-white"></i>
+            </div>
+            <div>
+              <h1 class="text-2xl font-bold text-white">ManuMarket</h1>
+              <p class="text-sm text-slate-300">Panel de Control</p>
+            </div>
           </div>
-          <div class="-mr-2 flex md:hidden">
-            <button id="btnMenu" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-800">
-              <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                <path class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
+
+          <!-- Navigation Links Desktop -->
+          <div id="navigationLinks" class="hidden md:flex md:space-x-2">
+            <a href="/dashboard" class="inline-flex items-center px-5 py-3 rounded-xl bg-blue-600/30 text-white font-semibold text-base border border-blue-500/50 space-x-2 shadow-lg">
+              <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+              <span>Dashboard</span>
+            </a>
+            <a id="inventarioLink" href="/inventario" class="inline-flex items-center px-5 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base transition-all duration-200 space-x-2">
+              <i data-lucide="package" class="w-5 h-5"></i>
+              <span>Inventario</span>
+            </a>
+            <a href="/pos" class="inline-flex items-center px-5 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base transition-all duration-200 space-x-2">
+              <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+              <span>POS</span>
+            </a>
+            <a href="/historial-ventas" class="inline-flex items-center px-5 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base transition-all duration-200 space-x-2">
+              <i data-lucide="history" class="w-5 h-5"></i>
+              <span>Historial</span>
+            </a>
+            <a id="trabajadoresLink" href="/trabajadores" class="inline-flex items-center px-5 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base transition-all duration-200 space-x-2">
+              <i data-lucide="users" class="w-5 h-5"></i>
+              <span>Trabajadores</span>
+            </a>
+          </div>
+
+          <!-- User info y logout -->
+          <div class="flex items-center space-x-5">
+            <div class="text-right hidden sm:block">
+              <p id="userInfo" class="text-base font-bold text-white">—</p>
+              <p class="text-sm text-slate-200">Bienvenido</p>
+            </div>
+            <a href="/logout" class="inline-flex items-center px-5 py-3 rounded-xl bg-red-600/30 text-white hover:bg-red-600/50 hover:text-white font-semibold text-base transition-all duration-200 space-x-2 border border-red-500/50">
+              <i data-lucide="log-out" class="w-5 h-5"></i>
+              <span class="hidden sm:inline">Salir</span>
+            </a>
+          </div>
+
+          <!-- Mobile menu button -->
+          <div class="md:hidden">
+            <button id="btnMenu" class="inline-flex items-center justify-center p-3 rounded-xl text-white hover:text-white hover:bg-white/20 transition-all duration-200">
+              <i data-lucide="menu" class="w-7 h-7"></i>
             </button>
           </div>
         </div>
-      </div>      <div id="menuResponsive" class="md:hidden hidden bg-gray-800">
-        <div class="px-2 pt-2 pb-3 space-y-1">
-          <a href="/dashboard" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Dashboard</a>
-          <a id="inventarioLinkMobile" href="/inventario" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Inventario</a>
-          <a href="/pos" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Punto de Venta</a>
-          <a href="/historial-ventas" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Historial de Ventas</a>
-          <a id="trabajadoresLinkMobile" href="/trabajadores" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Trabajadores</a>
-          <a href="/logout" class="block px-3 py-2 rounded-md text-base font-medium text-red-400 hover:bg-gray-700">Cerrar sesión</a>
+      </div>
+
+      <!-- Mobile Navigation -->
+      <div id="menuResponsive" class="md:hidden hidden border-t border-white/10 bg-slate-900/50">
+        <div class="px-4 pt-2 pb-3 space-y-1">
+          <a href="/dashboard" class="flex items-center px-4 py-3 rounded-xl bg-blue-600/30 text-white font-bold text-base space-x-3 border border-blue-500/50 shadow-lg">
+            <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+            <span>Dashboard</span>
+          </a>
+          <a id="inventarioLinkMobile" href="/inventario" class="flex items-center px-4 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base space-x-3 transition-all duration-200">
+            <i data-lucide="package" class="w-5 h-5"></i>
+            <span>Inventario</span>
+          </a>
+          <a href="/pos" class="flex items-center px-4 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base space-x-3 transition-all duration-200">
+            <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+            <span>POS</span>
+          </a>
+          <a href="/historial-ventas" class="flex items-center px-4 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base space-x-3 transition-all duration-200">
+            <i data-lucide="history" class="w-5 h-5"></i>
+            <span>Historial de Ventas</span>
+          </a>
+          <a id="trabajadoresLinkMobile" href="/trabajadores" class="flex items-center px-4 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base space-x-3 transition-all duration-200">
+            <i data-lucide="users" class="w-5 h-5"></i>
+            <span>Trabajadores</span>
+          </a>
+          <div class="border-t border-white/10 pt-3 mt-3">
+            <div class="px-4 py-2">
+              <p id="userInfoMobile" class="text-base font-bold text-white">—</p>
+            </div>
+            <a href="/logout" class="flex items-center px-4 py-3 rounded-xl bg-red-600/30 text-white hover:bg-red-600/50 hover:text-white font-semibold text-base space-x-3 transition-all duration-200 border border-red-500/50">
+              <i data-lucide="log-out" class="w-5 h-5"></i>
+              <span>Cerrar sesión</span>
+            </a>
+          </div>
         </div>
       </div>
     </nav>
+    
     <script>
       const btnMenu = document.getElementById("btnMenu");
       const menuResponsive = document.getElementById("menuResponsive");
       btnMenu && btnMenu.addEventListener("click", () => {
         menuResponsive.classList.toggle("hidden");
       });
+      
+      // Inicializar iconos
+      lucide.createIcons();
     </script>
-    <!-- ================================ -->
-
     <!-- CONTENIDO PRINCIPAL DEL DASHBOARD -->
-    <main class="max-w-7xl mx-auto p-6">
-      <h1 class="text-3xl font-semibold text-gray-800 mb-6">Dashboard</h1>
+    <main class="max-w-7xl mx-auto p-6 animate-fade-in">
+      <!-- Header del Dashboard -->
+      <div class="mb-8">
+        <h1 class="text-4xl font-bold text-white mb-2">Dashboard</h1>
+        <p class="text-slate-300">Resumen de tu negocio en tiempo real</p>
+        <div class="flex items-center space-x-2 mt-2">
+          <i data-lucide="clock" class="w-4 h-4 text-slate-400"></i>
+          <p id="currentTimeHeader" class="text-sm text-slate-400">—</p>
+        </div>
+      </div>
+
+      <!-- Loading Cards State -->
+      <div id="cards-loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="glass-card rounded-2xl p-6 animate-pulse">
+          <div class="flex items-center justify-between">
+            <div class="space-y-2">
+              <div class="h-4 bg-slate-300/20 rounded w-24"></div>
+              <div class="h-8 bg-slate-300/20 rounded w-16"></div>
+            </div>
+            <div class="w-12 h-12 bg-slate-300/20 rounded-xl"></div>
+          </div>
+        </div>
+        <div class="glass-card rounded-2xl p-6 animate-pulse">
+          <div class="flex items-center justify-between">
+            <div class="space-y-2">
+              <div class="h-4 bg-slate-300/20 rounded w-28"></div>
+              <div class="h-8 bg-slate-300/20 rounded w-20"></div>
+            </div>
+            <div class="w-12 h-12 bg-slate-300/20 rounded-xl"></div>
+          </div>
+        </div>
+        <div class="glass-card rounded-2xl p-6 animate-pulse">
+          <div class="flex items-center justify-between">
+            <div class="space-y-2">
+              <div class="h-4 bg-slate-300/20 rounded w-32"></div>
+              <div class="h-8 bg-slate-300/20 rounded w-12"></div>
+            </div>
+            <div class="w-12 h-12 bg-slate-300/20 rounded-xl"></div>
+          </div>
+        </div>
+        <div class="glass-card rounded-2xl p-6 animate-pulse">
+          <div class="flex items-center justify-between">
+            <div class="space-y-2">
+              <div class="h-4 bg-slate-300/20 rounded w-20"></div>
+              <div class="h-6 bg-slate-300/20 rounded w-24"></div>
+              <div class="h-4 bg-slate-300/20 rounded w-16"></div>
+            </div>
+            <div class="w-12 h-12 bg-slate-300/20 rounded-xl"></div>
+          </div>
+        </div>
+      </div>
 
       <!-- Cards con métricas -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <!-- CARD 1: Ventas del día (cantidad) -->
-        <div class="bg-white p-4 rounded-lg shadow">
-          <h2 class="text-gray-600 text-sm font-medium">Transacciones Hoy</h2>
-          <p id="ventasHoy" class="mt-2 text-3xl font-bold text-gray-800">—</p>
+      <div id="cards-content" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 hidden">
+        <!-- CARD 1: Ventas del día -->
+        <div class="glass-card rounded-2xl p-6 card-hover">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-slate-300 text-sm font-medium mb-1">Transacciones Hoy</h2>
+              <p id="ventasHoy" class="text-3xl font-bold text-white mb-1">—</p>
+            </div>
+            <div class="bg-blue-600/20 p-3 rounded-xl">
+              <i data-lucide="shopping-bag" class="w-6 h-6 text-blue-400"></i>
+            </div>
+          </div>
         </div>
+
         <!-- CARD 2: Monto total del día -->
-        <div class="bg-white p-4 rounded-lg shadow">
-          <h2 class="text-gray-600 text-sm font-medium">Monto Total Hoy</h2>
-          <p id="total-amount" class="mt-2 text-3xl font-bold text-gray-800">—</p>
+        <div class="glass-card rounded-2xl p-6 card-hover">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-slate-300 text-sm font-medium mb-1">Monto Total Hoy</h2>
+              <p id="total-amount" class="text-3xl font-bold text-white mb-1">—</p>
+              <div class="flex items-center space-x-1">
+                <i data-lucide="dollar-sign" class="w-4 h-4 text-green-400"></i>
+                <span class="text-xs text-green-400">Ingresos del día</span>
+              </div>
+            </div>
+            <div class="bg-green-600/20 p-3 rounded-xl">
+              <i data-lucide="banknote" class="w-6 h-6 text-green-400"></i>
+            </div>
+          </div>
         </div>
+
         <!-- CARD 3: Total Productos -->
-        <div class="bg-white p-4 rounded-lg shadow">
-          <h2 class="text-gray-600 text-sm font-medium">Productos en Inventario</h2>
-          <p id="totalProductos" class="mt-2 text-3xl font-bold text-gray-800">—</p>
+        <div class="glass-card rounded-2xl p-6 card-hover">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-slate-300 text-sm font-medium mb-1">Productos en Stock</h2>
+              <p id="totalProductos" class="text-3xl font-bold text-white mb-1">—</p>
+              <div class="flex items-center space-x-1">
+                <i data-lucide="package" class="w-4 h-4 text-blue-400"></i>
+                <span class="text-xs text-blue-400">Total inventario</span>
+              </div>
+            </div>
+            <div class="bg-purple-600/20 p-3 rounded-xl">
+              <i data-lucide="package-2" class="w-6 h-6 text-purple-400"></i>
+            </div>
+          </div>
         </div>
+
         <!-- CARD 4: Usuario Actual -->
-        <div class="bg-white p-4 rounded-lg shadow">
-          <h2 class="text-gray-600 text-sm font-medium">Usuario Actual</h2>
-          <p id="usuarioActual" class="mt-2 text-lg font-bold text-gray-800">—</p>
-          <p id="rolUsuario" class="text-sm text-gray-500">—</p>
+        <div class="glass-card rounded-2xl p-6 card-hover">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-slate-300 text-sm font-medium mb-1">Usuario Actual</h2>
+              <p id="usuarioActual" class="text-lg font-bold text-white mb-1">—</p>
+              <p id="rolUsuario" class="text-sm text-slate-400">—</p>
+            </div>
+            <div class="bg-indigo-600/20 p-3 rounded-xl">
+              <i data-lucide="user-circle" class="w-6 h-6 text-indigo-400"></i>
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- Gráfica de ventas -->
-      <div class="mt-8 bg-white p-6 rounded-lg shadow">        <div class="flex justify-between items-center mb-4">        <div>
-          <h3 class="text-xl font-medium text-gray-800">Resumen de Ventas</h3>
-          <p class="text-sm text-gray-500">Datos mostrados en hora local de Chile</p>
-          <p class="text-xs text-gray-400" id="currentTime">--</p>
-        </div>
-          <div class="flex space-x-2">
-            <button id="btn-day" class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm">
-              Día
+      <div class="glass-card rounded-2xl p-6 mb-8 animate-fade-in">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 space-y-4 sm:space-y-0">
+          <div>
+            <h3 class="text-2xl font-bold text-white mb-2">Análisis de Ventas</h3>
+            <p class="text-slate-300 text-sm">Rendimiento de tu negocio por períodos</p>
+            <div class="flex items-center space-x-2 mt-2">
+              <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i>
+              <p class="text-xs text-slate-400">Zona horaria: Santiago, Chile</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button id="btn-day" class="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 text-sm font-medium transition-all duration-200 shadow-lg">
+              <i data-lucide="calendar" class="w-4 h-4 inline mr-1"></i>
+              Hoy
             </button>
-            <button id="btn-week" class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm">
+            <button id="btn-week" class="px-4 py-2 bg-slate-700 text-slate-300 rounded-xl hover:bg-slate-600 text-sm font-medium transition-all duration-200">
+              <i data-lucide="calendar-days" class="w-4 h-4 inline mr-1"></i>
               Semana
             </button>
-            <button id="btn-month" class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm">
+            <button id="btn-month" class="px-4 py-2 bg-slate-700 text-slate-300 rounded-xl hover:bg-slate-600 text-sm font-medium transition-all duration-200">
+              <i data-lucide="calendar-range" class="w-4 h-4 inline mr-1"></i>
               Mes
             </button>
-            <button id="btn-year" class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm">
+            <button id="btn-year" class="px-4 py-2 bg-slate-700 text-slate-300 rounded-xl hover:bg-slate-600 text-sm font-medium transition-all duration-200">
+              <i data-lucide="calendar-clock" class="w-4 h-4 inline mr-1"></i>
               Año
             </button>
           </div>
         </div>
-        <div class="h-96">
+        
+        <!-- Loading state del gráfico -->
+        <div id="chart-loading" class="h-96 flex items-center justify-center">
+          <div class="text-center">
+            <div class="w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p class="text-slate-300">Cargando datos del gráfico...</p>
+          </div>
+        </div>
+        
+        <!-- Contenedor del gráfico -->
+        <div id="chart-container" class="h-96 hidden">
           <canvas id="salesChart"></canvas>
         </div>
       </div>
 
-      <!-- Información adicional -->
-      <div class="mt-6 bg-white p-4 rounded-lg shadow">
-        <h2 class="text-gray-600 text-sm font-medium">Información Adicional</h2>
-        <p id="currentTime" class="mt-2 text-sm text-gray-800">—</p>
+      <!-- Información adicional y sistema -->
+      <div class="glass-card rounded-2xl p-6 animate-fade-in">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold text-white">Información del Sistema</h2>
+          <div class="flex items-center space-x-2">
+            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse-custom"></div>
+            <span class="text-green-400 text-sm font-medium">Sistema Online</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="space-y-2">
+            <div class="flex items-center space-x-2">
+              <i data-lucide="clock" class="w-4 h-4 text-slate-400"></i>
+              <span class="text-slate-300 text-sm">Última actualización:</span>
+            </div>
+            <p id="currentTime" class="text-white font-medium pl-6">—</p>
+          </div>
+          <div class="space-y-2">
+            <div class="flex items-center space-x-2">
+              <i data-lucide="activity" class="w-4 h-4 text-slate-400"></i>
+              <span class="text-slate-300 text-sm">Estado del servidor:</span>
+            </div>
+            <p class="text-green-400 font-medium pl-6">Conectado</p>
+          </div>
+        </div>
       </div>
     </main>    <script>
+      // Inicializar los iconos de Lucide
+      lucide.createIcons();
+      
       // BASE URL de tu API Django
-      const BACKEND_URL = "http://localhost:8000"; // Asegúrate que este sea el puerto correcto de tu backend
+      const BACKEND_URL = "http://localhost:8000";
       let currentUser = null;
+      let salesChart = null;
+
+      // Función para mostrar toast/alerta
+      function showToast(message, type = "info") {
+        const toastContainer = document.getElementById("toast-container");
+        const toast = document.createElement("div");
+        
+        const colors = {
+          success: "bg-green-600 border-green-500",
+          error: "bg-red-600 border-red-500",
+          info: "bg-blue-600 border-blue-500",
+          warning: "bg-yellow-600 border-yellow-500"
+        };
+        
+        const icons = {
+          success: "check-circle",
+          error: "x-circle",
+          info: "info",
+          warning: "alert-triangle"
+        };
+        
+        toast.className = `${colors[type]} border backdrop-blur-sm rounded-xl p-4 text-white shadow-lg transform transition-all duration-300 translate-x-full opacity-0 flex items-center space-x-3 min-w-[300px]`;
+        toast.innerHTML = `
+          <i data-lucide="${icons[type]}" class="w-5 h-5 flex-shrink-0"></i>
+          <span class="flex-1 text-sm font-medium">${message}</span>
+          <button onclick="this.parentElement.remove()" class="text-white/80 hover:text-white">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        `;
+        
+        toastContainer.appendChild(toast);
+        lucide.createIcons();
+        
+        setTimeout(() => {
+          toast.classList.remove("translate-x-full", "opacity-0");
+        }, 100);
+        
+        setTimeout(() => {
+          toast.classList.add("translate-x-full", "opacity-0");
+          setTimeout(() => toast.remove(), 300);
+        }, 5000);
+      }
+
+      // Función para mostrar/ocultar loading
+      function setLoading(isLoading) {
+        const loadingOverlay = document.getElementById("loading-overlay");
+        if (isLoading) {
+          loadingOverlay.classList.remove("hidden");
+          loadingOverlay.classList.add("flex");
+        } else {
+          loadingOverlay.classList.add("hidden");
+          loadingOverlay.classList.remove("flex");
+        }
+      }
+
+      // Función para mostrar loading de cards
+      function setCardsLoading(isLoading) {
+        const cardsLoading = document.getElementById("cards-loading");
+        const cardsContent = document.getElementById("cards-content");
+        
+        if (isLoading) {
+          cardsLoading.classList.remove("hidden");
+          cardsContent.classList.add("hidden");
+        } else {
+          cardsLoading.classList.add("hidden");
+          cardsContent.classList.remove("hidden");
+        }
+      }
+
+      // Función para mostrar loading del gráfico
+      function setChartLoading(isLoading) {
+        const chartLoading = document.getElementById("chart-loading");
+        const chartContainer = document.getElementById("chart-container");
+        
+        if (isLoading) {
+          chartLoading.classList.remove("hidden");
+          chartContainer.classList.add("hidden");
+        } else {
+          chartLoading.classList.add("hidden");
+          chartContainer.classList.remove("hidden");
+        }
+      }
+
       // Función para formatear moneda
       function formatearMoneda(valor) {
         return new Intl.NumberFormat("es-CL", {
@@ -145,7 +491,7 @@
         const token = localStorage.getItem("token");
         if (!token) {
           console.log("No token found in loadCurrentUser");
-          window.location.href = "/";
+          setTimeout(() => window.location.href = "/", 2000);
           return;
         }
 
@@ -159,7 +505,7 @@
           if (!respUser.ok) {
             console.log("User request failed, removing token and redirecting");
             localStorage.removeItem("token");
-            window.location.href = "/";
+            setTimeout(() => window.location.href = "/", 2000);
             return;
           }
           
@@ -171,15 +517,24 @@
           const displayName = fullName || currentUser.username;
           const roleName = currentUser.role === 'ADMIN' ? 'Administrador' : 'Empleado';
           
-          document.getElementById("userInfo").textContent = `${displayName} (${roleName})`;
-          document.getElementById("usuarioActual").textContent = displayName;
-          document.getElementById("rolUsuario").textContent = roleName;
+          // Actualizar elementos de usuario
+          const userElements = ['userInfo', 'userInfoMobile', 'usuarioActual'];
+          userElements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+              element.textContent = `${displayName} (${roleName})`;
+            }
+          });
+          
+          const rolElement = document.getElementById("rolUsuario");
+          if (rolElement) rolElement.textContent = roleName;
           
           console.log("User info updated in DOM");
+          showToast(`¡Bienvenido, ${displayName}!`, "success");
           
         } catch (err) {
           console.error("Error al cargar usuario actual:", err);
-          window.location.href = "/";
+          setTimeout(() => window.location.href = "/", 2000);
         }
       }
 
@@ -189,15 +544,15 @@
 
         // Si es empleado, ocultar enlaces de inventario y usuarios
         if (currentUser.role === 'EMPLOYEE') {
-          const inventarioLink = document.getElementById("inventarioLink");
-          const trabajadoresLink = document.getElementById("trabajadoresLink");
-          const inventarioLinkMobile = document.getElementById("inventarioLinkMobile");
-          const trabajadoresLinkMobile = document.getElementById("trabajadoresLinkMobile");
+          const elementsToHide = [
+            'inventarioLink', 'trabajadoresLink', 
+            'inventarioLinkMobile', 'trabajadoresLinkMobile'
+          ];
           
-          if (inventarioLink) inventarioLink.style.display = "none";
-          if (trabajadoresLink) trabajadoresLink.style.display = "none";
-          if (inventarioLinkMobile) inventarioLinkMobile.style.display = "none";
-          if (trabajadoresLinkMobile) trabajadoresLinkMobile.style.display = "none";
+          elementsToHide.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) element.style.display = "none";
+          });
           
           console.log("Access control applied for EMPLOYEE role");
         }
@@ -208,50 +563,42 @@
         const token = localStorage.getItem("token");
         if (!token) {
           console.log("No token found in loadDashboardData");
-          window.location.href = "/";
+          setTimeout(() => window.location.href = "/", 2000);
           return;
         }
         const headers = { "Authorization": `Bearer ${token}` };
 
-        // Inicializar gráfico
+        // Inicializar gráfico con tema oscuro
         const ctx = document.getElementById('salesChart').getContext('2d');
-        let salesChart = new Chart(ctx, {
+        salesChart = new Chart(ctx, {
           type: 'bar',
           data: {
             labels: [],
             datasets: [{
               label: 'Ventas',
               data: [],
-              backgroundColor: 'rgba(54, 162, 235, 0.6)',
-              borderColor: 'rgba(54, 162, 235, 1)',
-              borderWidth: 1
+              backgroundColor: 'rgba(59, 130, 246, 0.6)',
+              borderColor: 'rgba(59, 130, 246, 1)',
+              borderWidth: 2,
+              borderRadius: 8,
+              borderSkipped: false,
             }]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            scales: {
-              y: {
-                beginAtZero: true,
-                ticks: {
-                  callback: function (value) {
-                    return formatearMoneda(value);
-                  }
-                },
-                title: {
-                  display: true,
-                  text: 'Monto en CLP'
+            plugins: {
+              legend: {
+                labels: {
+                  color: '#e2e8f0'
                 }
               },
-              x: {
-                title: {
-                  display: true,
-                  text: 'Período'
-                }
-              }
-            },
-            plugins: {
               tooltip: {
+                backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                titleColor: '#e2e8f0',
+                bodyColor: '#e2e8f0',
+                borderColor: 'rgba(59, 130, 246, 0.5)',
+                borderWidth: 1,
                 callbacks: {
                   label: function (context) {
                     let label = context.dataset.label || '';
@@ -263,6 +610,38 @@
                   }
                 }
               }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                grid: {
+                  color: 'rgba(148, 163, 184, 0.1)'
+                },
+                ticks: {
+                  color: '#94a3b8',
+                  callback: function (value) {
+                    return formatearMoneda(value);
+                  }
+                },
+                title: {
+                  display: true,
+                  text: 'Monto en CLP',
+                  color: '#e2e8f0'
+                }
+              },
+              x: {
+                grid: {
+                  color: 'rgba(148, 163, 184, 0.1)'
+                },
+                ticks: {
+                  color: '#94a3b8'
+                },
+                title: {
+                  display: true,
+                  text: 'Período',
+                  color: '#e2e8f0'
+                }
+              }
             }
           }
         });
@@ -270,8 +649,8 @@
         // Función para cargar datos de las cards
         async function loadCardData() {
           console.log("Starting loadCardData...");
+          setCardsLoading(true);
           
-          // Ensure DOM elements exist
           const elements = {
             ventasHoy: document.getElementById("ventasHoy"),
             totalAmount: document.getElementById("total-amount"),
@@ -284,7 +663,6 @@
             totalProductos: !!elements.totalProductos
           });
           
-          // Check if elements exist
           if (!elements.ventasHoy || !elements.totalAmount || !elements.totalProductos) {
             console.error("Required DOM elements not found!", elements);
             return;
@@ -298,7 +676,7 @@
             if (!resp.ok) {
               if (resp.status === 401) {
                 console.log("Unauthorized, redirecting to login");
-                window.location.href = "/";
+                setTimeout(() => window.location.href = "/", 2000);
                 return;
               }
               throw new Error(`Error al cargar métricas del dashboard: ${resp.status} ${resp.statusText}`);
@@ -307,83 +685,118 @@
             const data = await resp.json();
             console.log("Dashboard metrics data:", data);
             
-            // Validate data structure
             if (!data || !data.ventas_hoy) {
               throw new Error("Invalid data structure received from API");
             }
             
-            // Update DOM elements with validation
             const ventasValue = data.ventas_hoy.cantidad !== undefined ? data.ventas_hoy.cantidad : 0;
             const montoValue = data.ventas_hoy.monto !== undefined ? data.ventas_hoy.monto : 0;
             const productosValue = data.total_productos !== undefined ? data.total_productos : 0;
             
-            elements.ventasHoy.textContent = ventasValue.toString();
-            elements.totalAmount.textContent = formatearMoneda(montoValue);
-            elements.totalProductos.textContent = productosValue.toString();
+            // Animación de conteo para las métricas
+            animateCountUp(elements.ventasHoy, ventasValue);
+            animateCountUp(elements.totalProductos, productosValue);
             
-            console.log("DOM updated successfully:", {
-              ventasHoy: ventasValue,
-              totalAmount: formatearMoneda(montoValue),
-              totalProductos: productosValue
-            });
+            // Para el monto, usar formateo directo
+            elements.totalAmount.textContent = formatearMoneda(montoValue);
+            
+            console.log("DOM updated successfully");
             
           } catch (err) {
             console.error("Error en loadCardData:", err);
             
-            // Show error values and ensure elements are not showing em dashes
             elements.ventasHoy.textContent = "0";
             elements.totalAmount.textContent = formatearMoneda(0);
             elements.totalProductos.textContent = "0";
-            
-            console.error("Failed to load dashboard data. Please refresh the page.");
+          } finally {
+            setCardsLoading(false);
           }
+        }
+
+        // Función para animar números
+        function animateCountUp(element, targetValue) {
+          const startValue = 0;
+          const duration = 1000;
+          const increment = targetValue / (duration / 16);
+          let currentValue = startValue;
+          
+          const timer = setInterval(() => {
+            currentValue += increment;
+            if (currentValue >= targetValue) {
+              currentValue = targetValue;
+              clearInterval(timer);
+            }
+            element.textContent = Math.floor(currentValue).toString();
+          }, 16);
         }
 
         // Función para cargar datos del gráfico
         async function loadChartData(period = 'day') {
           console.log("Loading chart data for period:", period);
+          setChartLoading(true);
+          
           try {
             const resp = await fetch(`${BACKEND_URL}/ventas/metrics/chart/?period=${period}`, { headers });
             console.log("Chart data response:", resp.status, resp.statusText);
             
             if (!resp.ok) {
-              if (resp.status === 401) window.location.href = "/";
+              if (resp.status === 401) {
+                setTimeout(() => window.location.href = "/", 2000);
+                return;
+              }
               throw new Error(`Error al cargar datos del gráfico: ${resp.statusText}`);
             }
             const chartData = await resp.json();
             console.log("Chart data received:", chartData);
 
-            salesChart.data.labels = chartData.labels;
-            salesChart.data.datasets[0].data = chartData.data;
+            if (salesChart) {
+              salesChart.data.labels = chartData.labels;
+              salesChart.data.datasets[0].data = chartData.data;
 
-            // Calcular el valor máximo para la escala Y
-            const maxValue = chartData.data.length > 0 ? Math.max(...chartData.data) : 0;
-            salesChart.options.scales.y.max = maxValue > 0 ? maxValue * 1.1 : 10000;            // Ajustar título del eje X según el período
-            let xAxisTitle = 'Horas (Hora Local)';
-            if (period === 'week') xAxisTitle = 'Días de la Semana';
-            else if (period === 'month') xAxisTitle = 'Semanas del Mes';
-            else if (period === 'year') xAxisTitle = 'Meses del Año';
-            salesChart.options.scales.x.title.text = xAxisTitle;
+              const maxValue = chartData.data.length > 0 ? Math.max(...chartData.data) : 0;
+              salesChart.options.scales.y.max = maxValue > 0 ? maxValue * 1.1 : 10000;
 
-            salesChart.update();
+              // Ajustar título del eje X según el período
+              let xAxisTitle = 'Horas (Hora Local)';
+              if (period === 'week') xAxisTitle = 'Días de la Semana';
+              else if (period === 'month') xAxisTitle = 'Semanas del Mes';
+              else if (period === 'year') xAxisTitle = 'Meses del Año';
+              salesChart.options.scales.x.title.text = xAxisTitle;
+
+              salesChart.update('active');
+            }
 
             // Actualizar botones activos
-            document.querySelectorAll('[id^="btn-"]').forEach(btn => {
-              btn.classList.remove('bg-blue-600', 'text-white', 'font-semibold');
-              btn.classList.add('bg-blue-100', 'text-blue-700');
-            });
-            const activeButton = document.getElementById(`btn-${period}`);
-            if (activeButton) {
-              activeButton.classList.add('bg-blue-600', 'text-white', 'font-semibold');
-              activeButton.classList.remove('bg-blue-100', 'text-blue-700');
-            }
+            updateActiveButton(period);
 
           } catch (err) {
             console.error(`Error en loadChartData (periodo ${period}):`, err);
-            // Show a default empty chart on error
-            salesChart.data.labels = [];
-            salesChart.data.datasets[0].data = [];
-            salesChart.update();
+            
+            if (salesChart) {
+              salesChart.data.labels = [];
+              salesChart.data.datasets[0].data = [];
+              salesChart.update();
+            }
+          } finally {
+            setChartLoading(false);
+          }
+        }
+
+        // Función para actualizar botón activo
+        function updateActiveButton(activePeriod) {
+          const buttons = ['btn-day', 'btn-week', 'btn-month', 'btn-year'];
+          buttons.forEach(btnId => {
+            const btn = document.getElementById(btnId);
+            if (btn) {
+              btn.classList.remove('bg-blue-600', 'text-white');
+              btn.classList.add('bg-slate-700', 'text-slate-300');
+            }
+          });
+          
+          const activeBtn = document.getElementById(`btn-${activePeriod}`);
+          if (activeBtn) {
+            activeBtn.classList.add('bg-blue-600', 'text-white');
+            activeBtn.classList.remove('bg-slate-700', 'text-slate-300');
           }
         }
 
@@ -393,70 +806,71 @@
         await loadChartData('day');
 
         // Event listeners para los botones de período del gráfico
-        document.getElementById('btn-day').addEventListener('click', () => loadChartData('day'));
-        document.getElementById('btn-week').addEventListener('click', () => loadChartData('week'));
-        document.getElementById('btn-month').addEventListener('click', () => loadChartData('month'));
-        document.getElementById('btn-year').addEventListener('click', () => loadChartData('year'));
+        ['day', 'week', 'month', 'year'].forEach(period => {
+          const btn = document.getElementById(`btn-${period}`);
+          if (btn) {
+            btn.addEventListener('click', () => loadChartData(period));
+          }
+        });
         
         console.log("Dashboard data loading complete");
       }
 
+      // Función para mostrar la hora actual
+      function updateCurrentTime() {
+        const now = new Date();
+        const timeString = now.toLocaleString('es-CL', {
+          timeZone: 'America/Santiago',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+        
+        const timeElements = ['currentTime', 'currentTimeHeader'];
+        timeElements.forEach(id => {
+          const element = document.getElementById(id);
+          if (element) {
+            element.textContent = id === 'currentTimeHeader' ? 
+              `Actualizado: ${timeString}` : 
+              `${timeString}`;
+          }
+        });
+      }
+
+      // Inicialización principal
       document.addEventListener("DOMContentLoaded", async () => {
         console.log("DOM loaded, initializing dashboard...");
+        setLoading(true);
         
         const token = localStorage.getItem("token");
         if (!token) {
           console.log("No token found, redirecting to login");
-          window.location.href = "/";
+          setTimeout(() => window.location.href = "/", 2000);
           return;
         }
-        console.log("Token found:", token.substring(0, 20) + "...");        try {
+        
+        try {
           await loadCurrentUser();
           await loadDashboardData();
           setupAccessControl();
           
-          // Actualizar hora actual cada segundo
+          // Actualizar hora cada segundo
           updateCurrentTime();
           setInterval(updateCurrentTime, 1000);
           
+          // Re-inicializar iconos después de cargar contenido dinámico
+          lucide.createIcons();
+          
           console.log("Dashboard initialization complete");
+          
         } catch (error) {
           console.error("Dashboard initialization failed:", error);
-          alert("Error al cargar el dashboard. Por favor, intente nuevamente.");
+        } finally {
+          setLoading(false);
         }
-
-        // Cargar datos iniciales
-        await loadCardData();
-        await loadChartData('day'); // Carga el gráfico del día por defecto
-
-        // Event listeners para los botones de período del gráfico
-        document.getElementById('btn-day').addEventListener('click', () => loadChartData('day'));
-        document.getElementById('btn-week').addEventListener('click', () => loadChartData('week'));
-        document.getElementById('btn-month').addEventListener('click', () => loadChartData('month'));
-        document.getElementById('btn-year').addEventListener('click', () => loadChartData('year'));
-
-        // Función para mostrar la hora actual
-        function updateCurrentTime() {
-          const now = new Date();
-          const timeString = now.toLocaleString('es-CL', {
-            timeZone: 'America/Santiago',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
-          });
-          
-          const timeElement = document.getElementById('currentTime');
-          if (timeElement) {
-            timeElement.textContent = `Hora actual: ${timeString}`;
-          }
-        }
-
-        // Actualizar la hora cada segundo
-        setInterval(updateCurrentTime, 1000);
-        updateCurrentTime(); // Llamar una vez al cargar para evitar espera del primer intervalo
       });
     </script>
   </body>
