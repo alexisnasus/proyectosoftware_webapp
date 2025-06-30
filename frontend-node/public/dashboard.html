@@ -486,11 +486,11 @@
         }).format(valor);
       }
       
-      async function loadCurrentUser() {
-        console.log("Loading current user...");
+      async function initializeNavbar() {
+        console.log("Loading current user for navbar...");
         const token = localStorage.getItem("token");
         if (!token) {
-          console.log("No token found in loadCurrentUser");
+          console.log("No token found in initializeNavbar");
           setTimeout(() => window.location.href = "/", 2000);
           return;
         }
@@ -529,32 +529,27 @@
           const rolElement = document.getElementById("rolUsuario");
           if (rolElement) rolElement.textContent = roleName;
           
+          // Controlar visibilidad de enlaces según el rol - Los empleados no pueden ver inventario ni trabajadores
+          if (currentUser.role === 'EMPLOYEE') {
+            const inventarioLink = document.getElementById("inventarioLink");
+            const trabajadoresLink = document.getElementById("trabajadoresLink");
+            const inventarioLinkMobile = document.getElementById("inventarioLinkMobile");
+            const trabajadoresLinkMobile = document.getElementById("trabajadoresLinkMobile");
+            
+            if (inventarioLink) inventarioLink.style.display = 'none';
+            if (trabajadoresLink) trabajadoresLink.style.display = 'none';
+            if (inventarioLinkMobile) inventarioLinkMobile.style.display = 'none';
+            if (trabajadoresLinkMobile) trabajadoresLinkMobile.style.display = 'none';
+            
+            console.log("Access control applied for EMPLOYEE role");
+          }
+          
           console.log("User info updated in DOM");
           showToast(`¡Bienvenido, ${displayName}!`, "success");
           
         } catch (err) {
           console.error("Error al cargar usuario actual:", err);
           setTimeout(() => window.location.href = "/", 2000);
-        }
-      }
-
-      function setupAccessControl() {
-        console.log("Setting up access control for user:", currentUser);
-        if (!currentUser) return;
-
-        // Si es empleado, ocultar enlaces de inventario y usuarios
-        if (currentUser.role === 'EMPLOYEE') {
-          const elementsToHide = [
-            'inventarioLink', 'trabajadoresLink', 
-            'inventarioLinkMobile', 'trabajadoresLinkMobile'
-          ];
-          
-          elementsToHide.forEach(id => {
-            const element = document.getElementById(id);
-            if (element) element.style.display = "none";
-          });
-          
-          console.log("Access control applied for EMPLOYEE role");
         }
       }
 
@@ -853,9 +848,8 @@
         }
         
         try {
-          await loadCurrentUser();
+          await initializeNavbar();
           await loadDashboardData();
-          setupAccessControl();
           
           // Actualizar hora cada segundo
           updateCurrentTime();

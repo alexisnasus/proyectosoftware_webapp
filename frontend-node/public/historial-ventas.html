@@ -6,44 +6,202 @@
   <title>Historial de Ventas – ManuMarket</title>
   <!-- Tailwind CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <style>
+    /* Animaciones personalizadas */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .animate-fade-in {
+      animation: fadeIn 0.6s ease-out;
+    }
+    
+    .animate-slide-in {
+      animation: slideIn 0.5s ease-out;
+    }
+    
+    .animate-pulse-custom {
+      animation: pulse 2s infinite;
+    }
+    
+    .animate-spin {
+      animation: spin 1s linear infinite;
+    }
+    
+    /* Gradiente personalizado */
+    .bg-gradient-custom {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #334155 50%, #1e40af 100%);
+    }
+    
+    .bg-gradient-card {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.9) 100%);
+    }
+    
+    /* Efectos de vidrio */
+    .glass-effect {
+      backdrop-filter: blur(16px);
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+    
+    .glass-card {
+      backdrop-filter: blur(8px);
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    /* Efectos hover */
+    .card-hover {
+      transition: all 0.3s ease;
+    }
+    
+    .card-hover:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    /* Skeleton loading */
+    .skeleton {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: loading 1.5s infinite;
+    }
+    
+    @keyframes loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    
+    /* Overlay de carga */
+    .loading-overlay {
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(16px);
+    }
+    
+    /* Mejoras de accesibilidad */
+    .focus-visible {
+      outline: 2px solid #3b82f6;
+      outline-offset: 2px;
+    }
+    
+    /* Botones más grandes para mejor accesibilidad */
+    .btn-accessible {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  </style>
 </head>
-<body class="min-h-screen bg-gray-50">
-  <!-- Barra de navegación común -->
-  <nav class="bg-gray-900 text-white">
+<body class="min-h-screen bg-gradient-custom text-white relative overflow-x-hidden">
+  <!-- Navbar moderno consistente con dashboard -->
+  <nav class="glass-effect animate-slide-in">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between h-16 items-center">
-        <div class="flex-shrink-0">
-          <a href="/dashboard">
-            <img class="h-8 w-auto" src="ManuLogo_WIP.png" alt="Logo ManuMarket" />
-          </a>
-        </div>        <div class="hidden md:flex md:space-x-8">
-          <a href="/dashboard" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Dashboard</a>
-          <a id="inventarioLink" href="/inventario" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Inventario</a>
-          <a href="/pos" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Punto de Venta</a>
-          <a href="/historial-ventas" class="inline-flex items-center px-1 pt-1 border-b-2 border-blue-500 text-sm font-medium text-gray-100">Historial de Ventas</a>
-          <a id="trabajadoresLink" href="/trabajadores" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Trabajadores</a>
-        </div>
+      <div class="flex justify-between h-20 items-center">
+        <!-- Logo y brand -->
         <div class="flex items-center space-x-4">
-          <span id="userInfo" class="text-sm text-gray-300">—</span>
-          <a href="/logout" class="text-sm font-medium text-red-400 hover:text-red-300">Cerrar sesión</a>
+          <div class="flex-shrink-0 bg-blue-600 p-3 rounded-xl shadow-lg">
+            <i data-lucide="shopping-cart" class="w-7 h-7 text-white"></i>
+          </div>
+          <div>
+            <h1 class="text-2xl font-bold text-white">ManuMarket</h1>
+            <p class="text-sm text-slate-300">Panel de Control</p>
+          </div>
         </div>
-        <div class="-mr-2 flex md:hidden">
-          <button id="btnMenu" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-800">
-            <!-- icono hamburguesa -->
-            <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+
+        <!-- Navigation Links Desktop -->
+        <div id="navigationLinks" class="hidden md:flex md:space-x-2">
+          <a href="/dashboard" class="inline-flex items-center px-5 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base transition-all duration-200 space-x-2 btn-accessible focus-visible">
+            <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+            <span>Dashboard</span>
+          </a>
+          <a id="inventarioLink" href="/inventario" class="inline-flex items-center px-5 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base transition-all duration-200 space-x-2 btn-accessible focus-visible">
+            <i data-lucide="package" class="w-5 h-5"></i>
+            <span>Inventario</span>
+          </a>
+          <a href="/pos" class="inline-flex items-center px-5 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base transition-all duration-200 space-x-2 btn-accessible focus-visible">
+            <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+            <span>POS</span>
+          </a>
+          <a href="/historial-ventas" class="inline-flex items-center px-5 py-3 rounded-xl bg-blue-600/30 text-white font-semibold text-base border border-blue-500/50 space-x-2 shadow-lg btn-accessible focus-visible" aria-current="page">
+            <i data-lucide="history" class="w-5 h-5"></i>
+            <span>Historial</span>
+          </a>
+          <a id="trabajadoresLink" href="/trabajadores" class="inline-flex items-center px-5 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base transition-all duration-200 space-x-2 btn-accessible focus-visible">
+            <i data-lucide="users" class="w-5 h-5"></i>
+            <span>Trabajadores</span>
+          </a>
+        </div>
+
+        <!-- User info y logout -->
+        <div class="flex items-center space-x-5">
+          <div class="text-right hidden sm:block">
+            <p id="userInfo" class="text-base font-bold text-white">—</p>
+            <p class="text-sm text-slate-200">Bienvenido</p>
+          </div>
+          <a href="/logout" class="inline-flex items-center px-5 py-3 rounded-xl bg-red-600/30 text-white hover:bg-red-600/50 hover:text-white font-semibold text-base transition-all duration-200 space-x-2 border border-red-500/50 btn-accessible focus-visible">
+            <i data-lucide="log-out" class="w-5 h-5"></i>
+            <span class="hidden sm:inline">Salir</span>
+          </a>
+        </div>
+
+        <!-- Mobile menu button -->
+        <div class="md:hidden">
+          <button id="btnMenu" class="inline-flex items-center justify-center p-3 rounded-xl text-white hover:text-white hover:bg-white/20 transition-all duration-200 btn-accessible focus-visible" aria-label="Abrir menú de navegación" aria-expanded="false">
+            <i data-lucide="menu" class="w-7 h-7"></i>
           </button>
         </div>
       </div>
-    </div>    <div id="menuResponsive" class="md:hidden hidden bg-gray-800 px-2 pt-2 pb-3 space-y-1">
-      <a href="/dashboard" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Dashboard</a>
-      <a id="inventarioLinkMobile" href="/inventario" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Inventario</a>
-      <a href="/pos" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Punto de Venta</a>
-      <a href="/historial-ventas" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Historial de Ventas</a>
-      <a id="trabajadoresLinkMobile" href="/trabajadores" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Trabajadores</a>
-      <a href="/logout" class="block px-3 py-2 rounded-md text-base font-medium text-red-400 hover:bg-gray-700">Cerrar sesión</a>
+    </div>
+
+    <!-- Mobile Navigation -->
+    <div id="menuResponsive" class="md:hidden hidden border-t border-white/10 bg-slate-900/50" role="navigation" aria-label="Menú de navegación móvil">
+      <div class="px-4 pt-2 pb-3 space-y-1">
+        <a href="/dashboard" class="flex items-center px-4 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base space-x-3 transition-all duration-200 btn-accessible focus-visible">
+          <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+          <span>Dashboard</span>
+        </a>
+        <a id="inventarioLinkMobile" href="/inventario" class="flex items-center px-4 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base space-x-3 transition-all duration-200 btn-accessible focus-visible">
+          <i data-lucide="package" class="w-5 h-5"></i>
+          <span>Inventario</span>
+        </a>
+        <a href="/pos" class="flex items-center px-4 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base space-x-3 transition-all duration-200 btn-accessible focus-visible">
+          <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+          <span>POS</span>
+        </a>
+        <a href="/historial-ventas" class="flex items-center px-4 py-3 rounded-xl bg-blue-600/30 text-white font-bold text-base space-x-3 border border-blue-500/50 shadow-lg btn-accessible focus-visible" aria-current="page">
+          <i data-lucide="history" class="w-5 h-5"></i>
+          <span>Historial de Ventas</span>
+        </a>
+        <a id="trabajadoresLinkMobile" href="/trabajadores" class="flex items-center px-4 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base space-x-3 transition-all duration-200 btn-accessible focus-visible">
+          <i data-lucide="users" class="w-5 h-5"></i>
+          <span>Trabajadores</span>
+        </a>
+        <div class="border-t border-white/10 pt-3 mt-3">
+          <div class="px-4 py-2">
+            <p id="userInfoMobile" class="text-base font-bold text-white">—</p>
+          </div>
+          <a href="/logout" class="flex items-center px-4 py-3 rounded-xl bg-red-600/30 text-white hover:bg-red-600/50 hover:text-white font-semibold text-base space-x-3 transition-all duration-200 border border-red-500/50 btn-accessible focus-visible">
+            <i data-lucide="log-out" class="w-5 h-5"></i>
+            <span>Cerrar sesión</span>
+          </a>
+        </div>
+      </div>
     </div>
   </nav>
 
@@ -51,206 +209,435 @@
     // Menú hamburguesa responsive
     const btnMenu = document.getElementById("btnMenu");
     const menuResponsive = document.getElementById("menuResponsive");
-    if (btnMenu && menuResponsive) {
-      btnMenu.addEventListener("click", () => {
-        menuResponsive.classList.toggle("hidden");
-      });
-    }
+    btnMenu && btnMenu.addEventListener("click", () => {
+      menuResponsive.classList.toggle("hidden");
+    });
+    
+    // Inicializar iconos
+    lucide.createIcons();
   </script>
 
-  <main class="max-w-screen-2xl mx-auto p-6">
-    <h1 class="text-2xl font-semibold text-gray-800 mb-4">Historial de Ventas</h1>    <!-- Bloque de filtros -->
-    <div class="flex flex-wrap gap-4 mb-6">
-      <input type="date" id="fechaFiltro" class="border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-      <input type="text" id="vendedorFiltro" placeholder="Filtrar por vendedor" class="border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-      <input type="text" id="productoFiltro" placeholder="Filtrar por producto (código o nombre)" class="border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-      <button id="btnFiltrar" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400">
-        Filtrar
-      </button>
-      <button id="btnLimpiarFiltros" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400">
-        Limpiar Filtros
-      </button>    </div>
+  <!-- Contenido principal -->
+  <main class="max-w-7xl mx-auto p-6 animate-fade-in">
+      <!-- Encabezado -->
+      <div class="mb-8">
+        <h1 class="text-4xl font-bold text-white mb-2 flex items-center">
+          <i data-lucide="history" class="w-10 h-10 mr-4 text-blue-400"></i>
+          Historial de Ventas
+        </h1>
+        <p class="text-xl text-white/70">Revisa el historial completo de transacciones y ventas realizadas</p>
+      </div>
 
-    <!-- Indicador de filtros activos -->
-    <div id="filtrosActivos" class="mb-4 hidden">
-      <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-2">
-            <svg class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-            </svg>
-            <span class="text-sm font-medium text-blue-800">Filtros aplicados:</span>
-            <div id="listaFiltros" class="flex flex-wrap gap-2">
-              <!-- Los filtros activos se mostrarán aquí -->
+      <!-- Filtros con glassmorphism y accesibilidad -->
+      <div class="glass-card rounded-2xl p-6 mb-8 animate-fade-in shadow-xl">
+        <h2 class="text-xl font-semibold text-white mb-4 flex items-center">
+          <i data-lucide="filter" class="w-5 h-5 mr-2 text-blue-400"></i>
+          Filtros de Búsqueda
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div>
+            <label for="fechaFiltro" class="block text-sm font-medium text-white/80 mb-2">Fecha</label>
+            <input type="date" id="fechaFiltro" 
+                   class="w-full glass-card border border-white/30 px-4 py-3 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent btn-accessible transition-all duration-200"
+                   aria-label="Filtrar por fecha"/>
+          </div>
+          <div>
+            <label for="vendedorFiltro" class="block text-sm font-medium text-white/80 mb-2">Vendedor</label>
+            <input type="text" id="vendedorFiltro" 
+                   placeholder="Nombre del vendedor" 
+                   class="w-full glass-card border border-white/30 px-4 py-3 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent btn-accessible transition-all duration-200"
+                   aria-label="Filtrar por vendedor"/>
+          </div>
+          <div>
+            <label for="productoFiltro" class="block text-sm font-medium text-white/80 mb-2">Producto</label>
+            <input type="text" id="productoFiltro" 
+                   placeholder="Código o nombre del producto" 
+                   class="w-full glass-card border border-white/30 px-4 py-3 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent btn-accessible transition-all duration-200"
+                   aria-label="Filtrar por producto"/>
+          </div>
+          <div class="flex flex-col justify-end">
+            <div class="grid grid-cols-2 gap-2">
+              <button id="btnFiltrar" 
+                      class="inline-flex items-center justify-center px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all duration-200 btn-accessible focus-visible shadow-lg hover:shadow-xl"
+                      aria-label="Aplicar filtros de búsqueda">
+                <i data-lucide="search" class="w-5 h-5 mr-2"></i>
+                Filtrar
+              </button>
+              <button id="btnLimpiarFiltros" 
+                      class="inline-flex items-center justify-center px-4 py-3 bg-slate-600 hover:bg-slate-700 text-white font-semibold rounded-xl transition-all duration-200 btn-accessible focus-visible shadow-lg hover:shadow-xl"
+                      aria-label="Limpiar todos los filtros">
+                <i data-lucide="x-circle" class="w-5 h-5 mr-2"></i>
+                Limpiar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Indicadores de filtros activos -->
+        <div id="filtrosActivos" class="hidden">
+          <div class="glass-effect rounded-xl p-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <i data-lucide="filter" class="w-5 h-5 text-blue-400"></i>
+                <span class="text-sm font-medium text-blue-300">Filtros aplicados:</span>
+                <div id="listaFiltros" class="flex flex-wrap gap-2">
+                  <!-- Los filtros activos se mostrarán aquí -->
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Tabla de historial -->
-    <div class="bg-white shadow rounded-lg overflow-hidden">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendedor</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Venta</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
-            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Detalles</th>
-          </tr>
-        </thead>
-        <tbody id="tbodyHistorial" class="bg-white divide-y divide-gray-200">
-          <!-- JS inyectará las filas aquí -->        </tbody>
-      </table>
-    </div>    <!-- Modal para mostrar detalles de la venta -->
-    <div id="modalDetalle" class="fixed inset-0 bg-gray-400 bg-opacity-5 flex items-center justify-center z-50 hidden">
-      <div class="bg-white rounded-lg shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto border-2 border-gray-300 ring-4 ring-blue-100"><div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center rounded-t-lg">
-          <h2 class="text-xl font-semibold text-gray-800">Detalles de la Venta</h2>
-          <button id="btnCerrarModal" class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 text-3xl leading-none">&times;</button>
+      <!-- Loading overlay para tabla -->
+      <div id="loadingOverlay" class="fixed inset-0 loading-overlay flex items-center justify-center z-50 hidden">
+        <div class="glass-card rounded-2xl p-8 text-center animate-pulse-custom">
+          <div class="w-16 h-16 border-4 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p class="text-white text-lg font-medium">Cargando historial de ventas...</p>
         </div>
-        
-        <div class="p-6">
-          <!-- Información de la venta -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div class="bg-gray-50 p-4 rounded-lg">
-              <h3 class="text-lg font-medium text-gray-800 mb-3">Información General</h3>
-              <div class="space-y-2">
-                <p><span class="font-medium">ID Transacción:</span> <span id="modalTransaccionId">-</span></p>
-                <p><span class="font-medium">Estado:</span> <span id="modalEstado" class="px-2 py-1 rounded text-sm bg-green-100 text-green-800">-</span></p>
-                <p><span class="font-medium">Fecha de Venta:</span> <span id="modalFecha">-</span></p>
-                <p><span class="font-medium">Cantidad de Productos:</span> <span id="modalCantidadProductos">-</span></p>
+      </div>
+
+      <!-- Tabla de historial con glassmorphism -->
+      <div class="glass-card rounded-2xl overflow-hidden animate-fade-in shadow-xl">
+        <div class="overflow-x-auto">
+          <table class="min-w-full">
+            <thead class="bg-gradient-card">
+              <tr>
+                <th class="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider border-b border-white/10">
+                  <i data-lucide="hash" class="w-4 h-4 inline mr-2"></i>ID
+                </th>
+                <th class="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider border-b border-white/10">
+                  <i data-lucide="user" class="w-4 h-4 inline mr-2"></i>Vendedor
+                </th>
+                <th class="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider border-b border-white/10">
+                  <i data-lucide="dollar-sign" class="w-4 h-4 inline mr-2"></i>Total Venta
+                </th>
+                <th class="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider border-b border-white/10">
+                  <i data-lucide="calendar" class="w-4 h-4 inline mr-2"></i>Fecha
+                </th>
+                <th class="px-6 py-4 text-center text-sm font-bold text-white uppercase tracking-wider border-b border-white/10">
+                  <i data-lucide="eye" class="w-4 h-4 inline mr-2"></i>Detalles
+                </th>
+              </tr>
+            </thead>
+            <tbody id="tbodyHistorial" class="divide-y divide-white/10">
+              <!-- Loading skeleton -->
+              <tr id="skeletonRow" class="hidden animate-pulse">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="h-4 bg-white/20 rounded w-12"></div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="h-4 bg-white/20 rounded w-24"></div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="h-4 bg-white/20 rounded w-20"></div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="h-4 bg-white/20 rounded w-24"></div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                  <div class="h-8 bg-white/20 rounded w-24 mx-auto"></div>
+                </td>
+              </tr>
+              <!-- JS inyectará las filas aquí -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>  </main>
+
+  <!-- Toast de notificación mejorado -->
+  <div id="toast" class="fixed top-6 right-6 glass-card text-white px-6 py-4 rounded-xl shadow-2xl z-50 hidden animate-fade-in border border-green-500/30">
+    <div class="flex items-center space-x-3">
+      <i data-lucide="check-circle" class="w-6 h-6 text-green-300"></i>
+      <span id="toastMessage" class="font-medium">¡Sesión iniciada correctamente!</span>
+    </div>
+  </div>
+
+  <!-- Modal moderno para detalles de venta -->
+  <div id="modalDetalle" class="fixed inset-0 loading-overlay flex items-center justify-center z-50 hidden p-4">
+    <div class="glass-card rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto animate-fade-in">
+      <!-- Header del modal -->
+      <div class="sticky top-0 bg-gradient-card px-8 py-6 flex justify-between items-center rounded-t-2xl border-b border-white/10">
+        <h2 class="text-2xl font-bold text-white flex items-center">
+          <i data-lucide="receipt" class="w-7 h-7 mr-3 text-blue-400"></i>
+          Detalles de la Venta
+        </h2>
+        <button id="btnCerrarModal" 
+                class="text-white/60 hover:text-white hover:bg-white/10 rounded-xl p-2 transition-all duration-200 btn-accessible focus-visible"
+                aria-label="Cerrar modal">
+          <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+      </div>
+      
+      <div class="p-8">
+        <!-- Información de la venta con glassmorphism -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div class="glass-effect rounded-xl p-6">
+            <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+              <i data-lucide="info" class="w-5 h-5 mr-2 text-blue-400"></i>
+              Información General
+            </h3>
+            <div class="space-y-3">
+              <div class="flex justify-between items-center py-2 border-b border-white/10">
+                <span class="font-medium text-white/70">ID Transacción:</span>
+                <span id="modalTransaccionId" class="font-bold text-white text-lg">-</span>
               </div>
-            </div>
-            
-            <div class="bg-gray-50 p-4 rounded-lg">
-              <h3 class="text-lg font-medium text-gray-800 mb-3">Vendedor</h3>
-              <div class="space-y-2">
-                <p><span class="font-medium">Nombre:</span> <span id="modalVendedorNombre">-</span></p>
-                <p><span class="font-medium">Usuario:</span> <span id="modalVendedorUsuario">-</span></p>
-                <p><span class="font-medium">Rol:</span> <span id="modalVendedorRol">-</span></p>
+              <div class="flex justify-between items-center py-2 border-b border-white/10">
+                <span class="font-medium text-white/70">Estado:</span>
+                <span id="modalEstado" class="px-3 py-1 rounded-lg text-sm font-medium bg-green-500/20 text-green-300 border border-green-500/30">-</span>
+              </div>
+              <div class="flex justify-between items-center py-2 border-b border-white/10">
+                <span class="font-medium text-white/70">Fecha de Venta:</span>
+                <span id="modalFecha" class="font-semibold text-white">-</span>
+              </div>
+              <div class="flex justify-between items-center py-2">
+                <span class="font-medium text-white/70">Cantidad de Productos:</span>
+                <span id="modalCantidadProductos" class="font-bold text-blue-400 text-lg">-</span>
               </div>
             </div>
           </div>
-
-          <!-- Resumen de totales -->
-          <div class="bg-blue-50 p-4 rounded-lg mb-6">
-            <h3 class="text-lg font-medium text-gray-800 mb-3">Resumen de Totales</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div class="text-center">
-                <p class="text-sm text-gray-600">Total sin Descuento</p>
-                <p class="text-xl font-bold text-gray-800" id="modalTotalSinDescuento">-</p>
+          
+          <div class="glass-effect rounded-xl p-6">
+            <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+              <i data-lucide="user" class="w-5 h-5 mr-2 text-blue-400"></i>
+              Información del Vendedor
+            </h3>
+            <div class="space-y-3">
+              <div class="flex justify-between items-center py-2 border-b border-white/10">
+                <span class="font-medium text-white/70">Nombre:</span>
+                <span id="modalVendedorNombre" class="font-semibold text-white">-</span>
               </div>
-              <div class="text-center" id="modalDescuentoContainer">
-                <p class="text-sm text-gray-600">Descuento Aplicado</p>
-                <p class="text-xl font-bold text-red-600" id="modalDescuento">-</p>
-                <p class="text-xs text-gray-500" id="modalPorcentajeDescuento">-</p>
+              <div class="flex justify-between items-center py-2 border-b border-white/10">
+                <span class="font-medium text-white/70">Usuario:</span>
+                <span id="modalVendedorUsuario" class="font-semibold text-white">-</span>
               </div>
-              <div class="text-center">
-                <p class="text-sm text-gray-600">Total Final</p>
-                <p class="text-2xl font-bold text-green-600" id="modalTotalFinal">-</p>
+              <div class="flex justify-between items-center py-2">
+                <span class="font-medium text-white/70">Rol:</span>
+                <span id="modalVendedorRol" class="px-3 py-1 rounded-lg text-sm font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30">-</span>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Lista de productos -->
-          <div class="bg-white border border-gray-200 rounded-lg">
-            <h3 class="text-lg font-medium text-gray-800 p-4 border-b border-gray-200">Productos Vendidos</h3>
-            <div class="overflow-x-auto">
-              <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                  <tr>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Código</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
-                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Cantidad</th>
-                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Precio Unit.</th>
-                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Subtotal</th>
-                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Estado</th>
-                  </tr>
-                </thead>
-                <tbody id="modalProductosLista" class="bg-white divide-y divide-gray-200">
-                  <!-- JS llenará esta tabla -->
-                </tbody>
-              </table>
+        <!-- Resumen de totales con glassmorphism -->
+        <div class="glass-effect rounded-xl p-6 mb-8">
+          <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+            <i data-lucide="calculator" class="w-5 h-5 mr-2 text-blue-400"></i>
+            Resumen de Totales
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="text-center glass-card rounded-xl p-4">
+              <p class="text-sm font-medium text-white/70 mb-2">Total sin Descuento</p>
+              <p class="text-2xl font-bold text-white" id="modalTotalSinDescuento">-</p>
             </div>
+            <div class="text-center glass-card rounded-xl p-4" id="modalDescuentoContainer">
+              <p class="text-sm font-medium text-white/70 mb-2">Descuento Aplicado</p>
+              <p class="text-2xl font-bold text-red-400" id="modalDescuento">-</p>
+              <p class="text-xs text-white/60 mt-1" id="modalPorcentajeDescuento">-</p>
+            </div>
+            <div class="text-center glass-card rounded-xl p-4 border border-green-500/30 bg-green-500/10">
+              <p class="text-sm font-medium text-green-300 mb-2">Total Final</p>
+              <p class="text-3xl font-bold text-green-400" id="modalTotalFinal">-</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lista de productos con glassmorphism -->
+        <div class="glass-effect rounded-xl overflow-hidden">
+          <div class="px-6 py-4 border-b border-white/10 bg-gradient-card">
+            <h3 class="text-xl font-bold text-white flex items-center">
+              <i data-lucide="package" class="w-5 h-5 mr-2 text-blue-400"></i>
+              Productos Vendidos
+            </h3>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="min-w-full">
+              <thead class="glass-dark">
+                <tr>
+                  <th class="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider border-b border-white/10">Código</th>
+                  <th class="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider border-b border-white/10">Producto</th>
+                  <th class="px-6 py-4 text-center text-sm font-bold text-white uppercase tracking-wider border-b border-white/10">Cantidad</th>
+                  <th class="px-6 py-4 text-right text-sm font-bold text-white uppercase tracking-wider border-b border-white/10">Precio Unit.</th>
+                  <th class="px-6 py-4 text-right text-sm font-bold text-white uppercase tracking-wider border-b border-white/10">Subtotal</th>
+                  <th class="px-6 py-4 text-center text-sm font-bold text-white uppercase tracking-wider border-b border-white/10">Estado</th>
+                </tr>
+              </thead>
+              <tbody id="modalProductosLista" class="divide-y divide-white/10">
+                <!-- JS llenará esta tabla -->
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
     </div>
-  </main>
+  </div>
 
   <script>
+    // Inicializar Lucide icons
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+    });
+
     // BASE URL de tu API Django (ventas_api)
     const BACKEND_URL = "http://localhost:8000";
     const token = localStorage.getItem("token");
-    // Agrega el header Authorization si hay token
+    
+    // Headers con autorización
     const headers = token
       ? { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
-      : { "Content-Type": "application/json" };    const tbody = document.getElementById("tbodyHistorial");
+      : { "Content-Type": "application/json" };
+
+    // Elementos del DOM
+    const tbody = document.getElementById("tbodyHistorial");
     const fechaInput = document.getElementById("fechaFiltro");
     const vendedorInput = document.getElementById("vendedorFiltro");
     const productoInput = document.getElementById("productoFiltro");
     const btnFiltrar = document.getElementById("btnFiltrar");
     const btnLimpiarFiltros = document.getElementById("btnLimpiarFiltros");
+    const loadingOverlay = document.getElementById("loadingOverlay");
+    const skeletonRow = document.getElementById("skeletonRow");
+
+    // Función para mostrar toast (solo para login exitoso)
+    function mostrarToast(mensaje, tipo = 'success') {
+      // Solo mostrar toast para login exitoso
+      if (mensaje.includes('iniciada')) {
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+        
+        toastMessage.textContent = mensaje;
+        toast.classList.remove('hidden');
+        
+        setTimeout(() => {
+          toast.classList.add('hidden');
+        }, 4000);
+      }
+    }
+
+    // Función para mostrar loading overlay
+    function mostrarLoading() {
+      loadingOverlay.classList.remove('hidden');
+    }
+
+    // Función para ocultar loading overlay
+    function ocultarLoading() {
+      loadingOverlay.classList.add('hidden');
+    }
+
+    // Función para mostrar skeleton
+    function mostrarSkeleton() {
+      tbody.innerHTML = '';
+      for (let i = 0; i < 5; i++) {
+        const skeletonClone = skeletonRow.cloneNode(true);
+        skeletonClone.classList.remove('hidden');
+        skeletonClone.id = `skeleton-${i}`;
+        tbody.appendChild(skeletonClone);
+      }
+    }
 
     // Función para formatear moneda CLP
     function formatearMoneda(v) {
-      return new Intl.NumberFormat("es-CL",{ style:"currency", currency:"CLP" }).format(v);
-    }    // Carga el historial (con o sin filtros)
-    async function cargarHistorial() {
-      // Actualizar indicadores de filtros
-      actualizarIndicadoresFiltros();
-      
-      tbody.innerHTML = "";
-      // construir query params
-      const params = new URLSearchParams();
-      if (fechaInput.value) {
-        params.append("fecha_inicio", fechaInput.value);
-        params.append("fecha_fin", fechaInput.value);
-      }
-      if (vendedorInput.value.trim()) {
-        params.append("vendedor", vendedorInput.value.trim());
-      }
-      if (productoInput.value.trim()) {
-        params.append("producto", productoInput.value.trim());
-      }
+      return new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP" }).format(v);
+    }
 
+    // Carga el historial (con o sin filtros)
+    async function cargarHistorial() {
       try {
-        const resp = await fetch(`${BACKEND_URL}/ventas/historial-ventas/${ params.toString() ? "?" + params : "" }`, {
+        // Mostrar skeleton mientras carga
+        mostrarSkeleton();
+        
+        // Actualizar indicadores de filtros
+        actualizarIndicadoresFiltros();
+        
+        // Construir query params
+        const params = new URLSearchParams();
+        if (fechaInput.value) {
+          params.append("fecha_inicio", fechaInput.value);
+          params.append("fecha_fin", fechaInput.value);
+        }
+        if (vendedorInput.value.trim()) {
+          params.append("vendedor", vendedorInput.value.trim());
+        }
+        if (productoInput.value.trim()) {
+          params.append("producto", productoInput.value.trim());
+        }
+
+        const resp = await fetch(`${BACKEND_URL}/ventas/historial-ventas/${params.toString() ? "?" + params : ""}`, {
           method: "GET",
           headers
         });
+        
         if (!resp.ok) throw new Error("No se pudo cargar el historial de ventas");
         const data = await resp.json();
 
+        // Limpiar skeleton
+        tbody.innerHTML = "";
+
         if (!Array.isArray(data) || data.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No hay resultados.</td></tr>`;
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="5" class="px-6 py-8 text-center">
+                <div class="flex flex-col items-center space-y-3">
+                  <i data-lucide="search-x" class="w-12 h-12 text-white/40"></i>
+                  <p class="text-white/60 text-lg font-medium">No hay resultados</p>
+                  <p class="text-white/40 text-sm">Intenta ajustar los filtros de búsqueda</p>
+                </div>
+              </td>
+            </tr>
+          `;
+          lucide.createIcons();
           return;
         }
 
-        data.forEach(venta => {
+        data.forEach((venta, index) => {
           const row = document.createElement("tr");
-          row.className = "hover:bg-gray-50";          row.innerHTML = `
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${venta.id}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${venta.vendedor}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${formatearMoneda(venta.total)}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${venta.fecha_local || new Date(venta.fecha || venta.creado_en).toLocaleDateString()}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-center">
-              <button data-id="${venta.id}" class="btnVerDetalles px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-xs transition-colors duration-200">Ver Detalles</button>
+          row.className = "hover:bg-white/5 transition-all duration-200 animate-fade-in";
+          row.style.animationDelay = `${index * 0.1}s`;
+
+          row.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap text-base font-bold text-white">${venta.id}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-base text-white/90">${venta.vendedor}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-base font-semibold text-green-400">${formatearMoneda(venta.total)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-base text-white/90">${venta.fecha_local || new Date(venta.fecha || venta.creado_en).toLocaleDateString()}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-center">
+              <button data-id="${venta.id}" 
+                      class="btnVerDetalles inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all duration-200 btn-accessible focus-visible shadow-lg hover:shadow-xl transform hover:scale-105"
+                      aria-label="Ver detalles de la venta ${venta.id}">
+                <i data-lucide="eye" class="w-4 h-4 mr-2"></i>
+                Ver Detalles
+              </button>
             </td>
           `;
           tbody.appendChild(row);
         });
+        
+        // Reinicializar iconos de Lucide
+        lucide.createIcons();
+        
       } catch (err) {
         console.error("Error al cargar historial:", err);
-        tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-red-600">Error al cargar datos.</td></tr>`;      }
-    }    // Función para limpiar todos los filtros
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="px-6 py-8 text-center">
+              <div class="flex flex-col items-center space-y-3">
+                <i data-lucide="alert-circle" class="w-12 h-12 text-red-400"></i>
+                <p class="text-red-400 text-lg font-medium">Error al cargar datos</p>
+                <p class="text-white/60 text-sm">Por favor, intenta nuevamente</p>
+              </div>
+            </td>
+          </tr>
+        `;
+        lucide.createIcons();
+      }
+    }
+
+    // Función para limpiar todos los filtros
     function limpiarFiltros() {
       fechaInput.value = "";
       vendedorInput.value = "";
       productoInput.value = "";
-      actualizarIndicadoresFiltros(); // Actualizar indicadores
-      cargarHistorial(); // Recargar sin filtros
+      actualizarIndicadoresFiltros();
+      cargarHistorial();
     }
 
     // Funciones del modal
@@ -259,18 +646,17 @@
 
     function abrirModal() {
       modal.classList.remove("hidden");
+      document.body.style.overflow = 'hidden'; // Prevenir scroll del fondo
     }
 
     function cerrarModal() {
       modal.classList.add("hidden");
-    }    // Event listeners del modal
+      document.body.style.overflow = 'auto'; // Restaurar scroll
+    }
+
+    // Event listeners del modal
     btnCerrarModal.addEventListener("click", cerrarModal);
     
-    // Opcional: cerrar modal al hacer clic fuera (puedes comentar esta línea si no quieres esta funcionalidad)
-    // modal.addEventListener("click", (e) => {
-    //   if (e.target === modal) cerrarModal();
-    // });
-
     // Cerrar modal con tecla Escape
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && !modal.classList.contains("hidden")) {
@@ -281,6 +667,8 @@
     // Función para cargar y mostrar los detalles de una venta
     async function verDetallesVenta(transaccionId) {
       try {
+        mostrarLoading();
+        
         const resp = await fetch(`${BACKEND_URL}/ventas/transacciones/${transaccionId}/detalle/`, {
           method: "GET",
           headers
@@ -340,41 +728,48 @@
         const tablaProductos = document.getElementById("modalProductosLista");
         tablaProductos.innerHTML = "";
 
-        detalle.items.forEach(item => {
+        detalle.items.forEach((item, index) => {
           const fila = document.createElement("tr");
-          fila.className = "hover:bg-gray-50";
+          fila.className = "hover:bg-white/5 transition-all duration-200 animate-fade-in";
+          fila.style.animationDelay = `${index * 0.1}s`;
           
           const estadoProducto = item.producto_activo ? 
-            '<span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">Activo</span>' :
-            '<span class="px-2 py-1 text-xs bg-red-100 text-red-800 rounded">Eliminado</span>';
+            '<span class="px-3 py-1 text-xs font-medium bg-green-500/20 text-green-300 rounded-lg border border-green-500/30">Activo</span>' :
+            '<span class="px-3 py-1 text-xs font-medium bg-red-500/20 text-red-300 rounded-lg border border-red-500/30">Eliminado</span>';
 
           fila.innerHTML = `
-            <td class="px-4 py-3 text-sm text-gray-900">${item.producto_codigo || 'N/A'}</td>
-            <td class="px-4 py-3 text-sm text-gray-900">${item.producto_nombre}</td>
-            <td class="px-4 py-3 text-sm text-gray-900 text-center">${item.cantidad}</td>
-            <td class="px-4 py-3 text-sm text-gray-900 text-right">${formatearMoneda(item.precio_unitario)}</td>
-            <td class="px-4 py-3 text-sm text-gray-900 text-right font-medium">${formatearMoneda(item.subtotal)}</td>
-            <td class="px-4 py-3 text-center">${estadoProducto}</td>
+            <td class="px-6 py-4 text-base text-white/90">${item.producto_codigo || 'N/A'}</td>
+            <td class="px-6 py-4 text-base font-medium text-white">${item.producto_nombre}</td>
+            <td class="px-6 py-4 text-base text-center font-semibold text-blue-400">${item.cantidad}</td>
+            <td class="px-6 py-4 text-base text-right text-white/90">${formatearMoneda(item.precio_unitario)}</td>
+            <td class="px-6 py-4 text-base text-right font-bold text-green-400">${formatearMoneda(item.subtotal)}</td>
+            <td class="px-6 py-4 text-center">${estadoProducto}</td>
           `;
           
           tablaProductos.appendChild(fila);
         });
 
+        ocultarLoading();
         abrirModal();
+        lucide.createIcons();
 
       } catch (err) {
         console.error("Error al cargar detalles:", err);
-        alert("Error al cargar los detalles de la venta. Por favor, intente nuevamente.");
+        ocultarLoading();
+        // No mostrar alert, solo log del error
       }
     }
 
     // Event listener para los botones "Ver Detalles"
     document.addEventListener("click", (e) => {
-      if (e.target.classList.contains("btnVerDetalles")) {
-        const transaccionId = e.target.getAttribute("data-id");
+      if (e.target.classList.contains("btnVerDetalles") || e.target.closest('.btnVerDetalles')) {
+        const button = e.target.classList.contains("btnVerDetalles") ? e.target : e.target.closest('.btnVerDetalles');
+        const transaccionId = button.getAttribute("data-id");
         verDetallesVenta(transaccionId);
       }
-    });    // eventos
+    });
+
+    // Event listeners
     btnFiltrar.addEventListener("click", cargarHistorial);
     btnLimpiarFiltros.addEventListener("click", limpiarFiltros);
     
@@ -387,9 +782,18 @@
       });
     });
     
+    // Inicialización principal
     document.addEventListener("DOMContentLoaded", async () => {
       await initializeNavbar();
       cargarHistorial();
+      
+      // Mostrar toast de login exitoso si viene de login
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('login') === 'success') {
+        mostrarToast('¡Sesión iniciada correctamente!');
+        // Limpiar URL sin recargar la página
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
     });
 
     // Función para inicializar el navbar con información del usuario y control de roles
@@ -412,16 +816,22 @@
         }
         
         const user = await resp.json();
-          // Mostrar información del usuario
+        
+        // Mostrar información del usuario
         const fullName = `${user.first_name} ${user.last_name}`.trim();
         const displayName = fullName || user.username;
         const roleName = user.role === 'ADMIN' ? 'Administrador' : 'Empleado';
         
         document.getElementById("userInfo").textContent = `${displayName} (${roleName})`;
         
-        // Controlar visibilidad de enlaces según el rol
+        // Para móvil también
+        const userInfoMobile = document.getElementById("userInfoMobile");
+        if (userInfoMobile) {
+          userInfoMobile.textContent = `${displayName} (${roleName})`;
+        }
+        
+        // Controlar visibilidad de enlaces según el rol - Los empleados no pueden ver inventario ni trabajadores
         if (user.role === 'EMPLOYEE') {
-          // Los empleados no pueden ver inventario ni trabajadores
           const inventarioLink = document.getElementById("inventarioLink");
           const trabajadoresLink = document.getElementById("trabajadoresLink");
           const inventarioLinkMobile = document.getElementById("inventarioLinkMobile");
@@ -476,7 +886,7 @@
         
         filtros.forEach(filtro => {
           const badge = document.createElement("span");
-          badge.className = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800";
+          badge.className = "inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30";
           badge.innerHTML = `${filtro.tipo}: ${filtro.valor}`;
           listaFiltros.appendChild(badge);
         });
