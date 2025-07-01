@@ -5,164 +5,222 @@
     <title>Compras Realizadas - ManuMarket</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- Tailwind CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>    <style>
-      .fade-in {
-        animation: fadeIn 0.5s ease-in;
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+      body {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #334155 50%, #1e40af 100%);
+        min-height: 100vh;
       }
-      @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
+      .glass-card {
+        backdrop-filter: blur(12px);
+        background: rgba(255,255,255,0.10);
+        border: 1.5px solid rgba(59,130,246,0.18);
+        border-radius: 1.5rem;
+        box-shadow: 0 8px 40px 0 #1e293bcc, 0 1.5px 0 #3b82f6;
+      }
+      .big-title {
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: #fff;
+        text-align: center;
+        margin-bottom: 1.2rem;
+        letter-spacing: 0.01em;
+        text-shadow: 0 2px 12px #1e293b88;
+      }
+      .total-final {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #22c55e;
+        text-align: right;
+        margin-bottom: 0.5rem;
+      }
+      .total-label {
+        color: #cbd5e1;
+        font-size: 1.15rem;
+        font-weight: 600;
+      }
+      .fecha-label {
+        color: #a5b4fc;
+        font-size: 1.1rem;
+        text-align: right;
+      }
+      .producto-item {
+        background: linear-gradient(90deg, rgba(30,41,59,0.95) 0%, rgba(51,65,85,0.95) 100%);
+        border-radius: 1rem;
+        box-shadow: 0 2px 12px #1e293b33;
+        padding: 1.2rem 1rem;
+        margin-bottom: 1.1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 1.15rem;
+      }
+      .producto-nombre {
+        color: #fff;
+        font-weight: 700;
+        font-size: 1.15rem;
+      }
+      .producto-cantidad {
+        color: #60a5fa;
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-left: 0.5rem;
+      }
+      .producto-codigo {
+        color: #a5b4fc;
+        font-size: 1rem;
+        margin-top: 0.2rem;
+      }
+      .producto-precio {
+        color: #38bdf8;
+        font-size: 1.1rem;
+        font-weight: 600;
+      }
+      .producto-total {
+        color: #22c55e;
+        font-size: 1.25rem;
+        font-weight: 700;
+        text-align: right;
       }
       .descuento-badge {
         background: linear-gradient(135deg, #ef4444, #dc2626);
         color: white;
         padding: 0.25rem 0.5rem;
         border-radius: 0.375rem;
-        font-size: 0.875rem;
-        font-weight: 600;
+        font-size: 1rem;
+        font-weight: 700;
         display: inline-block;
         margin-left: 0.5rem;
       }
+      .volver-btn {
+        background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
+        color: #fff;
+        font-size: 1.25rem;
+        font-weight: 700;
+        border-radius: 0.75rem;
+        box-shadow: 0 2px 12px #1e40af55;
+        border: 1.5px solid #3b82f6cc;
+        padding: 1rem 2.5rem;
+        margin: 2rem auto 0 auto;
+        display: block;
+        transition: background 0.2s, box-shadow 0.2s;
+      }
+      .volver-btn:hover {
+        background: linear-gradient(90deg, #1e40af 0%, #2563eb 100%);
+        box-shadow: 0 4px 24px #1e40af88;
+      }
     </style>
   </head>
-  <body class="bg-gray-100 min-h-screen p-6">    <div class="max-w-3xl mx-auto fade-in">
-      <!-- Encabezado con totales -->
-      <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
-        <h1 class="text-3xl font-bold text-gray-800 mb-4">Productos Comprados</h1>
-        
-        <!-- Información de totales y descuentos -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="space-y-2">
-            <p class="text-gray-600">Total sin descuento: <span id="totalSinDescuento" class="font-semibold">₱0</span></p>
-            <p class="text-gray-600" id="descuentoInfo" style="display: none;">
-              Descuentos aplicados: <span id="totalDescuentos" class="font-semibold text-red-600">₱0</span>
-            </p>
-            <div id="detalleDescuentos" class="ml-4 text-sm text-gray-500" style="display: none;">
-              <!-- Aquí se mostrarán los detalles de descuentos -->
-            </div>
+  <body>
+    <div class="max-w-2xl mx-auto py-10 px-4 sm:px-8">
+      <div class="glass-card p-8">
+        <h1 class="big-title">Resumen de tu compra</h1>
+        <div class="mb-6">
+          <div class="flex flex-col gap-2 mb-2">
+            <span class="total-label">Total sin descuento:</span>
+            <span id="totalSinDescuento" class="text-white text-2xl font-bold">₱0</span>
           </div>
-          <div class="text-right">
-            <p class="text-2xl font-bold text-green-600">Total Final: <span id="totalFinal">₱0</span></p>
-            <p class="text-sm text-gray-500" id="fechaCompra">Fecha: --</p>
+          <div id="descuentoInfo" style="display: none;" class="mb-2">
+            <span class="total-label">Descuentos aplicados:</span>
+            <span id="totalDescuentos" class="descuento-badge">₱0</span>
+            <div id="detalleDescuentos" class="ml-2 mt-2 text-base text-red-200"></div>
           </div>
+          <div class="flex flex-col gap-2 mb-2">
+            <span class="total-label">Total final:</span>
+            <span id="totalFinal" class="total-final">₱0</span>
+          </div>
+          <div class="fecha-label" id="fechaCompra">Fecha: --</div>
         </div>
+        <div class="mb-6">
+          <h2 class="text-xl font-bold text-blue-200 mb-3">Productos comprados</h2>
+          <ul id="listaProductos"></ul>
+        </div>
+        <a href="pos.html">
+          <button class="volver-btn">Volver al punto de venta</button>
+        </a>
       </div>
-
-      <!-- Lista de productos comprados -->
-      <ul id="listaProductos" class="space-y-4">
-        <!-- Los productos se cargarán aquí dinámicamente -->
-      </ul>
     </div>
-
-    <a href="pos.html">
-      <button class="fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-700 transition-colors">
-        Volver a punto de venta
-      </button> 
-    </a>    <script>
+    <script>
       // Obtener los datos de la compra del localStorage
       document.addEventListener('DOMContentLoaded', () => {
         const datosCompraStr = localStorage.getItem('ultimaCompra');
-        
         if (datosCompraStr) {
           const datosCompra = JSON.parse(datosCompraStr);
-          
-          // Verificar si tenemos la nueva estructura o la antigua
           if (datosCompra.productos) {
-            // Nueva estructura con información de descuentos
             mostrarCompraCompleta(datosCompra);
           } else {
-            // Estructura antigua (compatibilidad hacia atrás)
             mostrarCompraSimple(datosCompra);
           }
         } else {
           mostrarSinDatos();
         }
       });
-
       function mostrarCompraCompleta(datosCompra) {
-        // Mostrar totales
         document.getElementById('totalSinDescuento').textContent = formatearMoneda(datosCompra.totalSinDescuento);
         document.getElementById('totalFinal').textContent = formatearMoneda(datosCompra.totalFinal);
-        
-        // Mostrar fecha
         if (datosCompra.fecha) {
           const fecha = new Date(datosCompra.fecha);
           document.getElementById('fechaCompra').textContent = `Fecha: ${fecha.toLocaleDateString()} ${fecha.toLocaleTimeString()}`;
         }
-          // Mostrar información de descuentos si existen
         if (datosCompra.totalDescuentos > 0) {
           document.getElementById('descuentoInfo').style.display = 'block';
           document.getElementById('totalDescuentos').textContent = formatearMoneda(datosCompra.totalDescuentos);
-          
           const detalleDescuentos = document.getElementById('detalleDescuentos');
-          detalleDescuentos.style.display = 'block';
           detalleDescuentos.innerHTML = '';
-          
           if (datosCompra.descuentoClp > 0) {
-            const descuentoClpElement = document.createElement('p');
-            descuentoClpElement.innerHTML = `• Descuento fijo: ${formatearMoneda(datosCompra.descuentoClp)} <span class="descuento-badge">FIJO</span>`;
+            const descuentoClpElement = document.createElement('div');
+            descuentoClpElement.innerHTML = `• Descuento fijo: <b>${formatearMoneda(datosCompra.descuentoClp)}</b> <span class="descuento-badge">FIJO</span>`;
             detalleDescuentos.appendChild(descuentoClpElement);
           }
-            if (datosCompra.descuentoPorcentaje > 0) {
-            const descuentoPctElement = document.createElement('p');
-            descuentoPctElement.innerHTML = `• Descuento ${datosCompra.descuentoPorcentaje}%: ${formatearMoneda(datosCompra.descuentoPorcentajeMonto)} <span class="descuento-badge">${datosCompra.descuentoPorcentaje}%</span>`;
+          if (datosCompra.descuentoPorcentaje > 0) {
+            const descuentoPctElement = document.createElement('div');
+            descuentoPctElement.innerHTML = `• Descuento ${datosCompra.descuentoPorcentaje}%: <b>${formatearMoneda(datosCompra.descuentoPorcentajeMonto)}</b> <span class="descuento-badge">${datosCompra.descuentoPorcentaje}%</span>`;
             detalleDescuentos.appendChild(descuentoPctElement);
           }
         }
-        
-        // Mostrar productos
         mostrarListaProductos(datosCompra.productos);
       }
-
       function mostrarCompraSimple(carrito) {
-        // Compatibilidad con estructura antigua
         const total = carrito.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
-        
         document.getElementById('totalSinDescuento').textContent = formatearMoneda(total);
         document.getElementById('totalFinal').textContent = formatearMoneda(total);
         document.getElementById('fechaCompra').textContent = 'Fecha: --';
-        
         mostrarListaProductos(carrito);
       }
-
       function mostrarListaProductos(productos) {
         const lista = document.getElementById('listaProductos');
         lista.innerHTML = '';
-        
         productos.forEach(item => {
           const li = document.createElement('li');
-          li.className = 'bg-white p-4 rounded-lg shadow flex justify-between items-center hover:bg-gray-50 transition-colors';
+          li.className = 'producto-item';
           li.innerHTML = `
             <div>
-              <p class="font-semibold">${item.nombre} <span class="text-gray-500">x${item.cantidad}</span></p>
-              <p class="text-sm text-gray-500">#${item.codigo}</p>
-              <p class="text-sm text-gray-600">Precio unitario: ${formatearMoneda(item.precio)}</p>
+              <span class="producto-nombre">${item.nombre}</span>
+              <span class="producto-cantidad">x${item.cantidad}</span><br>
+              <span class="producto-codigo">#${item.codigo}</span><br>
+              <span class="producto-precio">${formatearMoneda(item.precio)} c/u</span>
             </div>
-            <div class="font-medium text-right text-green-600">
+            <div class="producto-total">
               ${formatearMoneda(item.precio * item.cantidad)}
             </div>
           `;
           lista.appendChild(li);
         });
       }
-
       function mostrarSinDatos() {
         document.getElementById('totalSinDescuento').textContent = formatearMoneda(0);
         document.getElementById('totalFinal').textContent = formatearMoneda(0);
         document.getElementById('fechaCompra').textContent = 'Fecha: --';
-        
         const lista = document.getElementById('listaProductos');
         lista.innerHTML = `
-          <li class="bg-white p-4 rounded-lg shadow text-center text-gray-500">
+          <li class="producto-item text-center text-gray-300">
             No hay datos de compra disponibles
           </li>
         `;
       }
-
-      // Función para formatear moneda (igual que en pos.html)
       function formatearMoneda(valor) {
-        return new Intl.NumberFormat('es-CL', { 
-          style: 'currency', 
+        return new Intl.NumberFormat('es-CL', {
+          style: 'currency',
           currency: 'CLP',
           minimumFractionDigits: 0
         }).format(valor);
