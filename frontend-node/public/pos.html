@@ -7,183 +7,286 @@
     <title>Punto de Venta – ManuMarket</title>
     <!-- Tailwind CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Chart.js para los gráficos (igual que dashboard, aunque no se use aquí) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+      /* Animaciones personalizadas */
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes slideIn {
+        from { opacity: 0; transform: translateX(-20px); }
+        to { opacity: 1; transform: translateX(0); }
+      }
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      .animate-fade-in {
+        animation: fadeIn 0.6s ease-out;
+      }
+      .animate-slide-in {
+        animation: slideIn 0.5s ease-out;
+      }
+      .animate-pulse-custom {
+        animation: pulse 2s infinite;
+      }
+      .animate-spin {
+        animation: spin 1s linear infinite;
+      }
+      /* Gradiente personalizado */
+      .bg-gradient-custom {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #334155 50%, #1e40af 100%);
+      }
+      .bg-gradient-card {
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.9) 100%);
+      }
+      /* Efectos de vidrio */
+      .glass-effect {
+        backdrop-filter: blur(16px);
+        background: rgba(15, 23, 42, 0.8);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+      }
+      .glass-card {
+        backdrop-filter: blur(8px);
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      /* Efectos hover */
+      .card-hover {
+        transition: all 0.3s ease;
+      }
+      .card-hover:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      }
+    </style>
   </head>
-  <body class="min-h-screen bg-gray-50">
-    <!-- Barra de navegación común -->
-    <nav class="bg-gray-900 text-white">
+  <body class="min-h-screen bg-gradient-custom">
+    <!-- Barra de navegación moderna -->
+    <nav class="glass-effect border-b border-white/10 animate-slide-in">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16 items-center">
-          <div class="flex-shrink-0">
-            <a href="/dashboard">
-              <img class="h-8 w-auto" src="ManuLogo_WIP.png" alt="Logo ManuMarket" />
-            </a>
-          </div>          <div id="navigationLinks" class="hidden md:flex md:space-x-8">
-            <a href="/dashboard" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Dashboard</a>
-            <a id="inventarioLink" href="/inventario" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Inventario</a>
-            <a href="/pos" class="inline-flex items-center px-1 pt-1 border-b-2 border-blue-500 text-sm font-medium text-gray-100">Punto de Venta</a>
-              <!-- Aquí va Historial de Ventas -->
-            <a href="/historial-ventas" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Historial de Ventas</a>
-            <a id="trabajadoresLink" href="/trabajadores" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Trabajadores</a>          </div>
+        <div class="flex justify-between h-20 items-center">
+          <!-- Logo y brand -->
           <div class="flex items-center space-x-4">
-            <span id="userInfo" class="text-sm text-gray-300">—</span>
-            <a href="/logout" class="text-sm font-medium text-red-400 hover:text-red-300">Cerrar sesión</a>
+            <div class="flex-shrink-0 bg-blue-600 p-3 rounded-xl shadow-lg">
+              <i data-lucide="shopping-cart" class="w-7 h-7 text-white"></i>
+            </div>
+            <div>
+              <h1 class="text-2xl font-bold text-white">ManuMarket</h1>
+              <p class="text-sm text-slate-300">Punto de Venta</p>
+            </div>
           </div>
-          <div class="-mr-2 flex md:hidden">
-            <button id="btnMenuPos" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-800">
-              <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                <path class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
+
+          <!-- Navigation Links Desktop -->
+          <div id="navigationLinks" class="hidden md:flex md:space-x-2">
+            <a href="/dashboard" class="inline-flex items-center px-5 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base transition-all duration-200 space-x-2">
+              <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+              <span>Dashboard</span>
+            </a>
+            <a id="inventarioLink" href="/inventario" class="inline-flex items-center px-5 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base transition-all duration-200 space-x-2">
+              <i data-lucide="package" class="w-5 h-5"></i>
+              <span>Inventario</span>
+            </a>
+            <a href="/pos" class="inline-flex items-center px-5 py-3 rounded-xl bg-blue-600/30 text-white font-semibold text-base border border-blue-500/50 space-x-2 shadow-lg">
+              <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+              <span>POS</span>
+            </a>
+            <a href="/historial-ventas" class="inline-flex items-center px-5 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base transition-all duration-200 space-x-2">
+              <i data-lucide="history" class="w-5 h-5"></i>
+              <span>Historial</span>
+            </a>
+            <a id="trabajadoresLink" href="/trabajadores" class="inline-flex items-center px-5 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base transition-all duration-200 space-x-2">
+              <i data-lucide="users" class="w-5 h-5"></i>
+              <span>Trabajadores</span>
+            </a>
+          </div>
+
+          <!-- User info y logout -->
+          <div class="flex items-center space-x-5">
+            <div class="text-right hidden sm:block">
+              <p id="userInfo" class="text-base font-bold text-white">—</p>
+              <p class="text-sm text-slate-200">Bienvenido</p>
+            </div>
+            <a href="/logout" class="inline-flex items-center px-5 py-3 rounded-xl bg-red-600/30 text-white hover:bg-red-600/50 hover:text-white font-semibold text-base transition-all duration-200 space-x-2 border border-red-500/50">
+              <i data-lucide="log-out" class="w-5 h-5"></i>
+              <span class="hidden sm:inline">Salir</span>
+            </a>
+          </div>
+
+          <!-- Mobile menu button -->
+          <div class="md:hidden">
+            <button id="btnMenu" class="inline-flex items-center justify-center p-3 rounded-xl text-white hover:text-white hover:bg-white/20 transition-all duration-200">
+              <i data-lucide="menu" class="w-7 h-7"></i>
             </button>
           </div>
         </div>
-      </div>      <div id="menuResponsivePos" class="md:hidden hidden bg-gray-800">
-        <div class="px-2 pt-2 pb-3 space-y-1">
-          <a href="/dashboard" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Dashboard</a>
-          <a id="inventarioLinkMobile" href="/inventario" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Inventario</a>
-          <a href="/pos" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Punto de Venta</a>
-          <a href="/historial-ventas" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Historial de Ventas</a>
-          <a id="trabajadoresLinkMobile" href="/trabajadores" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Trabajadores</a>
-          <a href="/logout" class="block px-3 py-2 rounded-md text-base font-medium text-red-400 hover:bg-gray-700">Cerrar sesión</a>
+      </div>
+
+      <!-- Mobile Navigation -->
+      <div id="menuResponsive" class="md:hidden hidden border-t border-white/10 bg-slate-900/50">
+        <div class="px-4 pt-2 pb-3 space-y-1">
+          <a href="/dashboard" class="flex items-center px-4 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base space-x-3 transition-all duration-200">
+            <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+            <span>Dashboard</span>
+          </a>
+          <a id="inventarioLinkMobile" href="/inventario" class="flex items-center px-4 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base space-x-3 transition-all duration-200">
+            <i data-lucide="package" class="w-5 h-5"></i>
+            <span>Inventario</span>
+          </a>
+          <a href="/pos" class="flex items-center px-4 py-3 rounded-xl bg-blue-600/30 text-white font-bold text-base space-x-3 border border-blue-500/50 shadow-lg">
+            <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+            <span>POS</span>
+          </a>
+          <a href="/historial-ventas" class="flex items-center px-4 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base space-x-3 transition-all duration-200">
+            <i data-lucide="history" class="w-5 h-5"></i>
+            <span>Historial de Ventas</span>
+          </a>
+          <a id="trabajadoresLinkMobile" href="/trabajadores" class="flex items-center px-4 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base space-x-3 transition-all duration-200">
+            <i data-lucide="users" class="w-5 h-5"></i>
+            <span>Trabajadores</span>
+          </a>
+          <div class="border-t border-white/10 pt-3 mt-3">
+            <div class="px-4 py-2">
+              <p id="userInfoMobile" class="text-base font-bold text-white">—</p>
+            </div>
+            <a href="/logout" class="flex items-center px-4 py-3 rounded-xl bg-red-600/30 text-white hover:bg-red-600/50 hover:text-white font-semibold text-base space-x-3 transition-all duration-200 border border-red-500/50">
+              <i data-lucide="log-out" class="w-5 h-5"></i>
+              <span>Cerrar sesión</span>
+            </a>
+          </div>
         </div>
       </div>
     </nav>
     <script>
-      const btnMenuPos = document.getElementById("btnMenuPos");
-      const menuResponsivePos = document.getElementById("menuResponsivePos");
-      btnMenuPos && btnMenuPos.addEventListener("click", () => {
-        menuResponsivePos.classList.toggle("hidden");
+      const btnMenu = document.getElementById("btnMenu");
+      const menuResponsive = document.getElementById("menuResponsive");
+      btnMenu && btnMenu.addEventListener("click", () => {
+        menuResponsive.classList.toggle("hidden");
       });
+      // Inicializar iconos
+      lucide.createIcons();
     </script>
     <!-- ================================ -->
 
     <!-- CONTENIDO: PUNTO DE VENTA / CARRITO -->
-    <main class="max-w-4xl mx-auto py-6">
-      <h1 class="text-2xl font-semibold text-gray-800 mb-4">Punto de Venta</h1>
+    <main class="max-w-4xl mx-auto py-6 animate-fade-in">
+      <div class="glass-card rounded-2xl p-6 card-hover">
+        <h1 class="text-2xl font-bold text-white mb-4">Punto de Venta</h1>
 
-      <!-- BLOQUE DE AGREGAR PRODUCTO (con contenedor de sugerencias) -->
-      <div class="flex items-center mb-4 relative">
-        <div class="relative flex-grow">
+        <!-- BLOQUE DE AGREGAR PRODUCTO (con contenedor de sugerencias) -->
+        <div class="flex items-center mb-4 relative">
+          <div class="relative flex-grow">
+            <input
+              id="inputBuscar"
+              type="text"
+              placeholder="Código o nombre de producto"
+              autocomplete="off"
+              class="w-full pl-10 pr-4 py-2 border border-blue-800/30 bg-slate-900/60 text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg"
+            />
+            <!-- Ícono de lupa -->
+            <svg
+              class="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 21l-4.35-4.35M16.65 16.65A7 7 0 1110 3a7 7 0 016.65 13.65z"
+              />
+            </svg>
+            <div
+              id="contenedorSugerencias"
+              class="absolute z-10 w-full bg-slate-900/90 border border-blue-800/30 rounded-b-lg shadow-lg mt-1 hidden max-h-60 overflow-auto text-white"
+            ></div>
+          </div>
+          <button
+            id="btnAgregar"
+            class="ml-4 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2 shadow-lg transition-all duration-200"
+          >
+            <i data-lucide="plus-circle" class="w-5 h-5"></i>
+            <span>Agregar</span>
+          </button>
+        </div>
+
+        <!-- BLOQUE DE DESCUENTOS -->
+        <div class="bg-gradient-card p-4 mb-4 rounded-lg shadow">
+          <label for="inputDescuentoClp" class="block text-slate-300 font-medium mb-2">
+            Descuento de la venta (en CLP):
+          </label>
           <input
-            id="inputBuscar"
-            type="text"
-            placeholder="Código o nombre de producto"
-            autocomplete="off"
-            class="w-full pl-10 pr-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg"
+            id="inputDescuentoClp"
+            type="number"
+            step="0.01"
+            value="0"
+            min="0"
+            class="w-full border border-blue-800/30 bg-slate-900/60 text-white placeholder:text-slate-400 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <!-- Ícono de lupa -->
-          <svg
-            class="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M21 21l-4.35-4.35M16.65 16.65A7 7 0 1110 3a7 7 0 016.65 13.65z"
-            />
-          </svg>          <!-- CONTENEDOR DE SUGERENCIAS (oculto inicialmente) -->
-          <div
-            id="contenedorSugerencias"
-            class="absolute z-10 w-full bg-white border border-gray-300 rounded-b-lg shadow-lg mt-1 hidden max-h-60 overflow-auto"
-          ></div>
+          <p class="text-xs text-slate-400 mb-4">Si no deseas descuento en CLP, deja en cero.</p>
+
+          <label for="inputDescuentoPct" class="block text-slate-300 font-medium mb-2">
+            Descuento porcentual (%):
+          </label>
+          <input
+            id="inputDescuentoPct"
+            type="number"
+            step="0.01"
+            value="0"
+            min="0"
+            max="100"
+            class="w-full border border-blue-800/30 bg-slate-900/60 text-white placeholder:text-slate-400 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <p class="text-xs text-slate-400 mt-1">Ingresa un porcentaje (ej. “10” = 10 %).</p>
         </div>
-        <button
-          id="btnAgregar"
-          class="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
-        >
-          Agregar
-        </button>
-      </div>
 
-      <!-- BLOQUE DE DESCUENTOS -->
-      <div class="bg-white p-4 mb-4 rounded-lg shadow">
-        <!-- 1) Descuento fijo en CLP -->
-        <label for="inputDescuentoClp" class="block text-gray-700 font-medium mb-2">
-          Descuento de la venta (en CLP):
-        </label>
-        <input
-          id="inputDescuentoClp"
-          type="number"
-          step="0.01"
-          value="0"
-          min="0"
-          class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <p class="text-sm text-gray-500 mb-4">Si no deseas descuento en CLP, deja en cero.</p>
-
-        <!-- 2) Descuento porcentual -->
-        <label for="inputDescuentoPct" class="block text-gray-700 font-medium mb-2">
-          Descuento porcentual (%):
-        </label>
-        <input
-          id="inputDescuentoPct"
-          type="number"
-          step="0.01"
-          value="0"
-          min="0"
-          max="100"
-          class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <p class="text-sm text-gray-500 mt-1">Ingresa un porcentaje (ej. “10” = 10 %).</p>
-      </div>
-
-      <!-- TABLA DE ÍTEMS DEL CARRITO -->
-      <div id="contenedorTabla" class="border border-gray-200 rounded-lg overflow-hidden bg-white">
-        <!-- Encabezados -->
-        <div class="grid grid-cols-12 bg-gray-100 p-3 font-medium text-gray-700">
-          <div class="col-span-2">Código</div>
-          <div class="col-span-3">Producto</div>
-          <div class="col-span-1 text-center">Stock</div>
-          <div class="col-span-2 text-right">Precio U.</div>
-          <div class="col-span-2 text-right">Subtotal</div>
-          <div class="col-span-2 text-center">Cantidad</div>
-          <div class="col-span-1"></div>
-        </div>
-        <!-- Cuerpo de tabla: inyectado por JS -->
-        <div id="cuerpoTabla"></div>
-      </div>
-
-      <!-- BLOQUE DE TOTALES -->
-      <div class="flex justify-end mt-4">
-        <div class="w-full md:w-1/2 lg:w-1/3 p-4">
-          <div class="flex justify-between mb-2">
-            <span class="font-medium text-gray-700">Total (sin descuento):</span>
-            <span id="spanTotal" class="font-semibold text-gray-900">₱0.00</span>
+        <!-- TABLA DE ÍTEMS DEL CARRITO -->
+        <div id="contenedorTabla" class="border border-blue-800/30 rounded-lg overflow-hidden bg-slate-900/80">
+          <div class="grid grid-cols-12 bg-slate-800/80 p-3 font-medium text-slate-300">
+            <div class="col-span-2">Código</div>
+            <div class="col-span-3">Producto</div>
+            <div class="col-span-1 text-center">Stock</div>
+            <div class="col-span-2 text-right">Precio U.</div>
+            <div class="col-span-2 text-right">Subtotal</div>
+            <div class="col-span-2 text-center">Cantidad</div>
+            <div class="col-span-1"></div>
           </div>
-          <div class="flex justify-between">
-            <span class="font-medium text-gray-700">Total final (con descuentos):</span>
-            <span id="spanTotalFinal" class="font-semibold text-gray-900">₱0.00</span>
+          <div id="cuerpoTabla"></div>
+        </div>
+
+        <!-- BLOQUE DE TOTALES -->
+        <div class="flex justify-end mt-4">
+          <div class="w-full md:w-1/2 lg:w-1/3 p-4">
+            <div class="flex justify-between mb-2">
+              <span class="font-medium text-slate-300">Total (sin descuento):</span>
+              <span id="spanTotal" class="font-semibold text-white">₱0.00</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="font-medium text-slate-300">Total final (con descuentos):</span>
+              <span id="spanTotalFinal" class="font-semibold text-green-400">₱0.00</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- BOTÓN COMPRAR -->
-      <div class="flex justify-end mb-8">
-        <button
-          id="btnComprar"
-          class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center"
-        >
-          <svg
-            class="w-5 h-5 mr-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        <!-- BOTÓN COMPRAR -->
+        <div class="flex justify-end mb-8">
+          <button
+            id="btnComprar"
+            class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center space-x-2 transition-all duration-200"
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c
-                   -.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2
-                   2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-            />
-          </svg>
-          Comprar
-        </button>
+            <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+            <span>Comprar</span>
+          </button>
+        </div>
       </div>
     </main>
 
@@ -200,8 +303,9 @@
     </div>
     <p class="text-gray-700 mb-4" id="modalMensaje"></p>
     <div class="flex justify-end">
-      <button onclick="cerrarModal()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-        Aceptar
+      <button onclick="cerrarModal()" class="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 flex items-center space-x-2">
+        <i data-lucide="check-circle" class="w-5 h-5"></i>
+        <span>Aceptar</span>
       </button>
       
     </div>
@@ -312,35 +416,35 @@ document.addEventListener('DOMContentLoaded', function() {
           const subtotal = item.precio * item.cantidad;
 
           const fila = document.createElement("div");
-          fila.className = "grid grid-cols-12 p-3 items-center hover:bg-gray-50 border-t border-gray-200";
+          fila.className = "grid grid-cols-12 p-3 items-center hover:bg-blue-900/30 border-t border-blue-800/30 bg-slate-900/70 transition-colors duration-150";
 
           // 1) Código
           const divCodigo = document.createElement("div");
-          divCodigo.className = "col-span-2 font-mono text-sm";
+          divCodigo.className = "col-span-2 font-mono text-sm text-slate-200";
           divCodigo.textContent = item.codigo;
           fila.appendChild(divCodigo);
 
           // 2) Nombre
           const divNombre = document.createElement("div");
-          divNombre.className = "col-span-3";
+          divNombre.className = "col-span-3 text-white";
           divNombre.textContent = item.nombre;
           fila.appendChild(divNombre);
 
           // 3) Stock actual
           const divStock = document.createElement("div");
-          divStock.className = "col-span-1 text-center font-mono text-sm";
+          divStock.className = "col-span-1 text-center font-mono text-sm text-slate-400";
           divStock.textContent = item.stock;
           fila.appendChild(divStock);
 
           // 4) Precio unitario
           const divPrecio = document.createElement("div");
-          divPrecio.className = "col-span-2 text-right font-medium";
+          divPrecio.className = "col-span-2 text-right font-medium text-blue-400";
           divPrecio.textContent = formatearMoneda(item.precio);
           fila.appendChild(divPrecio);
 
           // 5) Subtotal
           const divSubtotal = document.createElement("div");
-          divSubtotal.className = "col-span-2 text-right font-medium";
+          divSubtotal.className = "col-span-2 text-right font-medium text-green-400";
           divSubtotal.textContent = formatearMoneda(subtotal);
           fila.appendChild(divSubtotal);
 
@@ -348,11 +452,11 @@ document.addEventListener('DOMContentLoaded', function() {
           const divCantCont = document.createElement("div");
           divCantCont.className = "col-span-2 flex justify-center";
           const divCantInner = document.createElement("div");
-          divCantInner.className = "flex items-center";
+          divCantInner.className = "flex items-center bg-slate-800/80 rounded-lg overflow-hidden border border-blue-800/30";
 
           // Botón “–”
           const btnMinus = document.createElement("button");
-          btnMinus.className = "w-8 h-8 bg-gray-100 hover:bg-gray-200 border rounded-l";
+          btnMinus.className = "w-8 h-8 bg-slate-900/80 hover:bg-blue-800/40 text-white border-r border-blue-800/30 focus:outline-none";
           btnMinus.textContent = "-";
           btnMinus.onclick = () => {
             if (item.cantidad > 1) {
@@ -367,13 +471,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
           // Cantidad
           const divCantValor = document.createElement("div");
-          divCantValor.className = "w-10 h-8 border-t border-b flex items-center justify-center";
+          divCantValor.className = "w-10 h-8 flex items-center justify-center text-white font-bold";
           divCantValor.textContent = item.cantidad;
           divCantInner.appendChild(divCantValor);
 
           // Botón “+”
           const btnPlus = document.createElement("button");
-          btnPlus.className = "w-8 h-8 bg-gray-100 hover:bg-gray-200 border rounded-r";
+          btnPlus.className = "w-8 h-8 bg-slate-900/80 hover:bg-blue-800/40 text-white border-l border-blue-800/30 focus:outline-none";
           btnPlus.textContent = "+";
           btnPlus.onclick = () => {
             item.cantidad++;
@@ -389,7 +493,7 @@ document.addEventListener('DOMContentLoaded', function() {
           const divEliminar = document.createElement("div");
           divEliminar.className = "col-span-1 flex justify-end";
           const btnEliminar = document.createElement("button");
-          btnEliminar.className = "text-red-500 hover:text-red-700 p-1";
+          btnEliminar.className = "text-red-400 hover:text-red-600 p-1 transition-colors duration-150";
           btnEliminar.innerHTML = `
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -849,6 +953,10 @@ function mostrarModalErrorVenta(errorData) {
         setupAccessControl();
       });
 
+    </script>
+    <!-- Inicializar iconos Lucide (igual que dashboard) -->
+    <script>
+      lucide.createIcons();
     </script>
   </body>
 </html>
