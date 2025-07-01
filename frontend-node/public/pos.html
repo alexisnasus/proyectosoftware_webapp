@@ -173,6 +173,49 @@
         background: linear-gradient(90deg, #1e40af 0%, #2563eb 100%);
         box-shadow: 0 4px 24px #1e40af88;
       }
+      
+      /* Estilos para sugerencias de búsqueda */
+      .suggestion-item {
+        background: rgba(30, 41, 59, 0.85);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        transition: all 0.2s ease;
+      }
+      
+      .suggestion-item:hover {
+        background: rgba(59, 130, 246, 0.3);
+        border-color: rgba(59, 130, 246, 0.5);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+      }
+      
+      .suggestion-highlight {
+        background: rgba(251, 191, 36, 0.9);
+        color: #1f2937;
+        padding: 2px 4px;
+        border-radius: 3px;
+        font-weight: 600;
+      }
+      
+      .suggestion-code {
+        background: rgba(30, 58, 138, 0.4);
+        color: #93c5fd;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        font-size: 11px;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+      }
+      
+      .suggestion-price {
+        color: #34d399;
+        font-weight: 700;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      }
+      
+      .suggestion-stock {
+        color: #cbd5e1;
+        font-size: 11px;
+        opacity: 0.8;
+      }
     </style>
   </head>
   <body class="min-h-screen bg-gradient-custom">
@@ -314,7 +357,7 @@
             </svg>
             <div
               id="contenedorSugerencias"
-              class="absolute z-10 w-full bg-slate-900/90 border border-blue-800/30 rounded-b-lg shadow-lg mt-1 hidden max-h-60 overflow-auto text-white"
+              class="absolute z-10 w-full glass-card border border-blue-400/40 rounded-b-lg shadow-2xl mt-1 hidden max-h-60 overflow-auto text-white backdrop-blur-12"
             ></div>
           </div>
           <button
@@ -922,8 +965,13 @@ function mostrarModalErrorVenta(errorData) {
         if (lista.length === 0) {
           // Mostrar mensaje cuando no hay resultados
           const noResults = document.createElement("div");
-          noResults.className = "px-4 py-3 text-sm text-gray-500 text-center";
-          noResults.textContent = `No se encontraron productos que contengan "${textoBuscado}"`;
+          noResults.className = "px-4 py-4 text-center bg-slate-800/60 border border-slate-600/40 rounded-sm";
+          noResults.innerHTML = `
+            <div class="text-slate-300 text-sm">
+              <i class="inline-block w-4 h-4 mr-2" style="color: #64748b;">🔍</i>
+              No se encontraron productos que contengan "<span class="text-blue-300 font-medium">${textoBuscado}</span>"
+            </div>
+          `;
           contenedorSugerencias.appendChild(noResults);
           contenedorSugerencias.classList.remove("hidden");
           return;
@@ -931,8 +979,7 @@ function mostrarModalErrorVenta(errorData) {
 
         lista.forEach((prod) => {
           const item = document.createElement("div");
-          item.className =
-            "px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm border-b border-gray-100 last:border-b-0";
+          item.className = "suggestion-item px-4 py-3 cursor-pointer border-b border-slate-600/30 last:border-b-0 rounded-sm";
           
           // Highlight del texto coincidente
           const nombreHighlight = highlightText(prod.nombre, textoBuscado);
@@ -940,11 +987,13 @@ function mostrarModalErrorVenta(errorData) {
           
           item.innerHTML = `
             <div class="flex justify-between items-center">
-              <span>${nombreHighlight}</span>
-              <div class="text-right">
-                <span class="text-gray-500 font-mono text-xs">${codigoHighlight}</span>
-                <br>
-                <span class="text-green-600 font-medium">${formatearMoneda(prod.precio)}</span>
+              <div class="flex-1">
+                <div class="text-white font-medium text-sm mb-1">${nombreHighlight}</div>
+                <div class="suggestion-stock">Stock: ${prod.stock} unidades disponibles</div>
+              </div>
+              <div class="text-right ml-4">
+                <div class="suggestion-code mb-1">${codigoHighlight}</div>
+                <div class="suggestion-price">${formatearMoneda(prod.precio)}</div>
               </div>
             </div>
           `;
@@ -966,7 +1015,7 @@ function mostrarModalErrorVenta(errorData) {
       function highlightText(text, searchText) {
         if (!searchText) return text;
         const regex = new RegExp(`(${searchText})`, 'gi');
-        return text.replace(regex, '<mark class="bg-yellow-200">$1</mark>');
+        return text.replace(regex, '<span class="suggestion-highlight">$1</span>');
       }      inputBuscar.addEventListener(
         "input",
         debounce((e) => {
