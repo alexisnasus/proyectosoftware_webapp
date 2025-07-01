@@ -66,6 +66,113 @@
         transform: translateY(-4px);
         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
       }
+      /* Loader/Spinner personalizado */
+      .loader-overlay {
+        backdrop-filter: blur(8px);
+        background: linear-gradient(135deg, rgba(15,23,42,0.85) 0%, rgba(30,41,59,0.85) 100%);
+      }
+      .loader-spinner {
+        width: 5rem;
+        height: 5rem;
+        border: 6px solid rgba(59,130,246,0.25); /* azul translúcido */
+        border-top: 6px solid #3b82f6; /* azul fuerte */
+        border-right: 6px solid #fff6; /* blanco translúcido */
+        border-radius: 50%;
+        box-shadow: 0 4px 32px 0 #1e293b99;
+        animation: spin 1s linear infinite;
+        margin-bottom: 1.5rem;
+      }
+      .loader-text {
+        color: #3b82f6;
+        font-weight: 600;
+        font-size: 1.15rem;
+        letter-spacing: 0.02em;
+        text-align: center;
+        animation: fadeIn 1.2s;
+        text-shadow: 0 2px 8px #1e293b88;
+      }
+      /* Modal de éxito moderno */
+      .modal-overlay {
+        backdrop-filter: blur(10px);
+        background: linear-gradient(135deg, rgba(15,23,42,0.85) 0%, rgba(30,41,59,0.85) 100%);
+      }
+      .modal-card {
+        background: linear-gradient(135deg, rgba(30,41,59,0.98) 0%, rgba(51,65,85,0.98) 100%);
+        border: 1.5px solid rgba(59,130,246,0.25);
+        border-radius: 1.25rem;
+        box-shadow: 0 8px 40px 0 #1e293bcc, 0 1.5px 0 #3b82f6;
+        padding: 2.5rem 2rem 2rem 2rem;
+        min-width: 320px;
+        max-width: 95vw;
+        animation: fadeIn 0.7s cubic-bezier(.4,2,.6,1) 1;
+        position: relative;
+      }
+      .modal-success-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.2rem;
+      }
+      .modal-success-icon svg, .modal-success-icon i {
+        width: 3.5rem;
+        height: 3.5rem;
+        color: #22c55e;
+        filter: drop-shadow(0 0 16px #22c55e88);
+        animation: popIn 0.5s cubic-bezier(.4,2,.6,1);
+      }
+      @keyframes popIn {
+        0% { transform: scale(0.5); opacity: 0; }
+        80% { transform: scale(1.15); opacity: 1; }
+        100% { transform: scale(1); }
+      }
+      .modal-title {
+        color: #fff;
+        font-size: 1.45rem;
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 0.5rem;
+        letter-spacing: 0.01em;
+      }
+      .modal-message {
+        color: #cbd5e1;
+        font-size: 1.08rem;
+        text-align: center;
+        margin-bottom: 1.5rem;
+      }
+      .modal-close {
+        position: absolute;
+        top: 1.1rem;
+        right: 1.1rem;
+        color: #64748b;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: color 0.2s;
+      }
+      .modal-close:hover {
+        color: #fff;
+      }
+      .modal-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 0.85rem 0;
+        background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
+        color: #fff;
+        font-weight: 600;
+        font-size: 1.08rem;
+        border-radius: 0.75rem;
+        box-shadow: 0 2px 12px #1e40af55;
+        border: 1.5px solid #3b82f6cc;
+        transition: background 0.2s, box-shadow 0.2s;
+      }
+      .modal-btn:hover {
+        background: linear-gradient(90deg, #1e40af 0%, #2563eb 100%);
+        box-shadow: 0 4px 24px #1e40af88;
+      }
     </style>
   </head>
   <body class="min-h-screen bg-gradient-custom">
@@ -291,30 +398,27 @@
     </main>
 
 <!-- Modal de confirmación -->
-<div id="miModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-  <div class="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full">
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="text-xl font-semibold text-gray-800" id="modalTitulo">Resultado de la Venta</h3>
-      <button onclick="cerrarModal()" class="text-gray-500 hover:text-gray-700">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-        </svg>
-      </button>
+<div id="miModal" class="hidden fixed inset-0 flex items-center justify-center z-50 modal-overlay">
+  <div class="modal-card animate-fade-in">
+    <button onclick="cerrarModal()" class="modal-close" aria-label="Cerrar">&times;</button>
+    <div class="modal-success-icon">
+      <i data-lucide="check-circle"></i>
     </div>
-    <p class="text-gray-700 mb-4" id="modalMensaje"></p>
-    <div class="flex justify-end">
-      <button onclick="cerrarModal()" class="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 flex items-center space-x-2">
-        <i data-lucide="check-circle" class="w-5 h-5"></i>
-        <span>Aceptar</span>
-      </button>
-      
-    </div>
+    <h3 class="modal-title" id="modalTitulo">Resultado de la Venta</h3>
+    <p class="modal-message" id="modalMensaje"></p>
+    <button onclick="cerrarModal()" class="modal-btn">
+      <i data-lucide="check-circle" class="w-5 h-5"></i>
+      <span>Aceptar</span>
+    </button>
   </div>
 </div>
 
 <!-- Spinner de carga -->
-<div id="spinner" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-  <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
+<div id="spinner" class="hidden fixed inset-0 flex items-center justify-center z-50 loader-overlay">
+  <div class="flex flex-col items-center">
+    <div class="loader-spinner"></div>
+    <div class="loader-text animate-fade-in">Procesando venta…</div>
+  </div>
 </div>
 
 
