@@ -270,7 +270,6 @@ class ProductoDetailAPIView(APIView):
         producto.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
     
-    
 
 class ProductoBulkImportAPIView(APIView):
     """

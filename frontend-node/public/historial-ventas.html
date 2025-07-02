@@ -126,23 +126,23 @@
 
         <!-- Navigation Links Desktop -->
         <div id="navigationLinks" class="hidden md:flex md:space-x-2">
-          <a href="/dashboard" class="inline-flex items-center px-5 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base transition-all duration-200 space-x-2 btn-accessible focus-visible">
+          <a href="/dashboard" class="inline-flex items-center px-5 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base transition-all duration-200 space-x-2 btn-accessible">
             <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
             <span>Dashboard</span>
           </a>
-          <a id="inventarioLink" href="/inventario" class="inline-flex items-center px-5 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base transition-all duration-200 space-x-2 btn-accessible focus-visible">
+          <a id="inventarioLink" href="/inventario" class="inline-flex items-center px-5 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base transition-all duration-200 space-x-2 btn-accessible">
             <i data-lucide="package" class="w-5 h-5"></i>
             <span>Inventario</span>
           </a>
-          <a href="/pos" class="inline-flex items-center px-5 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base transition-all duration-200 space-x-2 btn-accessible focus-visible">
+          <a href="/pos" class="inline-flex items-center px-5 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base transition-all duration-200 space-x-2 btn-accessible">
             <i data-lucide="shopping-bag" class="w-5 h-5"></i>
             <span>POS</span>
           </a>
-          <a href="/historial-ventas" class="inline-flex items-center px-5 py-3 rounded-xl bg-blue-600/30 text-white font-semibold text-base border border-blue-500/50 space-x-2 shadow-lg btn-accessible focus-visible" aria-current="page">
+          <a href="/historial-ventas" class="inline-flex items-center px-5 py-3 rounded-xl bg-blue-600/30 text-white font-semibold text-base border border-blue-500/50 space-x-2 shadow-lg btn-accessible" aria-current="page">
             <i data-lucide="history" class="w-5 h-5"></i>
             <span>Historial</span>
           </a>
-          <a id="trabajadoresLink" href="/trabajadores" class="inline-flex items-center px-5 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base transition-all duration-200 space-x-2 btn-accessible focus-visible">
+          <a id="trabajadoresLink" href="/trabajadores" class="inline-flex items-center px-5 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base transition-all duration-200 space-x-2 btn-accessible">
             <i data-lucide="users" class="w-5 h-5"></i>
             <span>Trabajadores</span>
           </a>
@@ -154,10 +154,10 @@
             <p id="userInfo" class="text-base font-bold text-white">—</p>
             <p class="text-sm text-slate-200">Bienvenido</p>
           </div>
-          <a href="/logout" class="inline-flex items-center px-5 py-3 rounded-xl bg-red-600/30 text-white hover:bg-red-600/50 hover:text-white font-semibold text-base transition-all duration-200 space-x-2 border border-red-500/50 btn-accessible focus-visible">
-            <i data-lucide="log-out" class="w-5 h-5"></i>
-            <span class="hidden sm:inline">Salir</span>
-          </a>
+            <a href="/logout" class="inline-flex items-center px-5 py-3 rounded-xl bg-red-600/30 text-white hover:bg-red-600/50 hover:text-white font-semibold text-base transition-all duration-200 space-x-2 border border-red-500/50">
+              <i data-lucide="log-out" class="w-5 h-5"></i>
+              <span class="hidden sm:inline">Salir</span>
+            </a>
         </div>
 
         <!-- Mobile menu button -->
@@ -184,7 +184,7 @@
           <i data-lucide="shopping-bag" class="w-5 h-5"></i>
           <span>POS</span>
         </a>
-        <a href="/historial-ventas" class="flex items-center px-4 py-3 rounded-xl bg-blue-600/30 text-white font-bold text-base space-x-3 border border-blue-500/50 shadow-lg btn-accessible focus-visible" aria-current="page">
+        <a href="/historial-ventas" class="flex items-center px-4 py-3 rounded-xl bg-blue-600/30 text-white font-bold text-base space-x-3 border border-blue-500/50 shadow-lg btn-accessible" aria-current="page">
           <i data-lucide="history" class="w-5 h-5"></i>
           <span>Historial de Ventas</span>
         </a>
@@ -196,10 +196,10 @@
           <div class="px-4 py-2">
             <p id="userInfoMobile" class="text-base font-bold text-white">—</p>
           </div>
-          <a href="/logout" class="flex items-center px-4 py-3 rounded-xl bg-red-600/30 text-white hover:bg-red-600/50 hover:text-white font-semibold text-base space-x-3 transition-all duration-200 border border-red-500/50 btn-accessible focus-visible">
-            <i data-lucide="log-out" class="w-5 h-5"></i>
-            <span>Cerrar sesión</span>
-          </a>
+            <a href="/logout" class="inline-flex items-center px-5 py-3 rounded-xl bg-red-600/30 text-white hover:bg-red-600/50 hover:text-white font-semibold text-base transition-all duration-200 space-x-2 border border-red-500/50">
+              <i data-lucide="log-out" class="w-5 h-5"></i>
+              <span class="hidden sm:inline">Salir</span>
+            </a>
         </div>
       </div>
     </div>
@@ -258,13 +258,13 @@
           <div class="flex flex-col justify-end">
             <div class="grid grid-cols-2 gap-2">
               <button id="btnFiltrar" 
-                      class="inline-flex items-center justify-center px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all duration-200 btn-accessible focus-visible shadow-lg hover:shadow-xl"
+                       class="inline-flex items-center justify-center px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all duration-200 btn-accessible shadow-lg hover:shadow-xl"
                       aria-label="Aplicar filtros de búsqueda">
                 <i data-lucide="search" class="w-5 h-5 mr-2"></i>
                 Filtrar
               </button>
               <button id="btnLimpiarFiltros" 
-                      class="inline-flex items-center justify-center px-4 py-3 bg-slate-600 hover:bg-slate-700 text-white font-semibold rounded-xl transition-all duration-200 btn-accessible focus-visible shadow-lg hover:shadow-xl"
+                      class="inline-flex items-center justify-center px-4 py-3 bg-slate-600 hover:bg-slate-700 text-white font-semibold rounded-xl transition-all duration-200 btn-accessible shadow-lg hover:shadow-xl"
                       aria-label="Limpiar todos los filtros">
                 <i data-lucide="x-circle" class="w-5 h-5 mr-2"></i>
                 Limpiar
@@ -601,7 +601,7 @@
             <td class="px-6 py-4 whitespace-nowrap text-base text-white/90">${venta.fecha_local || new Date(venta.fecha || venta.creado_en).toLocaleDateString()}</td>
             <td class="px-6 py-4 whitespace-nowrap text-center">
               <button data-id="${venta.id}" 
-                      class="btnVerDetalles inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all duration-200 btn-accessible focus-visible shadow-lg hover:shadow-xl transform hover:scale-105"
+                      class="btnVerDetalles inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all duration-200 btn-accessible shadow-lg hover:shadow-xl transform hover:scale-105"
                       aria-label="Ver detalles de la venta ${venta.id}">
                 <i data-lucide="eye" class="w-4 h-4 mr-2"></i>
                 Ver Detalles
