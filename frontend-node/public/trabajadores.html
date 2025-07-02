@@ -321,7 +321,11 @@
           currentUser = await resp.json();
           
           // Mostrar información del usuario en el navbar
-          document.getElementById("userInfo").textContent = `${currentUser.first_name} ${currentUser.last_name} (${currentUser.role})`;
+const fullName = `${currentUser.first_name} ${currentUser.last_name}`.trim();
+const displayName = fullName || currentUser.username;
+const roleName = currentUser.role === 'ADMIN' ? 'Administrador' : 'Empleado';
+document.getElementById("userInfo").textContent = `${displayName} (${roleName})`;
+
         } catch (err) {
           console.error("Error al cargar usuario actual:", err);
           window.location.href = "/";
