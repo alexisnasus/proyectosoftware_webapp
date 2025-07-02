@@ -46,12 +46,118 @@
       .animate-slide-in {
         animation: slideIn 0.5s ease-out;
       }
+      
+      /* Estilos del modal moderno */
+      .modal-overlay {
+        backdrop-filter: blur(10px);
+        background: linear-gradient(135deg, rgba(15,23,42,0.85) 0%, rgba(30,41,59,0.85) 100%);
+      }
+      
+      .modal-card {
+        background: linear-gradient(135deg, rgba(30,41,59,0.98) 0%, rgba(51,65,85,0.98) 100%);
+        border: 1.5px solid rgba(59,130,246,0.25);
+        border-radius: 1.25rem;
+        box-shadow: 0 8px 40px 0 #1e293bcc, 0 1.5px 0 #3b82f6;
+        padding: 2rem 1.5rem 1.5rem 1.5rem;
+        min-width: 280px;
+        max-width: 24rem;
+        animation: fadeIn 0.7s cubic-bezier(.4,2,.6,1) 1;
+        position: relative;
+      }
+      
+      .modal-success-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.2rem;
+      }
+      
+      .modal-success-icon svg, .modal-success-icon i {
+        animation: popIn 0.5s cubic-bezier(.4,2,.6,1);
+      }
+      
+      @keyframes popIn {
+        0% { transform: scale(0.5); opacity: 0; }
+        80% { transform: scale(1.15); opacity: 1; }
+        100% { transform: scale(1); }
+      }
+      
+      .modal-title {
+        color: #fff;
+        font-size: 1.45rem;
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 0.5rem;
+        letter-spacing: 0.01em;
+      }
+      
+      .modal-close {
+        position: absolute;
+        top: 1.1rem;
+        right: 1.1rem;
+        color: #64748b;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: color 0.2s;
+      }
+      
+      .modal-close:hover {
+        color: #fff;
+      }
+      
+      .modal-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 0.85rem 0;
+        background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
+        color: #fff;
+        font-weight: 600;
+        font-size: 1.08rem;
+        border-radius: 0.75rem;
+        box-shadow: 0 2px 12px #1e40af55;
+        border: 1.5px solid #3b82f6cc;
+        transition: background 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+      }
+      
+      .modal-btn:hover {
+        background: linear-gradient(90deg, #1e40af 0%, #2563eb 100%);
+        box-shadow: 0 4px 24px #1e40af88;
+      }
+      
+      /* Estilos específicos para el modal de confirmación */
+      .modal-btn-danger {
+        background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%);
+        border-color: #ef4444cc;
+        box-shadow: 0 2px 12px #dc262655;
+      }
+      
+      .modal-btn-danger:hover {
+        background: linear-gradient(90deg, #b91c1c 0%, #dc2626 100%);
+        box-shadow: 0 4px 24px #dc262688;
+      }
+      
+      .modal-btn-secondary {
+        background: linear-gradient(90deg, #64748b 0%, #94a3b8 100%);
+        border-color: #64748bcc;
+        box-shadow: 0 2px 12px #64748b55;
+      }
+      
+      .modal-btn-secondary:hover {
+        background: linear-gradient(90deg, #475569 0%, #64748b 100%);
+        box-shadow: 0 4px 24px #64748b88;
+      }
     </style>
   </head>
   <body class="min-h-screen bg-gradient-custom">
     <!-- Verificación de acceso -->
     <div id="accessDenied" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
-      <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+      <div class="bg-white rounded-lg p-8 max-w-sm w-full mx-4">
         <div class="text-center">
           <i data-lucide="shield-x" class="mx-auto h-12 w-12 text-red-500 mb-4"></i>
           <h3 class="mt-4 text-lg font-medium text-gray-900">Acceso Denegado</h3>
@@ -75,7 +181,7 @@
           <!-- Logo y brand -->
           <div class="flex items-center space-x-4">
             <div class="flex-shrink-0 bg-blue-600 p-3 rounded-xl shadow-lg">
-              <i data-lucide="shopping-cart" class="w-7 h-7 text-white"></i>
+              <img src="/ManuLogo_WIP.png" alt="ManuMarket" class="w-7 h-7 object-contain">
             </div>
             <div>
               <h1 class="text-2xl font-bold text-white">ManuMarket</h1>
@@ -287,78 +393,134 @@
     <input type="file" id="inputImportarCSV" accept=".csv" class="hidden" />
     <input type="file" id="inputActualizarCSV" accept=".csv" class="hidden" />
 
-    <!-- Modal HTML para crear/editar producto (hidden por defecto) -->
-    <div id="modalProducto" class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 hidden">
-      <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-        <div class="flex items-center justify-between mb-4">
-          <h2 id="modalTitle" class="text-xl font-semibold text-gray-800 flex items-center gap-2">
-            <i data-lucide="package-plus" class="w-5 h-5"></i>
-            Nuevo Producto
-          </h2>
-          <button id="btnCerrarModal" class="text-gray-400 hover:text-gray-600">
-            <i data-lucide="x" class="w-5 h-5"></i>
-          </button>
+    <!-- Modal HTML para crear/editar producto con diseño moderno -->
+    <div id="modalProducto" class="fixed inset-0 flex items-center justify-center z-50 modal-overlay hidden">
+      <div class="modal-card animate-fade-in max-w-sm w-full mx-4">
+        <button id="btnCerrarModal" class="modal-close" aria-label="Cerrar">&times;</button>
+        
+        <!-- Ícono del modal -->
+        <div class="modal-success-icon">
+          <i id="modalIcon" data-lucide="package-plus" class="w-12 h-12 text-blue-400" style="filter: drop-shadow(0 0 16px rgba(59, 130, 246, 0.5));"></i>
         </div>
-        <form id="formProducto" class="space-y-4">
+        
+        <!-- Título -->
+        <h2 id="modalTitle" class="modal-title mb-6">Nuevo Producto</h2>
+        
+        <form id="formProducto" class="space-y-5">
+          <!-- Código de Barra -->
           <div>
-            <label for="codigoProd" class="block text-sm font-medium text-gray-700 flex items-center gap-1">
-              <i data-lucide="qr-code" class="w-3 h-3"></i>
+            <label for="codigoProd" class="block text-sm font-medium text-white/80 mb-2 flex items-center gap-2">
+              <i data-lucide="qr-code" class="w-4 h-4 text-blue-400"></i>
               Código de Barra
             </label>
             <input
               id="codigoProd"
               type="text"
-              class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full glass-card border border-white/30 px-4 py-3 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200"
+              placeholder="Ingresa el código de barra"
             />
           </div>
+          
+          <!-- Nombre -->
           <div>
-            <label for="nombreProd" class="block text-sm font-medium text-gray-700 flex items-center gap-1">
-              <i data-lucide="tag" class="w-3 h-3"></i>
-              Nombre <span class="text-red-500">*</span>
+            <label for="nombreProd" class="block text-sm font-medium text-white/80 mb-2 flex items-center gap-2">
+              <i data-lucide="tag" class="w-4 h-4 text-blue-400"></i>
+              Nombre del Producto 
+              <span class="text-red-400">*</span>
             </label>
             <input
               id="nombreProd"
               type="text"
               required
-              class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full glass-card border border-white/30 px-4 py-3 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200"
+              placeholder="Nombre descriptivo del producto"
             />
           </div>
+          
+          <!-- Precio -->
           <div>
-            <label for="precioProd" class="block text-sm font-medium text-gray-700 flex items-center gap-1">
-              <i data-lucide="dollar-sign" class="w-3 h-3"></i>
-              Precio
+            <label for="precioProd" class="block text-sm font-medium text-white/80 mb-2 flex items-center gap-2">
+              <i data-lucide="dollar-sign" class="w-4 h-4 text-blue-400"></i>
+              Precio (CLP)
             </label>
             <input
               id="precioProd"
               type="number"
               step="10"
               min="0"
-              class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full glass-card border border-white/30 px-4 py-3 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200"
+              placeholder="0"
             />
           </div>
+          
+          <!-- Stock -->
           <div>
-            <label for="stockProd" class="block text-sm font-medium text-gray-700 flex items-center gap-1">
-              <i data-lucide="package-2" class="w-3 h-3"></i>
+            <label for="stockProd" class="block text-sm font-medium text-white/80 mb-2 flex items-center gap-2">
+              <i data-lucide="package-2" class="w-4 h-4 text-blue-400"></i>
               Cantidad en Stock
             </label>
             <input
               id="stockProd"
               type="number"
               min="0"
-              class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full glass-card border border-white/30 px-4 py-3 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200"
+              placeholder="0"
             />
           </div>
-          <div class="flex justify-end space-x-2 pt-4">
-            <button type="button" id="btnCancelarModal" class="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400 flex items-center gap-1">
-              <i data-lucide="x" class="w-4 h-4"></i>
-              Cancelar
+          
+          <!-- Botones de acción -->
+          <div class="flex gap-3 pt-4">
+            <button type="button" id="btnCancelarModal" class="flex-1 modal-btn bg-slate-600 hover:bg-slate-700">
+              <i data-lucide="x" class="w-5 h-5"></i>
+              <span>Cancelar</span>
             </button>
-            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-1">
-              <i data-lucide="save" class="w-4 h-4"></i>
-              Guardar
+            <button type="submit" class="flex-1 modal-btn bg-green-600 hover:bg-green-700">
+              <i data-lucide="save" class="w-5 h-5"></i>
+              <span>Guardar</span>
             </button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- Modal de confirmación para eliminar producto -->
+    <div id="modalConfirmarEliminar" class="fixed inset-0 flex items-center justify-center z-50 modal-overlay hidden">
+      <div class="modal-card animate-fade-in max-w-sm w-full mx-4">
+        <button id="btnCerrarModalEliminar" class="modal-close" aria-label="Cerrar">&times;</button>
+        
+        <!-- Ícono de advertencia -->
+        <div class="modal-success-icon">
+          <i data-lucide="alert-triangle" class="w-12 h-12 text-red-400" style="filter: drop-shadow(0 0 16px rgba(239, 68, 68, 0.5));"></i>
+        </div>
+        
+        <!-- Título -->
+        <h2 class="modal-title mb-4">Confirmar Eliminación</h2>
+        
+        <!-- Mensaje -->
+        <div class="text-center mb-6">
+          <p class="text-white/90 text-sm leading-relaxed">
+            ¿Eliminar este producto del inventario?
+          </p>
+          <p class="text-white/70 text-xs mt-2">
+            (Se mantendrá en el historial de ventas)
+          </p>
+          <div id="productoAEliminar" class="mt-4 p-3 glass-card rounded-lg">
+            <p class="text-white font-medium text-sm" id="nombreProductoEliminar">—</p>
+            <p class="text-white/70 text-xs" id="codigoProductoEliminar">—</p>
+          </div>
+        </div>
+        
+        <!-- Botones de acción -->
+        <div class="flex gap-3">
+          <button type="button" id="btnCancelarEliminar" class="flex-1 modal-btn modal-btn-secondary">
+            <i data-lucide="x" class="w-5 h-5"></i>
+            <span>Cancelar</span>
+          </button>
+          <button type="button" id="btnConfirmarEliminar" class="flex-1 modal-btn modal-btn-danger">
+            <i data-lucide="trash-2" class="w-5 h-5"></i>
+            <span>Eliminar</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -385,283 +547,143 @@
       const inputActualizarCSV = document.getElementById("inputActualizarCSV");
       const searchInput = document.getElementById("searchInput");
 
+      // Modal de confirmación de eliminación
+      const modalConfirmarEliminar = document.getElementById("modalConfirmarEliminar");
+      const btnCerrarModalEliminar = document.getElementById("btnCerrarModalEliminar");
+      const btnCancelarEliminar = document.getElementById("btnCancelarEliminar");
+      const btnConfirmarEliminar = document.getElementById("btnConfirmarEliminar");
+      const nombreProductoEliminar = document.getElementById("nombreProductoEliminar");
+      const codigoProductoEliminar = document.getElementById("codigoProductoEliminar");
+
+      // Función para cerrar modal de eliminación
+      function cerrarConfirmEliminar() {
+        modalConfirmarEliminar.classList.add("hidden");
+        eliminarProductoId = null;
+      }
+
       let editandoProductoId = null;
-      
-      // Variables para el ordenamiento
-      let ordenActual = {
-        campo: null,        // 'nombre', 'precio', 'stock'
-        direccion: 'asc'    // 'asc' o 'desc'
-      };
-      let productosOriginales = []; // Array para mantener los datos originales
+      let eliminarProductoId = null;
 
-      // Función para ordenar la tabla
-      function ordenarTabla(campo) {
-        // Si hacemos clic en el mismo campo, cambiar dirección
-        if (ordenActual.campo === campo) {
-          ordenActual.direccion = ordenActual.direccion === 'asc' ? 'desc' : 'asc';
-        } else {
-          // Nuevo campo, empezar con ascendente
-          ordenActual.campo = campo;
-          ordenActual.direccion = 'asc';
-        }
-
-        // Actualizar indicadores visuales
-        actualizarIndicadoresOrden();
-
-        // Ordenar los datos
-        const productosOrdenados = [...productosOriginales].sort((a, b) => {
-          let valorA, valorB;
-
-          switch (campo) {
-            case 'nombre':
-              valorA = a.nombre.toLowerCase();
-              valorB = b.nombre.toLowerCase();
-              break;
-            case 'precio':
-              valorA = parseFloat(a.precio) || 0;
-              valorB = parseFloat(b.precio) || 0;
-              break;
-            case 'stock':
-              valorA = parseInt(a.stock) || 0;
-              valorB = parseInt(b.stock) || 0;
-              break;
-            default:
-              return 0;
-          }
-
-          let resultado = 0;
-          if (valorA < valorB) resultado = -1;
-          else if (valorA > valorB) resultado = 1;
-
-          return ordenActual.direccion === 'desc' ? -resultado : resultado;
-        });
-
-        // Renderizar la tabla ordenada
-        renderizarTabla(productosOrdenados);
+      // Función para mostrar notificaciones toast
+      function showToast(message, type = 'success') {
+        const toast = document.createElement("div");
+        toast.textContent = message;
+        toast.className = `fixed bottom-4 right-4 z-50 px-4 py-2 rounded-lg text-white ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}`;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+          toast.remove();
+        }, 3000);
       }
 
-      if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-      }
-
-      // Función para actualizar los indicadores visuales de ordenamiento
-      function actualizarIndicadoresOrden() {
-        // Resetear todos los indicadores
-        ['nombre', 'precio', 'stock'].forEach(campo => {
-          const indicador = document.getElementById(`sort-${campo}`);
-          if (indicador) {
-            indicador.textContent = '↕';
-            indicador.className = 'ml-1 text-gray-400';
-          }
-        });
-
-        // Actualizar el indicador activo
-        if (ordenActual.campo) {
-          const indicadorActivo = document.getElementById(`sort-${ordenActual.campo}`);
-          if (indicadorActivo) {
-            indicadorActivo.textContent = ordenActual.direccion === 'asc' ? '↑' : '↓';
-            indicadorActivo.className = 'ml-1 text-blue-600 font-bold';
-          }
-        }
-      }
-
-      // Función para renderizar la tabla con los productos dados
-      function renderizarTabla(productos) {
-        tbodyInventario.innerHTML = "";
-
-        productos.forEach((prod) => {
-          const tr = document.createElement("tr");
-          tr.className = "hover:bg-white backdrop-blur-sm";
-
-          // Determinar el badge y color del stock
-          const stockValue = parseInt(prod.stock) || 0;
-          let stockDisplay = '';
-          let stockClass = '';
+      // Función para mostrar modal de error personalizado
+      function showErrorModal(title, message, details = null) {
+        return new Promise((resolve) => {
+          // Crear overlay del modal
+          const overlay = document.createElement('div');
+          overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm';
           
-          if (stockValue === 0) {
-            stockDisplay = 'Sin stock';
-            stockClass = 'text-red-600 bg-red-50 border border-red-200';
-          } else if (stockValue < 10) {
-            stockDisplay = `Bajo: ${stockValue}`;
-            stockClass = 'text-yellow-600 bg-yellow-50 border border-yellow-200';
-          } else {
-            stockDisplay = stockValue.toString();
-            stockClass = 'text-green-600 bg-green-50 border border-green-200';
-          }
-
-          tr.innerHTML = `
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${prod.id}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">${prod.codigo}</td>
-            <td class="px-6 py-4 text-sm font-bold text-gray-900 w-80 max-w-80 relative group">
-              <div class="truncate hover:text-blue-600 transition-colors cursor-pointer flex items-center gap-1">
-                ${prod.nombre}
-                <i data-lucide="info" class="w-3 h-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+          // Crear contenido del modal
+          overlay.innerHTML = `
+            <div class="glass-card rounded-2xl p-6 max-w-md w-full mx-4 border border-red-400/30 shadow-2xl animate-fade-in">
+              <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <i data-lucide="x-circle" class="w-8 h-8 text-red-400"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">${title}</h3>
+                <p class="text-slate-300 text-sm">${message}</p>
               </div>
-              <div class="absolute z-50 bottom-full left-0 mb-2 px-3 py-2 bg-slate-800 text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-normal max-w-xs border border-blue-400/30">
-                <div class="font-medium">${prod.nombre}</div>
-                <div class="absolute top-full left-4 w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-slate-800"></div>
-              </div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-              ${new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP" }).format(parseFloat(prod.precio))}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm">
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${stockClass}">
-                ${stockDisplay}
-              </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-center">
-              <div class="flex justify-center gap-2">
-                <button data-id="${prod.id}" class="btnEditar inline-flex items-center gap-1 px-3 py-1 bg-yellow-400 text-white rounded hover:bg-yellow-500 text-xs">
-                  <i data-lucide="edit-2" class="w-3 h-3"></i>
-                  Editar
-                </button>
-                <button data-id="${prod.id}" class="btnEliminar inline-flex items-center gap-1 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs">
-                  <i data-lucide="trash-2" class="w-3 h-3"></i>
-                  Eliminar
-                </button>
-              </div>
-            </td>
-          `;
-          tbodyInventario.appendChild(tr);
-        });
-
-        // Inicializar Lucide icons para los nuevos elementos
-        if (typeof lucide !== 'undefined') {
-          lucide.createIcons();
-        }
-
-        // Aplicar filtro después de renderizar
-        filterTable();
-        // Reagregar listeners a los botones
-        agregarListenersProductos();
-      }
-
-      // Función para agregar listeners a los botones de Editar y Eliminar
-      function agregarListenersProductos() {
-        // Agregar listeners a los botones Editar
-        document.querySelectorAll(".btnEditar").forEach((btn) => {
-          btn.addEventListener("click", async (e) => {
-            const id = e.currentTarget.dataset.id;
-            try {
-              // 1) Obtener datos del producto
-              const r = await fetch(`${BACKEND_URL}/ventas/productos/${id}/`, {
-                method: "GET",
-                headers,
-              });
-
-              if (!r.ok) {
-                throw new Error(`Error HTTP ${r.status}: ${r.statusText}`);
-              }
-
-              const producto = await r.json();
-
-              // 2) Obtener stock asociado (si existe)
-              const stocksR = await fetch(`${BACKEND_URL}/ventas/stocks/?producto=${id}`, { 
-                method: "GET",
-                headers 
-              });
-
-              if (!stocksR.ok) {
-                throw new Error(`Error HTTP ${stocksR.status}: ${stocksR.statusText}`);
-              }
-
-              const stocksData = await stocksR.json();
-              const cantidadStock = stocksData.length > 0 ? stocksData[0].cantidad : 0;
-
-              // 3) Abrir modal con datos precargados
-              abrirModal(false, {
-                id: producto.id,
-                codigo: producto.codigo,
-                nombre: producto.nombre,
-                precio: producto.precio,
-                stock: cantidadStock
-              });
-            } catch (err) {
-              console.error("Error detallado:", err);
-              alert(`Error al cargar datos del producto: ${err.message}`);
-            }
-          });
-        });
-
-        // Agregar listeners a los botones Eliminar
-        document.querySelectorAll(".btnEliminar").forEach((btn) => {
-          btn.addEventListener("click", async (e) => {
-            const id = e.currentTarget.dataset.id;
-            if (!confirm("¿Eliminar este producto del inventario? (Se mantendrá en el historial de ventas)")) return;
-            try {
-              // Usar soft delete - el producto se marca como eliminado pero no se borra físicamente
-              const response = await fetch(`${BACKEND_URL}/ventas/productos/${id}/`, {
-                method: "DELETE",
-                headers,
-              });
               
-              if (response.status === 204) {
-                // Eliminación exitosa
-                alert("Producto eliminado del inventario correctamente");
-                cargarInventario();
-              } else {
-                // Otros errores
-                throw new Error(`Error HTTP: ${response.status}`);
-              }
-            } catch (err) {
-              console.error(err);
-              alert("Error al eliminar producto: " + err.message);
+              ${details ? `
+              <div class="bg-slate-800/50 rounded-xl p-4 mb-6 border border-slate-600/30">
+                <h4 class="text-white font-semibold mb-2 text-sm">Detalles del error:</h4>
+                <p class="text-slate-300 text-xs font-mono break-words">${details}</p>
+              </div>
+              ` : ''}
+              
+              <button id="closeError" class="w-full px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors">
+                Entendido
+              </button>
+            </div>
+          `;
+          
+          document.body.appendChild(overlay);
+          
+          // Inicializar iconos
+          if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+          }
+          
+          // Event listeners
+          overlay.querySelector('#closeError').addEventListener('click', () => {
+            document.body.removeChild(overlay);
+            resolve();
+          });
+          
+          // Cerrar con clic fuera del modal
+          overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+              document.body.removeChild(overlay);
+              resolve();
             }
           });
         });
       }
 
-      // Función para abrir modal (crear o editar)
-      function abrirModal(nuevo = true, producto = {}) {
-        modalProducto.classList.remove("hidden");
-        if (nuevo) {
-          modalTitle.innerHTML = `<i data-lucide="package-plus" class="w-5 h-5"></i> Nuevo Producto`;
-          document.getElementById("codigoProd").value = "";
-          document.getElementById("nombreProd").value = "";
-          document.getElementById("precioProd").value = "";
-          document.getElementById("stockProd").value = "";
-          editandoProductoId = null;
-        } else {
-          modalTitle.innerHTML = `<i data-lucide="edit" class="w-5 h-5"></i> Editar Producto`;
-          document.getElementById("codigoProd").value = producto.codigo;
-          document.getElementById("nombreProd").value = producto.nombre;
-          document.getElementById("precioProd").value = producto.precio;
-          document.getElementById("stockProd").value = producto.stock;
-          editandoProductoId = producto.id;
-        }
-        
-        // Inicializar íconos de Lucide en el modal
-        if (typeof lucide !== 'undefined') {
-          lucide.createIcons();
-        }
-      }
-
-      function cerrarModal() {
-        modalProducto.classList.add("hidden");
-      }
-
-      // Listener para "+ Nuevo Producto"
-      btnNuevoProducto.addEventListener("click", () => abrirModal());
-      btnCerrarModal.addEventListener("click", cerrarModal);
-      btnCancelarModal.addEventListener("click", cerrarModal);
-
-      // Función para filtrar filas en la tabla según el texto de búsqueda
-      function filterTable() {
-        const term = searchInput.value.toLowerCase();
-        document.querySelectorAll("#tbodyInventario tr").forEach((row) => {
-          const codigo = row.children[1].textContent.toLowerCase();
-          const nombre = row.children[2].textContent.toLowerCase();
-          if (codigo.includes(term) || nombre.includes(term)) {
-            row.style.display = "";   // muéstralo
-          } else {
-            row.style.display = "none"; // lo oculta
+      // Función para mostrar modal de información personalizado
+      function showInfoModal(title, message, type = 'info') {
+        return new Promise((resolve) => {
+          const colorMap = {
+            info: { bg: 'bg-blue-500/20', text: 'text-blue-400', btn: 'bg-blue-600 hover:bg-blue-700', icon: 'info' },
+            warning: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', btn: 'bg-yellow-600 hover:bg-yellow-700', icon: 'alert-triangle' },
+            success: { bg: 'bg-green-500/20', text: 'text-green-400', btn: 'bg-green-600 hover:bg-green-700', icon: 'check-circle' }
+          };
+          
+          const colors = colorMap[type] || colorMap.info;
+          
+          // Crear overlay del modal
+          const overlay = document.createElement('div');
+          overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm';
+          
+          // Crear contenido del modal
+          overlay.innerHTML = `
+            <div class="glass-card rounded-2xl p-6 max-w-md w-full mx-4 border border-blue-400/30 shadow-2xl animate-fade-in">
+              <div class="text-center mb-6">
+                <div class="w-16 h-16 ${colors.bg} rounded-full flex items-center justify-center mx-auto mb-4">
+                  <i data-lucide="${colors.icon}" class="w-8 h-8 ${colors.text}"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">${title}</h3>
+                <p class="text-slate-300 text-sm">${message}</p>
+              </div>
+              
+              <button id="closeInfo" class="w-full px-4 py-3 ${colors.btn} text-white rounded-xl font-medium transition-colors">
+                Entendido
+              </button>
+            </div>
+          `;
+          
+          document.body.appendChild(overlay);
+          
+          // Inicializar iconos
+          if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
           }
+          
+          // Event listeners
+          overlay.querySelector('#closeInfo').addEventListener('click', () => {
+            document.body.removeChild(overlay);
+            resolve();
+          });
+          
+          // Cerrar con clic fuera del modal
+          overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+              document.body.removeChild(overlay);
+              resolve();
+            }
+          });
         });
       }
 
-      // --- Importar y Actualizar Inventario desde CSV (OPTIMIZADO) ---
-      
       // Función para comprimir datos con base64 y gzip (si está disponible)
       async function comprimirDatos(jsonString) {
         try {
@@ -682,7 +704,7 @@
           // Validar tamaño del archivo
           const maxSize = 50 * 1024 * 1024; // 50MB
           if (file.size > maxSize) {
-            alert("Archivo muy grande. Máximo permitido: 50MB");
+            await showErrorModal("Archivo muy grande", "El archivo supera el tamaño máximo permitido de 50MB.");
             return;
           }
 
@@ -690,7 +712,7 @@
           const lines = text.trim().split("\n");
           
           if (lines.length <= 1) {
-            alert("El archivo CSV está vacío o solo contiene cabeceras.");
+            await showInfoModal("Archivo vacío", "El archivo CSV está vacío o solo contiene cabeceras.", "warning");
             return;
           }
 
@@ -702,7 +724,8 @@
           const totalChunks = Math.ceil(totalProductos / chunkSize);
           
           if (totalProductos > chunkSize) {
-            if (!confirm(`El archivo contiene ${totalProductos} productos. Se procesará en ${totalChunks} lotes de ${chunkSize} productos. ¿Continuar?`)) {
+            const shouldContinue = await showCSVConfirmModal(totalProductos, totalChunks, chunkSize);
+            if (!shouldContinue) {
               return;
             }
           }
@@ -840,18 +863,8 @@
             await new Promise(resolve => setTimeout(resolve, 100));
           }
 
-          // Mostrar resultado final
-          let mensaje = `✅ Procesamiento completado!\n\n`;
-          mensaje += `📊 Resumen:\n`;
-          mensaje += `• Total productos: ${totalProductos}\n`;
-          mensaje += `• Productos creados: ${productosCreados}\n`;
-          if (esActualizacion) {
-            mensaje += `• Productos actualizados: ${productosActualizados}\n`;
-          }
-          mensaje += `• Errores: ${errores}\n`;
-          mensaje += `• Procesado en ${totalChunks} lotes`;
-
-          alert(mensaje);
+          // Mostrar resultado final con modal personalizado
+          await showCSVResultModal(totalProductos, productosCreados, productosActualizados, errores, totalChunks, esActualizacion);
           cargarInventario();
 
         } catch (error) {
@@ -864,21 +877,19 @@
           });
           
           // Mostrar error más específico al usuario
-          let errorMsg = "Error al procesar el archivo CSV: ";
+          let errorTitle = "Error al procesar archivo";
+          let errorMsg = "";
           if (error.message.includes('NetworkError')) {
-            errorMsg += "No se puede conectar al servidor. Verifique que:\n";
-            errorMsg += "• El servidor backend esté ejecutándose\n";
-            errorMsg += "• La URL del backend sea correcta\n";
-            errorMsg += "• No haya problemas de red";
+            errorMsg = "No se puede conectar al servidor. Verifique que el servidor backend esté ejecutándose y que no haya problemas de red.";
           } else if (error.message.includes('401')) {
-            errorMsg += "Token de autenticación expirado. Inicie sesión nuevamente.";
+            errorMsg = "Token de autenticación expirado. Inicie sesión nuevamente.";
           } else if (error.message.includes('403')) {
-            errorMsg += "No tiene permisos para realizar esta operación.";
+            errorMsg = "No tiene permisos para realizar esta operación.";
           } else {
-            errorMsg += error.message;
+            errorMsg = error.message;
           }
           
-          alert(errorMsg);
+          await showErrorModal(errorTitle, errorMsg, error.stack);
         } finally {
           // Restaurar botón
           const btn = esActualizacion ? btnActualizar : btnImportar;
@@ -895,24 +906,162 @@
         }
       }
 
-      // Event listeners optimizados
-      btnImportar.addEventListener("click", () => {
-        inputImportarCSV.click();
-      });
+      // Función para mostrar modal de confirmación de CSV personalizado
+      function showCSVConfirmModal(totalProductos, totalChunks, chunkSize) {
+        return new Promise((resolve) => {
+          // Crear overlay del modal
+          const overlay = document.createElement('div');
+          overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm';
+          
+          // Crear contenido del modal
+          overlay.innerHTML = `
+            <div class="glass-card rounded-2xl p-6 max-w-md w-full mx-4 border border-blue-400/30 shadow-2xl animate-fade-in">
+              <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <i data-lucide="alert-triangle" class="w-8 h-8 text-yellow-400"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Confirmar Procesamiento</h3>
+                <p class="text-slate-300 text-sm">Se va a procesar un archivo CSV grande</p>
+              </div>
+              
+              <div class="bg-slate-800/50 rounded-xl p-4 mb-6 border border-slate-600/30">
+                <div class="space-y-2 text-sm">
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">Total de productos:</span>
+                    <span class="text-white font-semibold">${totalProductos}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">Productos por lote:</span>
+                    <span class="text-white font-semibold">${chunkSize}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">Total de lotes:</span>
+                    <span class="text-white font-semibold">${totalChunks}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="flex gap-3">
+                <button id="cancelCSV" class="flex-1 px-4 py-3 bg-slate-600 hover:bg-slate-500 text-white rounded-xl font-medium transition-colors">
+                  Cancelar
+                </button>
+                <button id="confirmCSV" class="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors">
+                  Continuar
+                </button>
+              </div>
+            </div>
+          `;
+          
+          document.body.appendChild(overlay);
+          
+          // Inicializar iconos
+          if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+          }
+          
+          // Event listeners
+          overlay.querySelector('#confirmCSV').addEventListener('click', () => {
+            document.body.removeChild(overlay);
+            resolve(true);
+          });
+          
+          overlay.querySelector('#cancelCSV').addEventListener('click', () => {
+            document.body.removeChild(overlay);
+            resolve(false);
+          });
+          
+          // Cerrar con clic fuera del modal
+          overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+              document.body.removeChild(overlay);
+              resolve(false);
+            }
+          });
+        });
+      }
 
-      btnActualizar.addEventListener("click", () => {
-        inputActualizarCSV.click();
-      });
-
-      inputImportarCSV.addEventListener("change", async function (e) {
-        await procesarCSVOptimizado(e.target.files[0], false);
-        this.value = "";
-      });
-
-      inputActualizarCSV.addEventListener("change", async function (e) {
-        await procesarCSVOptimizado(e.target.files[0], true);
-        this.value = "";
-      });
+      // Función para mostrar modal de resultado del procesamiento CSV
+      function showCSVResultModal(totalProductos, productosCreados, productosActualizados, errores, totalChunks, esActualizacion) {
+        return new Promise((resolve) => {
+          // Crear overlay del modal
+          const overlay = document.createElement('div');
+          overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm';
+          
+          const isSuccess = errores === 0;
+          const iconColor = isSuccess ? 'text-green-400' : 'text-yellow-400';
+          const iconBg = isSuccess ? 'bg-green-500/20' : 'bg-yellow-500/20';
+          const icon = isSuccess ? 'check-circle' : 'alert-triangle';
+          
+          // Crear contenido del modal
+          overlay.innerHTML = `
+            <div class="glass-card rounded-2xl p-6 max-w-md w-full mx-4 border border-blue-400/30 shadow-2xl animate-fade-in">
+              <div class="text-center mb-6">
+                <div class="w-16 h-16 ${iconBg} rounded-full flex items-center justify-center mx-auto mb-4">
+                  <i data-lucide="${icon}" class="w-8 h-8 ${iconColor}"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">✅ Procesamiento Completado</h3>
+                <p class="text-slate-300 text-sm">${isSuccess ? 'El archivo se procesó exitosamente' : 'Procesamiento completado con algunos errores'}</p>
+              </div>
+              
+              <div class="bg-slate-800/50 rounded-xl p-4 mb-6 border border-slate-600/30">
+                <h4 class="text-white font-semibold mb-3 flex items-center gap-2">
+                  <i data-lucide="bar-chart-3" class="w-4 h-4 text-blue-400"></i>
+                  📊 Resumen del Procesamiento
+                </h4>
+                <div class="space-y-2 text-sm">
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">Total productos:</span>
+                    <span class="text-white font-semibold">${totalProductos}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">Productos creados:</span>
+                    <span class="text-green-400 font-semibold">${productosCreados}</span>
+                  </div>
+                  ${esActualizacion ? `
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">Productos actualizados:</span>
+                    <span class="text-blue-400 font-semibold">${productosActualizados}</span>
+                  </div>
+                  ` : ''}
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">Errores:</span>
+                    <span class="${errores > 0 ? 'text-red-400' : 'text-green-400'} font-semibold">${errores}</span>
+                  </div>
+                  <div class="flex justify-between border-t border-slate-600/50 pt-2 mt-2">
+                    <span class="text-slate-400">Procesado en:</span>
+                    <span class="text-white font-semibold">${totalChunks} lotes</span>
+                  </div>
+                </div>
+              </div>
+              
+              <button id="closeResult" class="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors">
+                Entendido
+              </button>
+            </div>
+          `;
+          
+          document.body.appendChild(overlay);
+          
+          // Inicializar iconos
+          if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+          }
+          
+          // Event listeners
+          overlay.querySelector('#closeResult').addEventListener('click', () => {
+            document.body.removeChild(overlay);
+            resolve();
+          });
+          
+          // Cerrar con clic fuera del modal
+          overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+              document.body.removeChild(overlay);
+              resolve();
+            }
+          });
+        });
+      }
 
       // --- Exportar Inventario a CSV ---
       function exportarCSV() {
@@ -951,6 +1100,10 @@
       }
       btnExportar.addEventListener("click", exportarCSV);
 
+      // Variables globales para ordenamiento y filtros
+      let productosOriginales = [];
+      let ordenActual = { campo: null, direccion: 'asc' };
+
       // --- Cargar lista de productos ---
       async function cargarInventario() {
         try {
@@ -978,7 +1131,251 @@
 
         } catch (err) {
           console.error(err);
-          alert("Error al cargar inventario.");
+          await showErrorModal("Error al cargar inventario", "No se pudo cargar la lista de productos desde el servidor.");
+        }
+      }
+
+      // --- Renderizar tabla de productos ---
+      function renderizarTabla(productos) {
+        if (!productos || productos.length === 0) {
+          tbodyInventario.innerHTML = `
+            <tr>
+              <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                <div class="flex flex-col items-center">
+                  <i data-lucide="package-x" class="w-12 h-12 mb-4 text-gray-400"></i>
+                  <p class="text-lg font-medium">No hay productos en el inventario</p>
+                  <p class="text-sm">Agrega productos usando el botón "Nuevo Producto"</p>
+                </div>
+              </td>
+            </tr>
+          `;
+          if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+          }
+          return;
+        }
+
+        tbodyInventario.innerHTML = productos
+          .map((producto) => {
+            // Manejar diferentes estructuras de datos del stock
+            let stockCantidad = 0;
+            if (producto.stock) {
+              if (typeof producto.stock === 'object' && producto.stock.cantidad !== undefined) {
+                stockCantidad = producto.stock.cantidad;
+              } else if (typeof producto.stock === 'number') {
+                stockCantidad = producto.stock;
+              }
+            }
+            
+            // Asegurar que stockCantidad sea un número válido
+            stockCantidad = Number(stockCantidad) || 0;
+            
+            const stockClass = stockCantidad === 0 ? 'text-red-600 font-bold' : 
+                             stockCantidad < 10 ? 'text-yellow-600 font-semibold' : 
+                             'text-green-600 font-medium';
+            
+            return `
+              <tr class="hover:bg-gray-50 transition-colors duration-150">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">${producto.id}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">${producto.codigo || '—'}</td>
+                <td class="px-6 py-4 text-sm font-bold text-gray-900 max-w-80 truncate" title="${producto.nombre}">${producto.nombre}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">$${producto.precio?.toLocaleString('es-CL') || '0'}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm ${stockClass}">${stockCantidad}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                  <div class="flex items-center justify-center space-x-2">
+                    <button
+                      onclick="editarProducto(${producto.id})"
+                      class="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-150"
+                      title="Editar producto"
+                    >
+                      <i data-lucide="edit-2" class="w-3 h-3 mr-1"></i>
+                      Editar
+                    </button>
+                    <button
+                      onclick="confirmarEliminarProducto(${producto.id}, '${producto.nombre.replace(/'/g, "\\'")}', '${producto.codigo || ''}')"
+                      class="inline-flex items-center px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors duration-150"
+                      title="Eliminar producto"
+                    >
+                      <i data-lucide="trash-2" class="w-3 h-3 mr-1"></i>
+                      Eliminar
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            `;
+          })
+          .join("");
+
+        // Reinicializar iconos de Lucide
+        if (typeof lucide !== 'undefined') {
+          lucide.createIcons();
+        }
+      }
+
+      // --- Funciones de ordenamiento ---
+      function ordenarTabla(campo) {
+        if (ordenActual.campo === campo) {
+          ordenActual.direccion = ordenActual.direccion === 'asc' ? 'desc' : 'asc';
+        } else {
+          ordenActual.campo = campo;
+          ordenActual.direccion = 'asc';
+        }
+
+        // Actualizar indicadores visuales
+        document.querySelectorAll('[id^="sort-"]').forEach(el => {
+          el.textContent = '↕';
+          el.className = 'ml-1 text-gray-400';
+        });
+
+        const indicator = document.getElementById(`sort-${campo}`);
+        if (indicator) {
+          indicator.textContent = ordenActual.direccion === 'asc' ? '↑' : '↓';
+          indicator.className = 'ml-1 text-blue-600';
+        }
+
+        // Crear copia de productos para ordenar
+        const productosOrdenados = [...productosOriginales].sort((a, b) => {
+          let valorA, valorB;
+
+          switch (campo) {
+            case 'nombre':
+              valorA = a.nombre?.toLowerCase() || '';
+              valorB = b.nombre?.toLowerCase() || '';
+              break;
+            case 'precio':
+              valorA = a.precio || 0;
+              valorB = b.precio || 0;
+              break;
+            case 'stock':
+              // Manejar diferentes estructuras de datos del stock
+              valorA = 0;
+              valorB = 0;
+              
+              if (a.stock) {
+                if (typeof a.stock === 'object' && a.stock.cantidad !== undefined) {
+                  valorA = a.stock.cantidad;
+                } else if (typeof a.stock === 'number') {
+                  valorA = a.stock;
+                }
+              }
+              
+              if (b.stock) {
+                if (typeof b.stock === 'object' && b.stock.cantidad !== undefined) {
+                  valorB = b.stock.cantidad;
+                } else if (typeof b.stock === 'number') {
+                  valorB = b.stock;
+                }
+              }
+              
+              valorA = Number(valorA) || 0;
+              valorB = Number(valorB) || 0;
+              break;
+            default:
+              return 0;
+          }
+
+          if (valorA < valorB) return ordenActual.direccion === 'asc' ? -1 : 1;
+          if (valorA > valorB) return ordenActual.direccion === 'asc' ? 1 : -1;
+          return 0;
+        });
+
+        renderizarTabla(productosOrdenados);
+      }
+
+      // --- Función de filtrado ---
+      function filterTable() {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        
+        if (!searchTerm) {
+          // Si no hay término de búsqueda, mostrar todos los productos
+          if (ordenActual.campo) {
+            ordenarTabla(ordenActual.campo);
+          } else {
+            renderizarTabla(productosOriginales);
+          }
+          return;
+        }
+
+        const productosFiltrados = productosOriginales.filter(producto => {
+          return (
+            producto.nombre?.toLowerCase().includes(searchTerm) ||
+            producto.codigo?.toLowerCase().includes(searchTerm) ||
+            producto.id?.toString().includes(searchTerm)
+          );
+        });
+
+        renderizarTabla(productosFiltrados);
+      }
+
+      // --- Funciones de modal para productos ---
+      function abrirModal(esEdicion = false, producto = null) {
+        editandoProductoId = esEdicion ? producto.id : null;
+        
+        // Actualizar título y icono
+        if (esEdicion) {
+          modalTitle.textContent = "Editar Producto";
+          document.getElementById("modalIcon").setAttribute("data-lucide", "edit");
+        } else {
+          modalTitle.textContent = "Nuevo Producto";
+          document.getElementById("modalIcon").setAttribute("data-lucide", "package-plus");
+        }
+
+        // Limpiar o rellenar formulario
+        document.getElementById("codigoProd").value = producto?.codigo || "";
+        document.getElementById("nombreProd").value = producto?.nombre || "";
+        document.getElementById("precioProd").value = producto?.precio || "";
+        document.getElementById("stockProd").value = producto?.stock?.cantidad || "";
+
+        modalProducto.classList.remove("hidden");
+        
+        if (typeof lucide !== 'undefined') {
+          lucide.createIcons();
+        }
+      }
+
+      function cerrarModal() {
+        modalProducto.classList.add("hidden");
+        editandoProductoId = null;
+        document.getElementById("formProducto").reset();
+      }
+
+      // --- Funciones para eliminar productos ---
+      function confirmarEliminarProducto(id, nombre, codigo) {
+        eliminarProductoId = id;
+        nombreProductoEliminar.textContent = nombre;
+        codigoProductoEliminar.textContent = codigo ? `Código: ${codigo}` : "Sin código";
+        modalConfirmarEliminar.classList.remove("hidden");
+      }
+
+      // --- Función para editar producto ---
+      async function editarProducto(id) {
+        try {
+          const res = await fetch(`${BACKEND_URL}/ventas/productos/${id}/`, {
+            method: "GET",
+            headers,
+          });
+          
+          if (!res.ok) throw new Error("Error al obtener producto");
+          
+          const producto = await res.json();
+          
+          // Obtener stock del producto
+          const stockRes = await fetch(`${BACKEND_URL}/ventas/stocks/?producto=${id}`, {
+            method: "GET",
+            headers,
+          });
+          
+          if (stockRes.ok) {
+            const stocks = await stockRes.json();
+            if (stocks.length > 0) {
+              producto.stock = stocks[0];
+            }
+          }
+          
+          abrirModal(true, producto);
+        } catch (err) {
+          console.error(err);
+          await showErrorModal("Error al cargar producto", "No se pudo cargar la información del producto para editar.");
         }
       }
 
@@ -987,8 +1384,13 @@
         e.preventDefault();
         const codigo = document.getElementById("codigoProd").value.trim();
         const nombre = document.getElementById("nombreProd").value.trim();
-        const precio = parseFloat(document.getElementById("precioProd").value);
-        const stockCantidad = parseInt(document.getElementById("stockProd").value, 10);
+        const precio = parseFloat(document.getElementById("precioProd").value) || 0;
+        const stockCantidad = parseInt(document.getElementById("stockProd").value, 10) || 0;
+
+        if (!nombre) {
+          await showErrorModal("Campo requerido", "El nombre del producto es obligatorio.");
+          return;
+        }
 
         try {
           let prodId = editandoProductoId;
@@ -1004,11 +1406,17 @@
             });
             if (!r.ok) {
               const eJson = await r.json();
-              alert("Error al crear producto: " + JSON.stringify(eJson));
+              console.error("Error al crear producto:", eJson);
+              let errorMsg = "Error al crear el producto.";
+              if (eJson.codigo && eJson.codigo[0]) {
+                errorMsg = `Error: ${eJson.codigo[0]}`;
+              }
+              await showErrorModal("Error al crear producto", errorMsg);
               return;
             }
             productoRes = await r.json();
             prodId = productoRes.id;
+            showToast("Producto creado correctamente.", 'success');
           } else {
             // Editar producto existente
             const r = await fetch(`${BACKEND_URL}/ventas/productos/${prodId}/`, {
@@ -1018,36 +1426,43 @@
             });
             if (!r.ok) {
               const eJson = await r.json();
-              alert("Error al actualizar producto: " + JSON.stringify(eJson));
+              console.error("Error al actualizar producto:", eJson);
+              let errorMsg = "Error al actualizar el producto.";
+              if (eJson.codigo && eJson.codigo[0]) {
+                errorMsg = `Error: ${eJson.codigo[0]}`;
+              }
+              await showErrorModal("Error al actualizar producto", errorMsg);
               return;
             }
             productoRes = await r.json();
+            showToast("Producto actualizado correctamente.", 'success');
           }
 
           // Ahora manejamos el Stock asociado
-          //  - Si existía stock, actualizamos con PUT
-          //  - Si no existía, creamos con POST
           const stocksR = await fetch(`${BACKEND_URL}/ventas/stocks/?producto=${prodId}`, {
             method: "GET",
             headers,
           });
-          const stocksData = await stocksR.json();
+          
+          if (stocksR.ok) {
+            const stocksData = await stocksR.json();
 
-          if (stocksData.length > 0) {
-            // Actualizar stock
-            const stockId = stocksData[0].id;
-            await fetch(`${BACKEND_URL}/ventas/stocks/${stockId}/`, {
-              method: "PUT",
-              headers,
-              body: JSON.stringify({ producto: prodId, cantidad: stockCantidad }),
-            });
-          } else {
-            // Crear stock nuevo
-            await fetch(`${BACKEND_URL}/ventas/stocks/`, {
-              method: "POST",
-              headers,
-              body: JSON.stringify({ producto: prodId, cantidad: stockCantidad }),
-            });
+            if (stocksData.length > 0) {
+              // Actualizar stock existente
+              const stockId = stocksData[0].id;
+              await fetch(`${BACKEND_URL}/ventas/stocks/${stockId}/`, {
+                method: "PUT",
+                headers,
+                body: JSON.stringify({ producto: prodId, cantidad: stockCantidad }),
+              });
+            } else {
+              // Crear stock nuevo
+              await fetch(`${BACKEND_URL}/ventas/stocks/`, {
+                method: "POST",
+                headers,
+                body: JSON.stringify({ producto: prodId, cantidad: stockCantidad }),
+              });
+            }
           }
 
           // Cerrar modal y recargar lista
@@ -1055,7 +1470,7 @@
           cargarInventario();
         } catch (err) {
           console.error(err);
-          alert("Error al guardar producto.");
+          await showErrorModal("Error al guardar producto", "No se pudo guardar el producto. Verifique los datos e intente nuevamente.");
         }
       });
 
@@ -1065,10 +1480,80 @@
         cargarInventario();
         searchInput.addEventListener("input", filterTable);
         
+        // Event listeners para modales
+        btnNuevoProducto.addEventListener("click", () => abrirModal(false));
+        btnCerrarModal.addEventListener("click", cerrarModal);
+        btnCancelarModal.addEventListener("click", cerrarModal);
+        
+        // Event listeners para CSV
+        btnImportar.addEventListener("click", () => inputImportarCSV.click());
+        btnActualizar.addEventListener("click", () => inputActualizarCSV.click());
+        
+        inputImportarCSV.addEventListener("change", (e) => {
+          if (e.target.files[0]) {
+            procesarCSVOptimizado(e.target.files[0], false);
+            e.target.value = ""; // Reset input
+          }
+        });
+        
+        inputActualizarCSV.addEventListener("change", (e) => {
+          if (e.target.files[0]) {
+            procesarCSVOptimizado(e.target.files[0], true);
+            e.target.value = ""; // Reset input
+          }
+        });
+        
         // Inicializar Lucide icons
         if (typeof lucide !== 'undefined') {
           lucide.createIcons();
         }
+        
+        // Listener para confirmar eliminación de producto
+        btnConfirmarEliminar.addEventListener("click", async () => {
+          if (!eliminarProductoId) return;
+          try {
+            const r = await fetch(`${BACKEND_URL}/ventas/productos/${eliminarProductoId}/`, {
+              method: "DELETE",
+              headers,
+            });
+            if (!r.ok) throw new Error(`Error HTTP ${r.status}`);
+            showToast("Producto eliminado correctamente.", 'success');
+            cerrarConfirmEliminar();
+            cargarInventario();
+          } catch (err) {
+            console.error(err);
+            showToast("Error al eliminar producto.", 'error');
+          }
+        });
+      
+        // Listeners para cerrar modal de eliminación
+        btnCerrarModalEliminar.addEventListener("click", cerrarConfirmEliminar);
+        btnCancelarEliminar.addEventListener("click", cerrarConfirmEliminar);
+        
+        // Cerrar modales con Escape
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") {
+            if (!modalProducto.classList.contains("hidden")) {
+              cerrarModal();
+            }
+            if (!modalConfirmarEliminar.classList.contains("hidden")) {
+              cerrarConfirmEliminar();
+            }
+          }
+        });
+        
+        // Cerrar modales al hacer clic fuera
+        modalProducto.addEventListener("click", (e) => {
+          if (e.target === modalProducto) {
+            cerrarModal();
+          }
+        });
+        
+        modalConfirmarEliminar.addEventListener("click", (e) => {
+          if (e.target === modalConfirmarEliminar) {
+            cerrarConfirmEliminar();
+          }
+        });
       });
 
       async function checkAccess() {
@@ -1092,11 +1577,16 @@
           const user = await resp.json();
           
           // Mostrar información del usuario
-const fullName = `${user.first_name} ${user.last_name}`.trim();
-const displayName = fullName || user.username;
-const roleName = user.role === 'ADMIN' ? 'Administrador' : 'Empleado';
-document.getElementById("userInfo").textContent = `${displayName} (${roleName})`;
-
+          const fullName = `${user.first_name} ${user.last_name}`.trim();
+          const displayName = fullName || user.username;
+          const roleName = user.role === 'ADMIN' ? 'Administrador' : 'Empleado';
+          document.getElementById("userInfo").textContent = `${displayName} (${roleName})`;
+          
+          // Mostrar también en mobile
+          const userInfoMobile = document.getElementById("userInfoMobile");
+          if (userInfoMobile) {
+            userInfoMobile.textContent = `${displayName} (${roleName})`;
+          }
           
           // Si es empleado, mostrar mensaje de acceso denegado
           if (user.role === 'EMPLOYEE') {
@@ -1113,6 +1603,11 @@ document.getElementById("userInfo").textContent = `${displayName} (${roleName})`
           window.location.href = "/";
         }
       }
+
+      // Hacer funciones globales para que estén disponibles desde onclick
+      window.editarProducto = editarProducto;
+      window.confirmarEliminarProducto = confirmarEliminarProducto;
+      window.ordenarTabla = ordenarTabla;
     </script>
   </body>
 </html>

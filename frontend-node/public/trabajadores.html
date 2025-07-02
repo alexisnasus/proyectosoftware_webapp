@@ -97,7 +97,7 @@
           <!-- Logo y brand -->
           <div class="flex items-center space-x-4">
             <div class="flex-shrink-0 bg-blue-600 p-3 rounded-xl shadow-lg">
-              <i data-lucide="shopping-cart" class="w-7 h-7 text-white"></i>
+              <img src="/ManuLogo_WIP.png" alt="ManuMarket" class="w-7 h-7 object-contain">
             </div>
             <div>
               <h1 class="text-2xl font-bold text-white">ManuMarket</h1>
@@ -186,11 +186,15 @@
       </div>
     </nav>
     <script>
-      const btnMenuTrab = document.getElementById("btnMenuTrab");
-      const menuResponsiveTrab = document.getElementById("menuResponsiveTrab");
-      btnMenuTrab && btnMenuTrab.addEventListener("click", () => {
-        menuResponsiveTrab.classList.toggle("hidden");
+      // Menú hamburguesa responsive
+      const btnMenu = document.getElementById("btnMenu");
+      const menuResponsive = document.getElementById("menuResponsive");
+      btnMenu && btnMenu.addEventListener("click", () => {
+        menuResponsive.classList.toggle("hidden");
       });
+      
+      // Inicializar iconos
+      lucide.createIcons();
     </script>
     <!-- ================================ -->    <!-- CONTENIDO: GESTIÓN DE USUARIOS -->
     <main class="max-w-7xl mx-auto p-6">
@@ -392,31 +396,38 @@ document.getElementById("userInfo").textContent = `${displayName} (${roleName})`
 
         users.forEach((user) => {
           const tr = document.createElement("tr");
+          tr.className = "hover:bg-white/5 transition-all duration-200";
           tr.innerHTML = `
-        <td class="px-6 py-4 whitespace-nowrap">${user.username}</td>
-        <td class="px-6 py-4 whitespace-nowrap">${user.first_name} ${user.last_name}</td>
-        <td class="px-6 py-4 whitespace-nowrap">${user.email}</td>
-        <td class="px-6 py-4 whitespace-nowrap">${user.role}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-white">${user.username}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-white">${user.first_name} ${user.last_name}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-white">${user.email}</td>
         <td class="px-6 py-4 whitespace-nowrap">
-          <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-            user.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red"
+          <span class="px-3 py-1 rounded-full text-xs font-medium ${
+            user.role === 'ADMIN' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+          }">
+            ${user.role === 'ADMIN' ? 'Administrador' : 'Empleado'}
+          </span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+          <span class="px-3 py-1 rounded-full text-xs font-medium ${
+            user.is_active ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-red-500/20 text-red-300 border border-red-500/30'
           }">
             ${user.is_active ? "Activo" : "Inactivo"}
           </span>
         </td>
         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium flex gap-2">
           <button 
-            onclick="openEditModal('${user.id}')"
-            class="inline-flex items-center px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow transition-all duration-150 gap-1"
-            title="Editar"
+            onclick="editUser('${user.id}')"
+            class="inline-flex items-center px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow transition-all duration-150 gap-1 hover:scale-105"
+            title="Editar usuario"
           >
             <i data-lucide="edit-2" class="w-4 h-4"></i>
             <span>Editar</span>
           </button>
           <button 
             onclick="deleteUser('${user.id}')"
-            class="inline-flex items-center px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow transition-all duration-150 gap-1"
-            title="Eliminar"
+            class="inline-flex items-center px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow transition-all duration-150 gap-1 hover:scale-105"
+            title="Eliminar usuario"
           >
             <i data-lucide="trash-2" class="w-4 h-4"></i>
             <span>Eliminar</span>
@@ -425,6 +436,8 @@ document.getElementById("userInfo").textContent = `${displayName} (${roleName})`
           `;
           tablaUsuarios.appendChild(tr);
         });
+        
+        // Reinicializar iconos después de crear la tabla
         lucide.createIcons();
       }
 
@@ -456,13 +469,13 @@ document.getElementById("userInfo").textContent = `${displayName} (${roleName})`
         const token = localStorage.getItem("token");
         
         try {
+          setLoading(true);
           const resp = await fetch(`${BACKEND_URL}/ventas/usuarios/${userId}/`, {
             headers: { "Authorization": `Bearer ${token}` }
           });
           
           if (!resp.ok) {
-            alert("Error al cargar datos del usuario");
-            return;
+            throw new Error("Error al cargar datos del usuario");
           }
           
           const user = await resp.json();
@@ -478,9 +491,13 @@ document.getElementById("userInfo").textContent = `${displayName} (${roleName})`
           document.getElementById("inputPassword").required = false;
           document.getElementById("inputPasswordConfirm").required = false;
           document.getElementById("modalUsuario").style.display = "flex";
+          
+          showToast("Datos del usuario cargados correctamente", "success");
         } catch (err) {
           console.error("Error al cargar usuario:", err);
-          alert("Error al cargar datos del usuario");
+          showToast("Error al cargar datos del usuario", "error");
+        } finally {
+          setLoading(false);
         }
       }
 
@@ -492,20 +509,24 @@ document.getElementById("userInfo").textContent = `${displayName} (${roleName})`
         const token = localStorage.getItem("token");
         
         try {
+          setLoading(true);
           const resp = await fetch(`${BACKEND_URL}/ventas/usuarios/${userId}/`, {
             method: "DELETE",
             headers: { "Authorization": `Bearer ${token}` }
           });
           
           if (resp.ok) {
+            showToast("Usuario eliminado correctamente", "success");
             await loadUsers();
           } else {
             const error = await resp.json();
-            alert("Error al eliminar usuario: " + (error.error || "Error desconocido"));
+            throw new Error(error.error || "Error desconocido");
           }
         } catch (err) {
           console.error("Error al eliminar usuario:", err);
-          alert("Error al eliminar usuario");
+          showToast("Error al eliminar usuario: " + err.message, "error");
+        } finally {
+          setLoading(false);
         }
       }
 
@@ -532,7 +553,7 @@ document.getElementById("userInfo").textContent = `${displayName} (${roleName})`
           const passwordConfirm = document.getElementById("inputPasswordConfirm").value;
           
           if (password !== passwordConfirm) {
-            alert("Las contraseñas no coinciden");
+            showToast("Las contraseñas no coinciden", "error");
             return;
           }
           
@@ -546,6 +567,7 @@ document.getElementById("userInfo").textContent = `${displayName} (${roleName})`
         }
 
         try {
+          setLoading(true);
           const url = isEditing 
             ? `${BACKEND_URL}/ventas/usuarios/${userId}/`
             : `${BACKEND_URL}/ventas/usuarios/`;
@@ -562,24 +584,22 @@ document.getElementById("userInfo").textContent = `${displayName} (${roleName})`
           });
           
           if (resp.ok) {
+            const action = isEditing ? "actualizado" : "creado";
+            showToast(`Usuario ${action} correctamente`, "success");
             closeModal();
             await loadUsers();
           } else {
             const error = await resp.json();
-            alert("Error al guardar usuario: " + JSON.stringify(error));
+            throw new Error(JSON.stringify(error));
           }
         } catch (err) {
           console.error("Error al guardar usuario:", err);
-          alert("Error al guardar usuario");
+          showToast("Error al guardar usuario: " + err.message, "error");
+        } finally {
+          setLoading(false);
         }
       }
       lucide.createIcons();
-
-      const btnMenu = document.getElementById("btnMenu");
-      const menuResponsive = document.getElementById("menuResponsive");
-      btnMenu && btnMenu.addEventListener("click", () => {
-        menuResponsive.classList.toggle("hidden");
-      });
 
       // Función para mostrar toast/alerta
       function showToast(message, type = "info") {

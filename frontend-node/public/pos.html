@@ -226,7 +226,7 @@
           <!-- Logo y brand -->
           <div class="flex items-center space-x-4">
             <div class="flex-shrink-0 bg-blue-600 p-3 rounded-xl shadow-lg">
-              <i data-lucide="shopping-cart" class="w-7 h-7 text-white"></i>
+              <img src="/ManuLogo_WIP.png" alt="ManuMarket" class="w-7 h-7 object-contain">
             </div>
             <div>
               <h1 class="text-2xl font-bold text-white">ManuMarket</h1>
@@ -456,6 +456,61 @@
   </div>
 </div>
 
+<!-- Modal moderno para errores de stock -->
+<div id="modalErrorStock" class="hidden fixed inset-0 flex items-center justify-center z-50 modal-overlay">
+  <div class="modal-card animate-fade-in max-w-2xl">
+    <button onclick="cerrarModalErrorStock()" class="modal-close" aria-label="Cerrar">&times;</button>
+    
+    <!-- Ícono de error -->
+    <div class="modal-success-icon">
+      <i data-lucide="alert-triangle" class="w-14 h-14 text-amber-400" style="filter: drop-shadow(0 0 16px rgba(251, 191, 36, 0.5));"></i>
+    </div>
+    
+    <!-- Título -->
+    <h3 class="modal-title text-amber-400 mb-4">
+      🚫 Venta No Autorizada
+    </h3>
+    
+    <!-- Mensaje principal -->
+    <div class="glass-effect rounded-xl p-4 mb-6 border border-red-500/30 bg-red-500/10">
+      <p class="text-red-300 text-center font-medium" id="modalErrorStockMensaje">
+        Como empleado, no puedes vender productos con stock insuficiente.
+      </p>
+    </div>
+    
+    <!-- Lista de productos con problemas -->
+    <div class="glass-effect rounded-xl p-4 mb-6 border border-amber-500/30">
+      <h4 class="text-amber-300 font-semibold mb-3 flex items-center">
+        <i data-lucide="package-x" class="w-5 h-5 mr-2"></i>
+        Productos con Stock Insuficiente:
+      </h4>
+      <div id="listaProductosSinStock" class="space-y-3">
+        <!-- Los productos se inyectarán aquí -->
+      </div>
+    </div>
+    
+    <!-- Mensaje de contacto -->
+    <div class="glass-card rounded-xl p-4 mb-6 border border-blue-500/30 bg-blue-500/10">
+      <p class="text-blue-300 text-center text-sm">
+        <i data-lucide="info" class="w-4 h-4 inline mr-2"></i>
+        Contacta a un administrador para realizar esta venta o ajusta las cantidades.
+      </p>
+    </div>
+    
+    <!-- Botones de acción -->
+    <div class="grid grid-cols-2 gap-3">
+      <button onclick="cerrarModalErrorStock()" class="modal-btn bg-slate-600 hover:bg-slate-700">
+        <i data-lucide="x-circle" class="w-5 h-5"></i>
+        <span>Cancelar</span>
+      </button>
+      <button onclick="ajustarCantidades()" class="modal-btn bg-amber-600 hover:bg-amber-700">
+        <i data-lucide="edit" class="w-5 h-5"></i>
+        <span>Ajustar Carrito</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- Spinner de carga -->
 <div id="spinner" class="hidden fixed inset-0 flex items-center justify-center z-50 loader-overlay">
   <div class="flex flex-col items-center">
@@ -476,19 +531,19 @@ let usuarioActual = null;
 // Función para obtener datos del usuario actual
 async function obtenerUsuarioActual() {
     try {
-        const response = await fetch('/api/usuario-actual/', {
+        const tokenLocal = localStorage.getItem('token');
+        const response = await fetch(`${BACKEND_URL}/ventas/user/me/`, {
             method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-                'Content-Type': 'application/json'
-            }
+            headers: tokenLocal
+                ? { 'Authorization': `Bearer ${tokenLocal}`, 'Content-Type': 'application/json' }
+                : { 'Content-Type': 'application/json' }
         });
         
         if (response.ok) {
             usuarioActual = await response.json();
             console.log('Usuario actual:', usuarioActual);
         } else {
-            console.error('Error al obtener usuario actual');
+            console.error('Error al obtener usuario actual, status:', response.status);
         }
     } catch (error) {
         console.error('Error:', error);
@@ -561,9 +616,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
         carritoItems.forEach((item, index) => {
           const subtotal = item.precio * item.cantidad;
+          
+          // Determinar si el producto tiene problemas de stock
+          const stockInsuficiente = item.cantidad > item.stock;
+          const claseFilaStock = stockInsuficiente 
+            ? "grid grid-cols-12 p-3 items-center hover:bg-red-900/20 border-t border-red-500/30 bg-red-900/10 transition-colors duration-150" 
+            : "grid grid-cols-12 p-3 items-center hover:bg-blue-900/30 border-t border-blue-800/30 bg-slate-900/70 transition-colors duration-150";
 
           const fila = document.createElement("div");
-          fila.className = "grid grid-cols-12 p-3 items-center hover:bg-blue-900/30 border-t border-blue-800/30 bg-slate-900/70 transition-colors duration-150";
+          fila.className = claseFilaStock;
 
           // 1) Código
           const divCodigo = document.createElement("div");
@@ -577,10 +638,26 @@ document.addEventListener('DOMContentLoaded', function() {
           divNombre.textContent = item.nombre;
           fila.appendChild(divNombre);
 
-          // 3) Stock actual
+          // 3) Stock actual con indicador visual
           const divStock = document.createElement("div");
-          divStock.className = "col-span-1 text-center font-mono text-sm text-slate-400";
-          divStock.textContent = item.stock;
+          divStock.className = "col-span-1 text-center font-mono text-sm";
+          
+          if (stockInsuficiente) {
+            divStock.innerHTML = `
+              <span class="px-2 py-1 rounded-full text-xs font-bold bg-red-500/20 text-red-300 border border-red-500/30">
+                ${item.stock} ⚠️
+              </span>
+            `;
+          } else if (item.stock <= 5) {
+            divStock.innerHTML = `
+              <span class="px-2 py-1 rounded-full text-xs font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                ${item.stock}
+              </span>
+            `;
+          } else {
+            divStock.className += " text-slate-400";
+            divStock.textContent = item.stock;
+          }
           fila.appendChild(divStock);
 
           // 4) Precio unitario
@@ -692,7 +769,7 @@ document.addEventListener('DOMContentLoaded', function() {
       btnAgregar.onclick = async () => {
         const codigoBuscado = inputBuscar.value.trim();
         if (!codigoBuscado) {
-          alert("Ingresa un código o nombre de producto.");
+          mostrarModal("Campo requerido", "Por favor, ingresa un código o nombre de producto para agregarlo al carrito.", 'warning');
           return;
         }
 
@@ -708,7 +785,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
           const productos = await resp.json();
           if (productos.length === 0) {
-            alert("Producto no encontrado.");
+            mostrarModal("Producto no encontrado", "No se encontró ningún producto con ese código o nombre. Verifica la información e intenta nuevamente.", 'warning');
             return;
           }
 
@@ -728,9 +805,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (similares.length > 0) {
               const sugerencia = similares[0];
-              alert(`❌ No se encontró coincidencia exacta para "${codigoBuscado}".\n\n💡 ¿Quizás buscabas?\n• ${sugerencia.nombre} (Código: ${sugerencia.codigo})\n\nUsa el autocompletado o escribe el código/nombre exacto.`);
+              mostrarModal("Coincidencia no exacta", `No se encontró coincidencia exacta para "${codigoBuscado}".\n\n¿Quizás buscabas?\n• ${sugerencia.nombre} (Código: ${sugerencia.codigo})\n\nUsa el autocompletado o escribe el código/nombre exacto.`, 'warning');
             } else {
-              alert(`❌ No se encontró ningún producto con "${codigoBuscado}".\n\n💡 Verifica:\n• El código de barras\n• El nombre del producto\n• Que el producto esté registrado en el sistema`);
+              mostrarModal("Producto no encontrado", `No se encontró ningún producto con "${codigoBuscado}".\n\nVerifica:\n• El código de barras\n• El nombre del producto\n• Que el producto esté registrado en el sistema`, 'warning');
             }
             return;
           }
@@ -754,7 +831,7 @@ document.addEventListener('DOMContentLoaded', function() {
           actualizarTotales();
         } catch (err) {
           console.error(err);
-          alert("Error al agregar producto.");
+          mostrarModal("Error al agregar producto", "Ocurrió un error al intentar agregar el producto al carrito. Por favor, intenta nuevamente.", 'error');
         }
       };
 
@@ -790,7 +867,15 @@ document.addEventListener('DOMContentLoaded', function() {
           });
           if (!respCrear.ok) {
             const errorJson = await respCrear.json();
-            alert("Error al crear transacción:\n" + JSON.stringify(errorJson));
+            
+            // Verificar si es un error de stock insuficiente para empleados
+            if (errorJson.tipo_error === 'STOCK_INSUFICIENTE_EMPLEADO') {
+              mostrarModalErrorStock(errorJson);
+              return;
+            }
+            
+            // Para otros errores de creación
+            mostrarModal("Error al crear transacción", "Ocurrió un error inesperado al procesar la venta. Intenta nuevamente.", 'error');
             return;
           }
           const transaccionData = await respCrear.json();
@@ -813,12 +898,12 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Verificar si es un error de permisos específico para empleados
             if (respConfirm.status === 403 && errJson.tipo_error === 'STOCK_INSUFICIENTE_EMPLEADO') {
-              mostrarModalErrorVenta(errJson);
+              mostrarModalErrorStock(errJson);
               return;
             }
             
-            // Para otros errores
-            alert("Error al confirmar transacción:\n" + JSON.stringify(errJson));
+            // Para otros errores de confirmación
+            mostrarModal("Error al confirmar transacción", "No se pudo completar la venta. Verifica los datos e intenta nuevamente.", 'error');
             return;
           }
           const resultado = await respConfirm.json();          // 8.3) Mostrar resultado
@@ -870,7 +955,16 @@ document.addEventListener('DOMContentLoaded', function() {
 function mostrarModal(titulo, mensaje, tipo = 'success') {
   ultimoTipoModal = tipo;
   document.getElementById("modalTitulo").textContent = titulo;
-  document.getElementById("modalMensaje").textContent = mensaje;
+  
+  // Manejar saltos de línea en el mensaje
+  const mensajeElement = document.getElementById("modalMensaje");
+  if (mensaje.includes('\n')) {
+    // Convertir saltos de línea a HTML
+    mensajeElement.innerHTML = mensaje.replace(/\n/g, '<br>');
+  } else {
+    mensajeElement.textContent = mensaje;
+  }
+  
   // Cambiar ícono según tipo
   const iconDiv = document.querySelector('.modal-success-icon');
   iconDiv.innerHTML = '';
@@ -892,25 +986,78 @@ function cerrarModal() {
       window.location.href = "compras.html";
     }, 200);
   }
+  // Para warning y error, simplemente cerrar el modal sin redireccionar
 }
 
       // Función para mostrar modal de error específico para empleados
-function mostrarModalErrorVenta(errorData) {
-    let mensaje = `❌ VENTA NO AUTORIZADA\n\n`;
-    mensaje += `${errorData.detalle}\n\n`;
+function mostrarModalErrorStock(errorData) {
+    // Mostrar el mensaje principal
+    const mensajeElement = document.getElementById("modalErrorStockMensaje");
+    mensajeElement.textContent = errorData.detalle || "Como empleado, no puedes vender productos con stock insuficiente.";
+    
+    // Construir la lista de productos con problemas
+    const listaElement = document.getElementById("listaProductosSinStock");
+    listaElement.innerHTML = "";
     
     if (errorData.items_sin_stock && errorData.items_sin_stock.length > 0) {
-        mensaje += `Productos con stock insuficiente:\n`;
         errorData.items_sin_stock.forEach(item => {
-            mensaje += `• ${item.producto} (Código: ${item.codigo})\n`;
-            mensaje += `  Stock disponible: ${item.stock_disponible}\n`;
-            mensaje += `  Cantidad solicitada: ${item.cantidad_solicitada}\n\n`;
+            const productoDiv = document.createElement("div");
+            productoDiv.className = "glass-card rounded-lg p-3 border border-red-500/20 bg-red-500/5";
+            
+            productoDiv.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <p class="font-semibold text-white text-sm mb-1">${item.producto}</p>
+                        <p class="text-xs text-slate-400">Código: ${item.codigo || 'N/A'}</p>
+                    </div>
+                    <div class="text-right ml-4">
+                        <div class="flex flex-col space-y-1">
+                            <span class="text-xs px-2 py-1 rounded-full ${item.stock_disponible <= 0 ? 'bg-red-500/20 text-red-300' : 'bg-amber-500/20 text-amber-300'} border ${item.stock_disponible <= 0 ? 'border-red-500/30' : 'border-amber-500/30'}">
+                                Stock: ${item.stock_disponible}
+                            </span>
+                            <span class="text-xs px-2 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                                Pedido: ${item.cantidad_solicitada}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                ${item.stock_disponible <= 0 
+                    ? '<p class="text-xs text-red-400 mt-2 font-medium">⚠️ Producto sin stock disponible</p>'
+                    : `<p class="text-xs text-amber-400 mt-2">⚠️ Faltan ${item.cantidad_solicitada - item.stock_disponible} unidades</p>`
+                }
+            `;
+            
+            listaElement.appendChild(productoDiv);
         });
     }
     
-    mensaje += `Contacta a un administrador para realizar esta venta.`;
+    // Mostrar el modal
+    document.getElementById("modalErrorStock").classList.remove("hidden");
+    lucide.createIcons();
+}
+
+function cerrarModalErrorStock() {
+    document.getElementById("modalErrorStock").classList.add("hidden");
+}
+
+function ajustarCantidades() {
+    // Cerrar el modal
+    cerrarModalErrorStock();
     
-    alert(mensaje);
+    // Scroll al carrito para facilitar los ajustes
+    document.getElementById("contenedorTabla").scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+    });
+    
+    // Opcional: mostrar un mensaje de ayuda
+    setTimeout(() => {
+        mostrarModal(
+            "Ajusta las cantidades", 
+            "Reduce las cantidades de los productos marcados en rojo o elimínalos del carrito para continuar con la venta.", 
+            'warning'
+        );
+    }, 500);
 }
 
       // 9) Inicializar al cargar

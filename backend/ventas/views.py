@@ -216,7 +216,21 @@ class ProductoListCreateAPIView(APIView):
         if request.user.role != 'ADMIN':
             return Response({"error": "Solo los administradores pueden crear productos"}, 
                           status=status.HTTP_403_FORBIDDEN)
-        
+
+        # Si existe un producto con este código marcado como eliminado, reactivarlo
+        codigo = request.data.get('codigo', '').strip()
+        if codigo:
+            try:
+                prod_elim = Producto.objects.get(codigo=codigo, eliminado=True)
+                prod_elim.nombre = request.data.get('nombre', prod_elim.nombre)
+                prod_elim.precio = request.data.get('precio', prod_elim.precio)
+                prod_elim.eliminado = False
+                prod_elim.eliminado_en = None
+                prod_elim.save()
+                return Response(ProductoSerializer(prod_elim).data, status=status.HTTP_201_CREATED)
+            except Producto.DoesNotExist:
+                pass
+
         serializer = ProductoSerializer(data=request.data)
         if serializer.is_valid():
             producto = serializer.save()
@@ -1141,7 +1155,7 @@ class HistorialVentasAPIView(APIView):
         manual_parameters=[
             openapi.Parameter('fecha_inicio', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Fecha inicio (YYYY-MM-DD)'),
             openapi.Parameter('fecha_fin', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Fecha fin (YYYY-MM-DD)'),
-            openapi.Parameter('vendedor', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Filtrar por vendedor'),
+            openapi.Parameter('vendedor', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Filtrar por vendedor (username, nombre o apellido)'),
             openapi.Parameter('producto', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Filtrar por producto (código o nombre)'),
         ]
     )
@@ -1160,10 +1174,14 @@ class HistorialVentasAPIView(APIView):
         if fecha_fin:
             transacciones = transacciones.filter(confirmado_en__date__lte=fecha_fin)
         if vendedor:
-            transacciones = transacciones.filter(usuario__username__icontains=vendedor)
+            # Buscar por username, nombre o apellido
+            transacciones = transacciones.filter(
+                Q(usuario__username__icontains=vendedor) |
+                Q(usuario__first_name__icontains=vendedor) |
+                Q(usuario__last_name__icontains=vendedor)
+            )
         if producto:
             # Filtrar por transacciones que contengan productos con el código o nombre especificado
-            from django.db.models import Q
             transacciones = transacciones.filter(
                 Q(item__producto__codigo__icontains=producto) |
                 Q(item__producto__nombre__icontains=producto) |
