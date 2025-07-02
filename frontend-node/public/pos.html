@@ -1080,8 +1080,11 @@ function mostrarModalErrorVenta(errorData) {
             const user = await resp.json();
           
           // Mostrar información del usuario
-          document.getElementById("userInfo").textContent = `${user.first_name} ${user.last_name} (${user.role})`;
-          
+          const fullName = `${user.first_name} ${user.last_name}`.trim();
+          const displayName = fullName || user.username;
+          const roleName = user.role === 'ADMIN' ? 'Administrador' : 'Empleado';
+          document.getElementById("userInfo").textContent = `${displayName} (${roleName})`;
+
           // Si es empleado, ocultar enlaces de inventario y usuarios
           if (user.role === 'EMPLOYEE') {
             const inventarioLink = document.getElementById("inventarioLink");
