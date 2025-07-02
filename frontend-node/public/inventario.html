@@ -7,35 +7,60 @@
     <title>Inventario – ManuMarket</title>
     <!-- Tailwind CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <style>
-      /* Estilos adicionales para los encabezados ordenables */
-      .sortable-header {
-        transition: background-color 0.2s ease;
+      /* Animaciones personalizadas */
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
       }
-      .sortable-header:hover {
-        background-color: #f3f4f6;
+      
+      @keyframes slideIn {
+        from { opacity: 0; transform: translateX(-20px); }
+        to { opacity: 1; transform: translateX(0); }
       }
-      .sort-indicator {
-        font-size: 12px;
-        font-weight: bold;
-        user-select: none;
+      
+      /* Gradiente personalizado */
+      .bg-gradient-custom {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #334155 50%, #1e40af 100%);
+      }
+      
+      /* Efectos de vidrio */
+      .glass-effect {
+        backdrop-filter: blur(16px);
+        background: rgba(15, 23, 42, 0.8);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+      }
+      
+      .glass-card {
+        backdrop-filter: blur(8px);
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      
+      .animate-fade-in {
+        animation: fadeIn 0.6s ease-out;
+      }
+      
+      .animate-slide-in {
+        animation: slideIn 0.5s ease-out;
       }
     </style>
   </head>
-  <body class="min-h-screen bg-gray-50">
+  <body class="min-h-screen bg-gradient-custom">
     <!-- Verificación de acceso -->
     <div id="accessDenied" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
       <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
         <div class="text-center">
-          <svg class="mx-auto h-12 w-12 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-          </svg>
+          <i data-lucide="shield-x" class="mx-auto h-12 w-12 text-red-500 mb-4"></i>
           <h3 class="mt-4 text-lg font-medium text-gray-900">Acceso Denegado</h3>
           <p class="mt-2 text-sm text-gray-500">
             No tienes permisos para acceder al inventario. Solo los administradores pueden gestionar el inventario.
           </p>
           <div class="mt-6">
-            <a href="/dashboard" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+            <a href="/dashboard" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg inline-flex items-center gap-2">
+              <i data-lucide="arrow-left" class="w-4 h-4"></i>
               Volver al Dashboard
             </a>
           </div>
@@ -43,54 +68,98 @@
       </div>
     </div>
 
-    <!-- Barra de navegación común -->
-    <nav class="bg-gray-900 text-white">
+        <!-- Barra de navegación moderna -->
+    <nav class="glass-effect border-b border-white/10 animate-slide-in">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16 items-center">
-          <div class="flex-shrink-0">
-            <a href="/dashboard">
-              <img class="h-8 w-auto" src="ManuLogo_WIP.png" alt="Logo ManuMarket" />
-            </a>
-          </div>
-          <div class="hidden md:flex md:space-x-8">
-            <a href="/dashboard" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">
-              Dashboard
-            </a>
-            <a href="/inventario" class="inline-flex items-center px-1 pt-1 border-b-2 border-blue-500 text-sm font-medium text-gray-100">
-              Inventario
-            </a>
-            <a href="/pos" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">
-              Punto de Venta
-            </a>
-            <a href="/historial-ventas" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Historial de Ventas</a>
-            <a href="/trabajadores" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">
-              Trabajadores
-            </a>
-          </div>
+        <div class="flex justify-between h-20 items-center">
+          <!-- Logo y brand -->
           <div class="flex items-center space-x-4">
-            <span id="userInfo" class="text-sm text-gray-300">—</span>
-            <a href="/logout" class="text-sm font-medium text-red-400 hover:text-red-300">
-              Cerrar sesión
+            <div class="flex-shrink-0 bg-blue-600 p-3 rounded-xl shadow-lg">
+              <i data-lucide="shopping-cart" class="w-7 h-7 text-white"></i>
+            </div>
+            <div>
+              <h1 class="text-2xl font-bold text-white">ManuMarket</h1>
+              <p class="text-sm text-slate-300">Gestión de Inventario</p>
+            </div>
+          </div>
+
+          <!-- Navigation Links Desktop -->
+          <div id="navigationLinks" class="hidden md:flex md:space-x-2">
+            <a href="/dashboard" class="inline-flex items-center px-5 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base transition-all duration-200 space-x-2">
+              <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+              <span>Dashboard</span>
+            </a>
+            <a id="inventarioLink" href="/inventario" class="inline-flex items-center px-5 py-3 rounded-xl bg-blue-600/30 text-white font-semibold text-base border border-blue-500/50 space-x-2 shadow-lg">
+              <i data-lucide="package" class="w-5 h-5"></i>
+              <span>Inventario</span>
+            </a>
+            <a href="/pos" class="inline-flex items-center px-5 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base transition-all duration-200 space-x-2">
+              <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+              <span>POS</span>
+            </a>
+            <a href="/historial-ventas" class="inline-flex items-center px-5 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base transition-all duration-200 space-x-2">
+              <i data-lucide="history" class="w-5 h-5"></i>
+              <span>Historial</span>
+            </a>
+            <a id="trabajadoresLink" href="/trabajadores" class="inline-flex items-center px-5 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base transition-all duration-200 space-x-2">
+              <i data-lucide="users" class="w-5 h-5"></i>
+              <span>Trabajadores</span>
             </a>
           </div>
-          <div class="-mr-2 flex md:hidden">
-            <button id="btnMenuInv" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-800">
-              <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                <path class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
+
+          <!-- User info y logout -->
+          <div class="flex items-center space-x-5">
+            <div class="text-right hidden sm:block">
+              <p id="userInfo" class="text-base font-bold text-white">—</p>
+              <p class="text-sm text-slate-200">Bienvenido</p>
+            </div>
+            <a href="/logout" class="inline-flex items-center px-5 py-3 rounded-xl bg-red-600/30 text-white hover:bg-red-600/50 hover:text-white font-semibold text-base transition-all duration-200 space-x-2 border border-red-500/50">
+              <i data-lucide="log-out" class="w-5 h-5"></i>
+              <span class="hidden sm:inline">Salir</span>
+            </a>
+          </div>
+
+          <!-- Mobile menu button -->
+          <div class="md:hidden">
+            <button id="btnMenuInv" class="inline-flex items-center justify-center p-3 rounded-xl text-white hover:text-white hover:bg-white/20 transition-all duration-200">
+              <i data-lucide="menu" class="w-7 h-7"></i>
             </button>
           </div>
         </div>
       </div>
-      <div id="menuResponsiveInv" class="md:hidden hidden bg-gray-800">
-        <div class="px-2 pt-2 pb-3 space-y-1">
-          <a href="/dashboard" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Dashboard</a>
-          <a href="/inventario" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Inventario</a>
-          <a href="/pos" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Punto de Venta</a>
-          <a href="/historial-ventas" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Historial de Ventas</a>
-          <a href="/trabajadores" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Trabajadores</a>
-          <a href="/logout" class="block px-3 py-2 rounded-md text-base font-medium text-red-400 hover:bg-gray-700">Cerrar sesión</a>
+
+      <!-- Mobile Navigation -->
+      <div id="menuResponsiveInv" class="md:hidden hidden border-t border-white/10 bg-slate-900/50">
+        <div class="px-4 pt-2 pb-3 space-y-1">
+          <a href="/dashboard" class="flex items-center px-4 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base space-x-3 transition-all duration-200">
+            <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+            <span>Dashboard</span>
+          </a>
+          <a id="inventarioLinkMobile" href="/inventario" class="flex items-center px-4 py-3 rounded-xl bg-blue-600/30 text-white font-bold text-base space-x-3 border border-blue-500/50 shadow-lg">
+            <i data-lucide="package" class="w-5 h-5"></i>
+            <span>Inventario</span>
+          </a>
+          <a href="/pos" class="flex items-center px-4 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base space-x-3 transition-all duration-200">
+            <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+            <span>POS</span>
+          </a>
+          <a href="/historial-ventas" class="flex items-center px-4 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base space-x-3 transition-all duration-200">
+            <i data-lucide="history" class="w-5 h-5"></i>
+            <span>Historial de Ventas</span>
+          </a>
+          <a id="trabajadoresLinkMobile" href="/trabajadores" class="flex items-center px-4 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base space-x-3 transition-all duration-200">
+            <i data-lucide="users" class="w-5 h-5"></i>
+            <span>Trabajadores</span>
+          </a>
+          <div class="border-t border-white/10 pt-3 mt-3">
+            <div class="px-4 py-2">
+              <p id="userInfoMobile" class="text-base font-bold text-white">—</p>
+            </div>
+            <a href="/logout" class="flex items-center px-4 py-3 rounded-xl bg-red-600/30 text-white hover:bg-red-600/50 hover:text-white font-semibold text-base space-x-3 transition-all duration-200 border border-red-500/50">
+              <i data-lucide="log-out" class="w-5 h-5"></i>
+              <span>Cerrar sesión</span>
+            </a>
+          </div>
         </div>
       </div>
     </nav>
@@ -101,71 +170,110 @@
       btnMenuInv && btnMenuInv.addEventListener("click", () => {
         menuResponsiveInv.classList.toggle("hidden");
       });
+      
+      // Inicializar iconos
+      lucide.createIcons();
     </script>
 
     <!-- CONTENIDO: LISTADO DE PRODUCTOS -->
-    <main class="max-w-screen-2xl mx-auto p-6">
+    <main class="max-w-7xl mx-auto p-6 animate-fade-in">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
-        <h1 class="text-2xl font-semibold text-gray-800">Inventario</h1>
-        <div class="flex space-x-2 w-full sm:w-auto">
-          <input
-            id="searchInput"
-            type="text"
-            placeholder="Buscar producto..."
-            class="flex-1 border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+        <div class="flex items-center gap-3">
+          <i data-lucide="package" class="w-8 h-8 text-white"></i>
+          <h1 class="text-2xl font-semibold text-white">Inventario</h1>
+        </div>
+      </div>
+
+        <div class="flex justify-end space-x-2 w-full sm:w-auto mb-4">
+          <div class="relative w-64">
+            <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/70"></i>
+            <input
+              id="searchInput"
+              type="text"
+              placeholder="Buscar producto..."
+              class="pl-10 flex-1 border border-white/20 bg-white/10 text-white placeholder-white/70 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full backdrop-blur-sm"
+            />
+          </div>
           <!-- Botón Importar (azul) -->
           <button
             id="btnImportar"
-            class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 flex items-center gap-2"
             title="Importar productos nuevos desde CSV (no actualiza existentes)"
           >
+            <i data-lucide="upload" class="w-4 h-4"></i>
             Importar
           </button>
           <!-- Botón Actualizar (naranja) -->
           <button
             id="btnActualizar"
-            class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-400"
+            class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-400 flex items-center gap-2"
             title="Actualizar inventario desde CSV (crea nuevos y actualiza existentes)"
           >
+            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
             Actualizar
           </button>
           <!-- Botón Exportar (morado) -->
           <button
             id="btnExportar"
-            class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 flex items-center gap-2"
           >
+            <i data-lucide="download" class="w-4 h-4"></i>
             Exportar
           </button>
           <!-- Botón Nuevo Producto (verde) -->
           <button
             id="btnNuevoProducto"
-            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center gap-2"
           >
-            + Nuevo Producto
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            Nuevo Producto
           </button>
         </div>
       </div>
 
-      <div class="bg-white shadow rounded-lg overflow-hidden">
+      <div class="glass-card rounded-2xl overflow-hidden">
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código de Barra</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <div class="flex items-center gap-1">
+                  <i data-lucide="hash" class="w-3 h-3"></i>
+                  ID
+                </div>
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <div class="flex items-center gap-1">
+                  <i data-lucide="qr-code" class="w-3 h-3"></i>
+                  Código de Barra
+                </div>
+              </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none" 
                   onclick="ordenarTabla('nombre')" title="Clic para ordenar por nombre">
-                Nombre <span id="sort-nombre" class="ml-1 text-gray-400">↕</span>
+                <div class="flex items-center gap-1">
+                  <i data-lucide="tag" class="w-3 h-3"></i>
+                  Nombre <span id="sort-nombre" class="ml-1 text-gray-400">↕</span>
+                </div>
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none" 
                   onclick="ordenarTabla('precio')" title="Clic para ordenar por precio">
-                Precio <span id="sort-precio" class="ml-1 text-gray-400">↕</span>
+                <div class="flex items-center gap-1">
+                  <i data-lucide="dollar-sign" class="w-3 h-3"></i>
+                  Precio <span id="sort-precio" class="ml-1 text-gray-400">↕</span>
+                </div>
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none" 
                   onclick="ordenarTabla('stock')" title="Clic para ordenar por stock">
-                Stock <span id="sort-stock" class="ml-1 text-gray-400">↕</span>
+                <div class="flex items-center gap-1">
+                  <i data-lucide="package-2" class="w-3 h-3"></i>
+                  Stock <span id="sort-stock" class="ml-1 text-gray-400">↕</span>
+                </div>
               </th>
-              <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+              <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <div class="flex items-center justify-center gap-1">
+                  <i data-lucide="settings" class="w-3 h-3"></i>
+                  Acciones
+                </div>
+              </th>
             </tr>
           </thead>
           <tbody id="tbodyInventario" class="bg-white divide-y divide-gray-200">
@@ -182,10 +290,21 @@
     <!-- Modal HTML para crear/editar producto (hidden por defecto) -->
     <div id="modalProducto" class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 hidden">
       <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-        <h2 id="modalTitle" class="text-xl font-semibold text-gray-800 mb-4">Nuevo Producto</h2>
+        <div class="flex items-center justify-between mb-4">
+          <h2 id="modalTitle" class="text-xl font-semibold text-gray-800 flex items-center gap-2">
+            <i data-lucide="package-plus" class="w-5 h-5"></i>
+            Nuevo Producto
+          </h2>
+          <button id="btnCerrarModal" class="text-gray-400 hover:text-gray-600">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
         <form id="formProducto" class="space-y-4">
           <div>
-            <label for="codigoProd" class="block text-sm font-medium text-gray-700">Código de Barra</label>
+            <label for="codigoProd" class="block text-sm font-medium text-gray-700 flex items-center gap-1">
+              <i data-lucide="qr-code" class="w-3 h-3"></i>
+              Código de Barra
+            </label>
             <input
               id="codigoProd"
               type="text"
@@ -193,7 +312,10 @@
             />
           </div>
           <div>
-            <label for="nombreProd" class="block text-sm font-medium text-gray-700">Nombre</label>
+            <label for="nombreProd" class="block text-sm font-medium text-gray-700 flex items-center gap-1">
+              <i data-lucide="tag" class="w-3 h-3"></i>
+              Nombre <span class="text-red-500">*</span>
+            </label>
             <input
               id="nombreProd"
               type="text"
@@ -202,7 +324,10 @@
             />
           </div>
           <div>
-            <label for="precioProd" class="block text-sm font-medium text-gray-700">Precio</label>
+            <label for="precioProd" class="block text-sm font-medium text-gray-700 flex items-center gap-1">
+              <i data-lucide="dollar-sign" class="w-3 h-3"></i>
+              Precio
+            </label>
             <input
               id="precioProd"
               type="number"
@@ -212,7 +337,10 @@
             />
           </div>
           <div>
-            <label for="stockProd" class="block text-sm font-medium text-gray-700">Cantidad en Stock</label>
+            <label for="stockProd" class="block text-sm font-medium text-gray-700 flex items-center gap-1">
+              <i data-lucide="package-2" class="w-3 h-3"></i>
+              Cantidad en Stock
+            </label>
             <input
               id="stockProd"
               type="number"
@@ -220,11 +348,13 @@
               class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <div class="flex justify-end space-x-2">
-            <button type="button" id="btnCerrarModal" class="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400">
+          <div class="flex justify-end space-x-2 pt-4">
+            <button type="button" id="btnCancelarModal" class="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400 flex items-center gap-1">
+              <i data-lucide="x" class="w-4 h-4"></i>
               Cancelar
             </button>
-            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-1">
+              <i data-lucide="save" class="w-4 h-4"></i>
               Guardar
             </button>
           </div>
@@ -247,6 +377,7 @@
       const formProducto = document.getElementById("formProducto");
       const modalTitle = document.getElementById("modalTitle");
       const btnCerrarModal = document.getElementById("btnCerrarModal");
+      const btnCancelarModal = document.getElementById("btnCancelarModal");
       const btnImportar = document.getElementById("btnImportar");
       const btnActualizar = document.getElementById("btnActualizar");
       const btnExportar = document.getElementById("btnExportar");
@@ -338,25 +469,54 @@
           const tr = document.createElement("tr");
           tr.className = "hover:bg-gray-50";
 
+          // Determinar el badge y color del stock
+          const stockValue = parseInt(prod.stock) || 0;
+          let stockDisplay = '';
+          let stockClass = '';
+          
+          if (stockValue === 0) {
+            stockDisplay = 'Sin stock';
+            stockClass = 'text-red-600 bg-red-50 border border-red-200';
+          } else if (stockValue < 10) {
+            stockDisplay = `Bajo: ${stockValue}`;
+            stockClass = 'text-yellow-600 bg-yellow-50 border border-yellow-200';
+          } else {
+            stockDisplay = stockValue.toString();
+            stockClass = 'text-green-600 bg-green-50 border border-green-200';
+          }
+
           tr.innerHTML = `
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${prod.id}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${prod.codigo}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${prod.nombre}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">${prod.codigo}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">${prod.nombre}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
               ${new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP" }).format(parseFloat(prod.precio))}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${prod.stock || 0}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${stockClass}">
+                ${stockDisplay}
+              </span>
+            </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-center">
-              <button data-id="${prod.id}" class="btnEditar inline-flex px-2 py-1 bg-yellow-400 text-white rounded hover:bg-yellow-500 text-xs mr-2">
-                Editar
-              </button>
-              <button data-id="${prod.id}" class="btnEliminar inline-flex px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs">
-                Eliminar
-              </button>
+              <div class="flex justify-center gap-2">
+                <button data-id="${prod.id}" class="btnEditar inline-flex items-center gap-1 px-3 py-1 bg-yellow-400 text-white rounded hover:bg-yellow-500 text-xs">
+                  <i data-lucide="edit-2" class="w-3 h-3"></i>
+                  Editar
+                </button>
+                <button data-id="${prod.id}" class="btnEliminar inline-flex items-center gap-1 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs">
+                  <i data-lucide="trash-2" class="w-3 h-3"></i>
+                  Eliminar
+                </button>
+              </div>
             </td>
           `;
           tbodyInventario.appendChild(tr);
         });
+
+        // Inicializar Lucide icons para los nuevos elementos
+        if (typeof lucide !== 'undefined') {
+          lucide.createIcons();
+        }
 
         // Aplicar filtro después de renderizar
         filterTable();
@@ -376,9 +536,23 @@
                 method: "GET",
                 headers,
               });
+
+              if (!r.ok) {
+                throw new Error(`Error HTTP ${r.status}: ${r.statusText}`);
+              }
+
               const producto = await r.json();
+
               // 2) Obtener stock asociado (si existe)
-              const stocksR = await fetch(`${BACKEND_URL}/ventas/stocks/?producto=${id}`, { headers });
+              const stocksR = await fetch(`${BACKEND_URL}/ventas/stocks/?producto=${id}`, { 
+                method: "GET",
+                headers 
+              });
+
+              if (!stocksR.ok) {
+                throw new Error(`Error HTTP ${stocksR.status}: ${stocksR.statusText}`);
+              }
+
               const stocksData = await stocksR.json();
               const cantidadStock = stocksData.length > 0 ? stocksData[0].cantidad : 0;
 
@@ -391,8 +565,8 @@
                 stock: cantidadStock
               });
             } catch (err) {
-              console.error(err);
-              alert("Error al cargar datos del producto.");
+              console.error("Error detallado:", err);
+              alert(`Error al cargar datos del producto: ${err.message}`);
             }
           });
         });
@@ -429,19 +603,24 @@
       function abrirModal(nuevo = true, producto = {}) {
         modalProducto.classList.remove("hidden");
         if (nuevo) {
-          modalTitle.textContent = "Nuevo Producto";
+          modalTitle.innerHTML = `<i data-lucide="package-plus" class="w-5 h-5"></i> Nuevo Producto`;
           document.getElementById("codigoProd").value = "";
           document.getElementById("nombreProd").value = "";
           document.getElementById("precioProd").value = "";
           document.getElementById("stockProd").value = "";
           editandoProductoId = null;
         } else {
-          modalTitle.textContent = "Editar Producto";
+          modalTitle.innerHTML = `<i data-lucide="edit" class="w-5 h-5"></i> Editar Producto`;
           document.getElementById("codigoProd").value = producto.codigo;
           document.getElementById("nombreProd").value = producto.nombre;
           document.getElementById("precioProd").value = producto.precio;
           document.getElementById("stockProd").value = producto.stock;
           editandoProductoId = producto.id;
+        }
+        
+        // Inicializar íconos de Lucide en el modal
+        if (typeof lucide !== 'undefined') {
+          lucide.createIcons();
         }
       }
 
@@ -452,6 +631,7 @@
       // Listener para "+ Nuevo Producto"
       btnNuevoProducto.addEventListener("click", () => abrirModal());
       btnCerrarModal.addEventListener("click", cerrarModal);
+      btnCancelarModal.addEventListener("click", cerrarModal);
 
       // Función para filtrar filas en la tabla según el texto de búsqueda
       function filterTable() {
@@ -516,7 +696,7 @@
 
           // Botón loading
           const btn = esActualizacion ? btnActualizar : btnImportar;
-          const textoOriginal = btn.textContent;
+          const textoOriginal = btn.innerHTML;
           
           let productosCreados = 0;
           let productosActualizados = 0;
@@ -529,7 +709,13 @@
             const chunk = lines.slice(start, end);
             
             // Actualizar progreso
-            btn.textContent = `Procesando ${i + 1}/${totalChunks} (${Math.round(((i + 1) / totalChunks) * 100)}%)`;
+            btn.innerHTML = `<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Procesando ${i + 1}/${totalChunks} (${Math.round(((i + 1) / totalChunks) * 100)}%)`;
+            btn.disabled = true;
+            
+            // Reinicializar íconos
+            if (typeof lucide !== 'undefined') {
+              lucide.createIcons();
+            }
             
             const productos = [];
             
@@ -683,9 +869,16 @@
         } finally {
           // Restaurar botón
           const btn = esActualizacion ? btnActualizar : btnImportar;
-          const textoOriginal = esActualizacion ? "Actualizar" : "Importar";
-          btn.textContent = textoOriginal;
+          const textoOriginal = esActualizacion ? 
+            `<i data-lucide="refresh-cw" class="w-4 h-4"></i> Actualizar` : 
+            `<i data-lucide="upload" class="w-4 h-4"></i> Importar`;
+          btn.innerHTML = textoOriginal;
           btn.disabled = false;
+          
+          // Reinicializar íconos
+          if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+          }
         }
       }
 
@@ -854,6 +1047,11 @@
         await checkAccess();
         cargarInventario();
         searchInput.addEventListener("input", filterTable);
+        
+        // Inicializar Lucide icons
+        if (typeof lucide !== 'undefined') {
+          lucide.createIcons();
+        }
       });
 
       async function checkAccess() {
@@ -882,6 +1080,10 @@
           // Si es empleado, mostrar mensaje de acceso denegado
           if (user.role === 'EMPLOYEE') {
             document.getElementById("accessDenied").classList.remove("hidden");
+            // Inicializar íconos en el mensaje de acceso denegado
+            if (typeof lucide !== 'undefined') {
+              lucide.createIcons();
+            }
             return;
           }
           

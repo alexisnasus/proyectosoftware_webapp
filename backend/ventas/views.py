@@ -233,7 +233,9 @@ class ProductoDetailAPIView(APIView):
     def get(self, request, pk):
         producto = get_object_or_404(Producto, pk=pk, eliminado=False)
         serializer = ProductoSerializer(producto)
-        return Response(serializer.data, status=status.HTTP_200_OK)    @swagger_auto_schema(
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(
         security=[{"Bearer": []}],
         request_body=ProductoSerializer,
         responses={200: ProductoSerializer, 400: "Error de validación", 404: "Producto no encontrado"}
@@ -267,7 +269,8 @@ class ProductoDetailAPIView(APIView):
         producto.eliminado_en = timezone.now()
         producto.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
+    
+    
 
 class ProductoBulkImportAPIView(APIView):
     """
