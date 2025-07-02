@@ -761,12 +761,9 @@ document.addEventListener('DOMContentLoaded', function() {
       // 8) Comprar: crear y confirmar transacción
       btnComprar.onclick = async () => {
         if (carritoItems.length === 0) {
-          mostrarModal("Carrito vacío","Nohay existencias para vender");
+          mostrarModal("Carrito vacío", "No hay productos en el carrito para vender.", 'error');
           return;
         }
-
-        AbrirModal();
-
 
         const itemsParaEnviar = carritoItems.map((item) => ({
           codigo: item.codigo,
@@ -868,27 +865,36 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById("spinner").classList.add("hidden");
   }
       };
-      // Función para mostrar el modal con mensajes personalizados
-function mostrarModal(titulo, mensaje) {
+      let ultimoTipoModal = 'success'; // Variable global para el tipo de modal
+
+function mostrarModal(titulo, mensaje, tipo = 'success') {
+  ultimoTipoModal = tipo;
   document.getElementById("modalTitulo").textContent = titulo;
   document.getElementById("modalMensaje").textContent = mensaje;
+  // Cambiar ícono según tipo
+  const iconDiv = document.querySelector('.modal-success-icon');
+  iconDiv.innerHTML = '';
+  if (tipo === 'success') {
+    iconDiv.innerHTML = '<i data-lucide="check-circle"></i>';
+  } else if (tipo === 'error') {
+    iconDiv.innerHTML = '<i data-lucide="x-circle" style="color:#ef4444;"></i>';
+  } else if (tipo === 'warning') {
+    iconDiv.innerHTML = '<i data-lucide="alert-triangle" style="color:#fbbf24;"></i>';
+  }
   document.getElementById("miModal").classList.remove("hidden");
-}
-
-// Tus funciones existentes de modal
-function AbrirModal() {
-  document.getElementById("spinner").classList.remove("hidden");
-  document.getElementById("miModal").classList.add("hidden");
+  lucide.createIcons();
 }
 
 function cerrarModal() {
   document.getElementById("miModal").classList.add("hidden");
-   setTimeout(() => {
+  if (ultimoTipoModal === 'success') {
+    setTimeout(() => {
       window.location.href = "compras.html";
     }, 200);
+  }
 }
 
-// Función para mostrar modal de error específico para empleados
+      // Función para mostrar modal de error específico para empleados
 function mostrarModalErrorVenta(errorData) {
     let mensaje = `❌ VENTA NO AUTORIZADA\n\n`;
     mensaje += `${errorData.detalle}\n\n`;
