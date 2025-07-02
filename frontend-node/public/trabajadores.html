@@ -7,45 +7,181 @@
     <title>Trabajadores – ManuMarket</title>
     <!-- Tailwind CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+        <style>
+      /* Animaciones personalizadas */
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      
+      @keyframes slideIn {
+        from { opacity: 0; transform: translateX(-20px); }
+        to { opacity: 1; transform: translateX(0); }
+      }
+      
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+      }
+      
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      
+      .animate-fade-in {
+        animation: fadeIn 0.6s ease-out;
+      }
+      
+      .animate-slide-in {
+        animation: slideIn 0.5s ease-out;
+      }
+      
+      .animate-pulse-custom {
+        animation: pulse 2s infinite;
+      }
+      
+      .animate-spin {
+        animation: spin 1s linear infinite;
+      }
+      
+      /* Gradiente personalizado */
+      .bg-gradient-custom {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #334155 50%, #1e40af 100%);
+      }
+      
+      .bg-gradient-card {
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.9) 100%);
+      }
+      
+      /* Efectos de vidrio */
+      .glass-effect {
+        backdrop-filter: blur(16px);
+        background: rgba(15, 23, 42, 0.8);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+      }
+      
+      .glass-card {
+        backdrop-filter: blur(8px);
+        background: rgba(255, 255, 255, 0.1);
+      }
+      
+      /* Efectos hover */
+      .card-hover {
+        transition: all 0.3s ease;
+      }
+      
+      .card-hover:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      }
+    </style>
+
   </head>
-  <body class="min-h-screen bg-gray-50">
+  <body class="min-h-screen bg-gradient-custom">
+    <!-- Toast container para alertas -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+    
+    <!-- Loading overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 hidden items-center justify-center">
+      <div class="glass-effect rounded-2xl p-8 text-center animate-fade-in">
+        <div class="w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p class="text-white font-medium">Cargando dashboard...</p>
+      </div>
+    </div>
     <!-- Barra de navegación común -->
-    <nav class="bg-gray-900 text-white">
+       <!-- Barra de navegación moderna -->
+    <nav class="glass-effect border-b border-white/10 animate-slide-in">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16 items-center">
-          <div class="flex-shrink-0">
-            <a href="/dashboard">
-              <img class="h-8 w-auto" src="ManuLogo_WIP.png" alt="Logo ManuMarket" />
+        <div class="flex justify-between h-20 items-center">
+          <!-- Logo y brand -->
+          <div class="flex items-center space-x-4">
+            <div class="flex-shrink-0 bg-blue-600 p-3 rounded-xl shadow-lg">
+              <i data-lucide="shopping-cart" class="w-7 h-7 text-white"></i>
+            </div>
+            <div>
+              <h1 class="text-2xl font-bold text-white">ManuMarket</h1>
+              <p class="text-sm text-slate-300">Panel de Control</p>
+            </div>
+          </div>
+
+          <!-- Navigation Links Desktop -->
+          <div id="navigationLinks" class="hidden md:flex md:space-x-2">
+            <a href="/dashboard" class="inline-flex items-center px-5 py-3 rounded-xl bg-blue-600/30 text-white font-semibold text-base border border-blue-500/50 space-x-2 shadow-lg">
+              <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+              <span>Dashboard</span>
+            </a>
+            <a id="inventarioLink" href="/inventario" class="inline-flex items-center px-5 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base transition-all duration-200 space-x-2">
+              <i data-lucide="package" class="w-5 h-5"></i>
+              <span>Inventario</span>
+            </a>
+            <a href="/pos" class="inline-flex items-center px-5 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base transition-all duration-200 space-x-2">
+              <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+              <span>POS</span>
+            </a>
+            <a href="/historial-ventas" class="inline-flex items-center px-5 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base transition-all duration-200 space-x-2">
+              <i data-lucide="history" class="w-5 h-5"></i>
+              <span>Historial</span>
+            </a>
+            <a id="trabajadoresLink" href="/trabajadores" class="inline-flex items-center px-5 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base transition-all duration-200 space-x-2">
+              <i data-lucide="users" class="w-5 h-5"></i>
+              <span>Trabajadores</span>
             </a>
           </div>
-          <div class="hidden md:flex md:space-x-8">
-            <a href="/dashboard" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Dashboard</a>
-            <a href="/inventario" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Inventario</a>
-            <a href="/pos" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Punto de Venta</a>
-            <a href="/historial-ventas" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-blue-500 hover:text-gray-200">Historial de Ventas</a>
-            <a href="/trabajadores" class="inline-flex items-center px-1 pt-1 border-b-2 border-blue-500 text-sm font-medium text-gray-100">Trabajadores</a>          </div>
-          <div class="flex items-center space-x-4">
-            <span id="userInfo" class="text-sm text-gray-300">—</span>
-            <a href="/logout" class="text-sm font-medium text-red-400 hover:text-red-300">Cerrar sesión</a>
+
+          <!-- User info y logout -->
+          <div class="flex items-center space-x-5">
+            <div class="text-right hidden sm:block">
+              <p id="userInfo" class="text-base font-bold text-white">—</p>
+              <p class="text-sm text-slate-200">Bienvenido</p>
+            </div>
+            <a href="/logout" class="inline-flex items-center px-5 py-3 rounded-xl bg-red-600/30 text-white hover:bg-red-600/50 hover:text-white font-semibold text-base transition-all duration-200 space-x-2 border border-red-500/50">
+              <i data-lucide="log-out" class="w-5 h-5"></i>
+              <span class="hidden sm:inline">Salir</span>
+            </a>
           </div>
-          <div class="-mr-2 flex md:hidden">
-            <button id="btnMenuTrab" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-800">
-              <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                <path class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
+
+          <!-- Mobile menu button -->
+          <div class="md:hidden">
+            <button id="btnMenu" class="inline-flex items-center justify-center p-3 rounded-xl text-white hover:text-white hover:bg-white/20 transition-all duration-200">
+              <i data-lucide="menu" class="w-7 h-7"></i>
             </button>
           </div>
         </div>
       </div>
-      <div id="menuResponsiveTrab" class="md:hidden hidden bg-gray-800">
-        <div class="px-2 pt-2 pb-3 space-y-1">
-          <a href="/dashboard" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Dashboard</a>
-          <a href="/inventario" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Inventario</a>
-          <a href="/pos" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Punto de Venta</a>
-          <a href="/historial-ventas" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Punto de Venta</a>
-          <a href="/trabajadores" class="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700">Trabajadores</a>
-          <a href="/logout" class="block px-3 py-2 rounded-md text-base font-medium text-red-400 hover:bg-gray-700">Cerrar sesión</a>
+
+      <!-- Mobile Navigation -->
+      <div id="menuResponsive" class="md:hidden hidden border-t border-white/10 bg-slate-900/50">
+        <div class="px-4 pt-2 pb-3 space-y-1">
+          <a href="/dashboard" class="flex items-center px-4 py-3 rounded-xl bg-blue-600/30 text-white font-bold text-base space-x-3 border border-blue-500/50 shadow-lg">
+            <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+            <span>Dashboard</span>
+          </a>
+          <a id="inventarioLinkMobile" href="/inventario" class="flex items-center px-4 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base space-x-3 transition-all duration-200">
+            <i data-lucide="package" class="w-5 h-5"></i>
+            <span>Inventario</span>
+          </a>
+          <a href="/pos" class="flex items-center px-4 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base space-x-3 transition-all duration-200">
+            <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+            <span>POS</span>
+          </a>
+          <a href="/historial-ventas" class="flex items-center px-4 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base space-x-3 transition-all duration-200">
+            <i data-lucide="history" class="w-5 h-5"></i>
+            <span>Historial de Ventas</span>
+          </a>
+          <a id="trabajadoresLinkMobile" href="/trabajadores" class="flex items-center px-4 py-3 rounded-xl text-white hover:bg-white/20 hover:text-white font-semibold text-base space-x-3 transition-all duration-200">
+            <i data-lucide="users" class="w-5 h-5"></i>
+            <span>Trabajadores</span>
+          </a>
+          <div class="border-t border-white/10 pt-3 mt-3">
+            <div class="px-4 py-2">
+              <p id="userInfoMobile" class="text-base font-bold text-white">—</p>
+            </div>
+            <a href="/logout" class="flex items-center px-4 py-3 rounded-xl bg-red-600/30 text-white hover:bg-red-600/50 hover:text-white font-semibold text-base space-x-3 transition-all duration-200 border border-red-500/50">
+              <i data-lucide="log-out" class="w-5 h-5"></i>
+              <span>Cerrar sesión</span>
+            </a>
+          </div>
         </div>
       </div>
     </nav>
@@ -59,46 +195,46 @@
     <!-- ================================ -->    <!-- CONTENIDO: GESTIÓN DE USUARIOS -->
     <main class="max-w-7xl mx-auto p-6">
       <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-semibold text-gray-800">Gestión de Usuarios</h1>
+        <h1 class="text-2xl font-semibold text-white">Gestión de Usuarios</h1>
         <button id="btnNuevoUsuario" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium">
           Nuevo Usuario
         </button>
       </div>
 
       <!-- Tabla de usuarios -->
-      <div class="bg-white shadow rounded-lg overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+
+      <div class="w-full overflow-x-auto">
+        <table class="w-full text-white glass-card rounded-2xl">
+          <thead>
+            <tr class="border-b border-white/10">
+              <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Usuario</th>
+              <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Nombre</th>
+              <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Email</th>
+              <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Rol</th>
+              <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Estado</th>
+              <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Acciones</th>
             </tr>
           </thead>
-          <tbody id="tablaUsuarios" class="bg-white divide-y divide-gray-200">
+          <tbody id="tablaUsuarios" class="divide-y divide-white/10">
             <!-- Los usuarios se cargarán aquí dinámicamente -->
           </tbody>
         </table>
       </div>
-
       <!-- Información para empleados -->
       <div id="infoEmpleado" class="bg-white shadow rounded-lg p-6 hidden">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">Tu Información</h2>
-        <p class="text-gray-600"><strong>ID:</strong> <span id="userId">—</span></p>
-        <p class="text-gray-600 mt-2"><strong>Nombre de Usuario:</strong> <span id="userName">—</span></p>
-        <p class="text-gray-600 mt-2"><strong>Nombre Completo:</strong> <span id="userFullName">—</span></p>
-        <p class="text-gray-600 mt-2"><strong>Correo Electrónico:</strong> <span id="userEmail">—</span></p>
-        <p class="text-gray-600 mt-2"><strong>Rol:</strong> <span id="userRole">—</span></p>
+        <h2 class="text-lg font-semibold text-white mb-4">Tu Información</h2>
+        <p class="text-white"><strong>ID:</strong> <span id="userId">—</span></p>
+        <p class="text-white mt-2"><strong>Nombre de Usuario:</strong> <span id="userName">—</span></p>
+        <p class="text-white mt-2"><strong>Nombre Completo:</strong> <span id="userFullName">—</span></p>
+        <p class="text-white mt-2"><strong>Correo Electrónico:</strong> <span id="userEmail">—</span></p>
+        <p class="text-white mt-2"><strong>Rol:</strong> <span id="userRole">—</span></p>
       </div>
     </main>
 
     <!-- Modal para crear/editar usuario -->
-    <div id="modalUsuario" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-center justify-center">
-      <div class="bg-white rounded-lg p-6 w-full max-w-md">
-        <h3 id="modalTitulo" class="text-lg font-semibold text-gray-800 mb-4">Nuevo Usuario</h3>
+    <div id="modalUsuario" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+      <div class="glass-card rounded-lg p-6 w-full max-w-md">
+        <h3 id="modalTitulo" class="text-lg font-semibold text-white mb-4">Nuevo Usuario</h3>
         <form id="formUsuario">
           <input type="hidden" id="usuarioId" />
           <div class="mb-4">
@@ -135,12 +271,14 @@
             </div>
           </div>
           <div class="flex justify-end space-x-3">
-            <button type="button" id="btnCancelar" class="px-4 py-2 text-gray-600 bg-gray-200 rounded-lg hover:bg-gray-300">Cancelar</button>
+            <button type="button" id="btnCancelar" class="px-4 py-2 text-white bg-gray-200 rounded-lg hover:bg-gray-300">Cancelar</button>
             <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Guardar</button>
           </div>
         </form>
       </div>
-    </div>    <script>
+    </div>    
+    
+    <script>
       // BASE URL de tu API Django (ventas_api)
       const BACKEND_URL = "http://localhost:8000";
       let currentUser = null;
@@ -210,32 +348,45 @@
       }
 
       function renderUsersTable(users) {
-        const tbody = document.getElementById("tablaUsuarios");
-        tbody.innerHTML = "";
+        const tablaUsuarios = document.getElementById("tablaUsuarios");
+        tablaUsuarios.innerHTML = ""; // Limpiar tabla antes de cargar
 
-        users.forEach(user => {
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${user.username}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.first_name} ${user.last_name}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.email || '-'}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              <span class="px-2 py-1 text-xs font-medium rounded-full ${user.role === 'ADMIN' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}">
-                ${user.role === 'ADMIN' ? 'Administrador' : 'Empleado'}
-              </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              <span class="px-2 py-1 text-xs font-medium rounded-full ${user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-                ${user.is_active ? 'Activo' : 'Inactivo'}
-              </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-              <button onclick="editUser(${user.id})" class="text-blue-600 hover:text-blue-900 mr-3">Editar</button>
-              ${user.id !== currentUser.id ? `<button onclick="deleteUser(${user.id})" class="text-red-600 hover:text-red-900">Eliminar</button>` : ''}
-            </td>
+        users.forEach((user) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+        <td class="px-6 py-4 whitespace-nowrap">${user.username}</td>
+        <td class="px-6 py-4 whitespace-nowrap">${user.first_name} ${user.last_name}</td>
+        <td class="px-6 py-4 whitespace-nowrap">${user.email}</td>
+        <td class="px-6 py-4 whitespace-nowrap">${user.role}</td>
+        <td class="px-6 py-4 whitespace-nowrap">
+          <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+            user.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red"
+          }">
+            ${user.is_active ? "Activo" : "Inactivo"}
+          </span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium flex gap-2">
+          <button 
+            onclick="openEditModal('${user.id}')"
+            class="inline-flex items-center px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow transition-all duration-150 gap-1"
+            title="Editar"
+          >
+            <i data-lucide="edit-2" class="w-4 h-4"></i>
+            <span>Editar</span>
+          </button>
+          <button 
+            onclick="deleteUser('${user.id}')"
+            class="inline-flex items-center px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow transition-all duration-150 gap-1"
+            title="Eliminar"
+          >
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+            <span>Eliminar</span>
+          </button>
+        </td>
           `;
-          tbody.appendChild(row);
+          tablaUsuarios.appendChild(tr);
         });
+        lucide.createIcons();
       }
 
       function showEmployeeInfo() {
@@ -381,6 +532,65 @@
         } catch (err) {
           console.error("Error al guardar usuario:", err);
           alert("Error al guardar usuario");
+        }
+      }
+      lucide.createIcons();
+
+      const btnMenu = document.getElementById("btnMenu");
+      const menuResponsive = document.getElementById("menuResponsive");
+      btnMenu && btnMenu.addEventListener("click", () => {
+        menuResponsive.classList.toggle("hidden");
+      });
+
+      // Función para mostrar toast/alerta
+      function showToast(message, type = "info") {
+        const toastContainer = document.getElementById("toast-container");
+        const toast = document.createElement("div");
+        
+        const colors = {
+          success: "bg-green-600 border-green-500",
+          error: "bg-red-600 border-red-500",
+          info: "bg-blue-600 border-blue-500",
+          warning: "bg-yellow-600 border-yellow-500"
+        };
+        
+        const icons = {
+          success: "check-circle",
+          error: "x-circle",
+          info: "info",
+          warning: "alert-triangle"
+        };
+        
+        toast.className = `${colors[type]} border backdrop-blur-sm rounded-xl p-4 text-white shadow-lg transform transition-all duration-300 translate-x-full opacity-0 flex items-center space-x-3 min-w-[300px]`;
+        toast.innerHTML = `
+          <i data-lucide="${icons[type]}" class="w-5 h-5 flex-shrink-0"></i>
+          <span class="flex-1 text-sm font-medium">${message}</span>
+          <button onclick="this.parentElement.remove()" class="text-white/80 hover:text-white">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        `;
+        
+        toastContainer.appendChild(toast);
+        lucide.createIcons();
+        
+        setTimeout(() => {
+          toast.classList.remove("translate-x-full", "opacity-0");
+        }, 100);
+        
+        setTimeout(() => {
+          toast.classList.add("translate-x-full", "opacity-0");
+          setTimeout(() => toast.remove(), 300);
+        }, 5000);
+      }
+      // Función para mostrar/ocultar loading
+      function setLoading(isLoading) {
+        const loadingOverlay = document.getElementById("loading-overlay");
+        if (isLoading) {
+          loadingOverlay.classList.remove("hidden");
+          loadingOverlay.classList.add("flex");
+        } else {
+          loadingOverlay.classList.add("hidden");
+          loadingOverlay.classList.remove("flex");
         }
       }
     </script>
