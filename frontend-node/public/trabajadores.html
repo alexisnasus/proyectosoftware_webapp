@@ -232,52 +232,86 @@
     </main>
 
     <!-- Modal para crear/editar usuario -->
-    <div id="modalUsuario" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
-      <div class="glass-card rounded-lg p-6 w-full max-w-md">
-        <h3 id="modalTitulo" class="text-lg font-semibold text-white mb-4">Nuevo Usuario</h3>
-        <form id="formUsuario">
+    <div id="modalUsuario" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" style="display: none;">
+      <div class="glass-effect rounded-2xl p-8 w-full max-w-md shadow-2xl animate-fade-in">
+        <div class="flex justify-between items-center mb-6">
+          <h3 id="modalTitulo" class="text-xl font-bold text-white">Nuevo Usuario</h3>
+          <button id="btnCerrarModal" class="text-white/60 hover:text-white transition-colors">
+            <i data-lucide="x" class="w-6 h-6"></i>
+          </button>
+        </div>
+        
+        <form id="formUsuario" class="space-y-4">
           <input type="hidden" id="usuarioId" />
-          <div class="mb-4">
-            <label for="inputUsername" class="block text-sm font-medium text-gray-700">Nombre de Usuario</label>
-            <input type="text" id="inputUsername" required class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          
+          <div>
+            <label for="inputUsername" class="block text-sm font-medium text-white mb-2">Nombre de Usuario</label>
+            <input type="text" id="inputUsername" required 
+                  class="w-full bg-slate-800/50 border border-white/30 px-4 py-3 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200" 
+                  placeholder="Ingrese nombre de usuario"/>
           </div>
-          <div class="mb-4">
-            <label for="inputEmail" class="block text-sm font-medium text-gray-700">Email</label>
-            <input type="email" id="inputEmail" class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          
+          <div>
+            <label for="inputEmail" class="block text-sm font-medium text-white mb-2">Email</label>
+            <input type="email" id="inputEmail" 
+                  class="w-full bg-slate-800/50 border border-white/30 px-4 py-3 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200" 
+                  placeholder="correo@ejemplo.com"/>
           </div>
-          <div class="mb-4">
-            <label for="inputFirstName" class="block text-sm font-medium text-gray-700">Nombre</label>
-            <input type="text" id="inputFirstName" class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label for="inputFirstName" class="block text-sm font-medium text-white mb-2">Nombre</label>
+              <input type="text" id="inputFirstName" 
+                    class="w-full bg-slate-800/50 border border-white/30 px-4 py-3 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200" 
+                    placeholder="Nombre"/>
+            </div>
+            <div>
+              <label for="inputLastName" class="block text-sm font-medium text-white mb-2">Apellido</label>
+              <input type="text" id="inputLastName" 
+                    class="w-full bg-slate-800/50 border border-white/30 px-4 py-3 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200" 
+                    placeholder="Apellido"/>
+            </div>
           </div>
-          <div class="mb-4">
-            <label for="inputLastName" class="block text-sm font-medium text-gray-700">Apellido</label>
-            <input type="text" id="inputLastName" class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
-          <div class="mb-4">
-            <label for="inputRole" class="block text-sm font-medium text-gray-700">Rol</label>
-            <select id="inputRole" required class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="ADMIN">Administrador</option>
-              <option value="EMPLOYEE">Empleado</option>
+          
+          <div>
+            <label for="inputRole" class="block text-sm font-medium text-white mb-2">Rol</label>
+            <select id="inputRole" required 
+                    class="w-full bg-slate-800/50 border border-white/30 px-4 py-3 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200">
+              <option value="ADMIN" class="bg-slate-800 text-white">Administrador</option>
+              <option value="EMPLOYEE" class="bg-slate-800 text-white">Empleado</option>
             </select>
           </div>
-          <div id="passwordFields">
-            <div class="mb-4">
-              <label for="inputPassword" class="block text-sm font-medium text-gray-700">Contraseña</label>
-              <input type="password" id="inputPassword" class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          
+          <div id="passwordFields" class="space-y-4">
+            <div>
+              <label for="inputPassword" class="block text-sm font-medium text-white mb-2">Contraseña</label>
+              <input type="password" id="inputPassword" 
+                    class="w-full bg-slate-800/50 border border-white/30 px-4 py-3 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200" 
+                    placeholder="••••••••"/>
             </div>
-            <div class="mb-4">
-              <label for="inputPasswordConfirm" class="block text-sm font-medium text-gray-700">Confirmar Contraseña</label>
-              <input type="password" id="inputPasswordConfirm" class="mt-1 w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <div>
+              <label for="inputPasswordConfirm" class="block text-sm font-medium text-white mb-2">Confirmar Contraseña</label>
+              <input type="password" id="inputPasswordConfirm" 
+                    class="w-full bg-slate-800/50 border border-white/30 px-4 py-3 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200" 
+                    placeholder="••••••••"/>
             </div>
           </div>
-          <div class="flex justify-end space-x-3">
-            <button type="button" id="btnCancelar" class="px-4 py-2 text-white bg-gray-200 rounded-lg hover:bg-gray-300">Cancelar</button>
-            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Guardar</button>
+          
+          <div class="flex justify-end space-x-3 pt-6">
+            <button type="button" id="btnCancelar" 
+                    class="px-6 py-3 bg-slate-600 hover:bg-slate-700 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg">
+              Cancelar
+            </button>
+            <button type="submit" 
+                    class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105">
+              Guardar
+            </button>
           </div>
         </form>
       </div>
-    </div>    
-    
+    </div>
+
+
     <script>
       // BASE URL de tu API Django (ventas_api)
       const BACKEND_URL = "http://localhost:8000";
@@ -297,6 +331,7 @@
         // Event listeners
         document.getElementById("btnNuevoUsuario")?.addEventListener("click", openCreateModal);
         document.getElementById("btnCancelar").addEventListener("click", closeModal);
+        document.getElementById("btnCerrarModal").addEventListener("click", closeModal);
         document.getElementById("formUsuario").addEventListener("submit", handleFormSubmit);
       });
 
@@ -413,7 +448,7 @@ document.getElementById("userInfo").textContent = `${displayName} (${roleName})`
         document.getElementById("passwordFields").style.display = "block";
         document.getElementById("inputPassword").required = true;
         document.getElementById("inputPasswordConfirm").required = true;
-        document.getElementById("modalUsuario").classList.remove("hidden");
+        document.getElementById("modalUsuario").style.display = "flex";
       }
 
       async function editUser(userId) {
@@ -442,7 +477,7 @@ document.getElementById("userInfo").textContent = `${displayName} (${roleName})`
           document.getElementById("passwordFields").style.display = "none";
           document.getElementById("inputPassword").required = false;
           document.getElementById("inputPasswordConfirm").required = false;
-          document.getElementById("modalUsuario").classList.remove("hidden");
+          document.getElementById("modalUsuario").style.display = "flex";
         } catch (err) {
           console.error("Error al cargar usuario:", err);
           alert("Error al cargar datos del usuario");
@@ -475,7 +510,7 @@ document.getElementById("userInfo").textContent = `${displayName} (${roleName})`
       }
 
       function closeModal() {
-        document.getElementById("modalUsuario").classList.add("hidden");
+        document.getElementById("modalUsuario").style.display = "none";
       }
 
       async function handleFormSubmit(e) {
