@@ -231,9 +231,9 @@
         </div>
       </div>
 
-      <div class="glass-card rounded-2xl overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
+      <div class="glass-card rounded-2xl overflow-auto">
+        <table class="min-w-full divide-y divide-white">
+          <thead class="bg-white backdrop-blur-sm">
             <tr>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 <div class="flex items-center gap-1">
@@ -247,7 +247,7 @@
                   Código de Barra
                 </div>
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none" 
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none w-80 max-w-80" 
                   onclick="ordenarTabla('nombre')" title="Clic para ordenar por nombre">
                 <div class="flex items-center gap-1">
                   <i data-lucide="tag" class="w-3 h-3"></i>
@@ -276,7 +276,7 @@
               </th>
             </tr>
           </thead>
-          <tbody id="tbodyInventario" class="bg-white divide-y divide-gray-200">
+          <tbody id="tbodyInventario" class="bg-white divide-y divide-white">
             <!-- JS inyectará aquí las filas -->
           </tbody>
         </table>
@@ -440,6 +440,10 @@
         renderizarTabla(productosOrdenados);
       }
 
+      if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+      }
+
       // Función para actualizar los indicadores visuales de ordenamiento
       function actualizarIndicadoresOrden() {
         // Resetear todos los indicadores
@@ -467,7 +471,7 @@
 
         productos.forEach((prod) => {
           const tr = document.createElement("tr");
-          tr.className = "hover:bg-gray-50";
+          tr.className = "hover:bg-white backdrop-blur-sm";
 
           // Determinar el badge y color del stock
           const stockValue = parseInt(prod.stock) || 0;
@@ -488,7 +492,16 @@
           tr.innerHTML = `
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${prod.id}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">${prod.codigo}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">${prod.nombre}</td>
+            <td class="px-6 py-4 text-sm font-bold text-gray-900 w-80 max-w-80 relative group">
+              <div class="truncate hover:text-blue-600 transition-colors cursor-pointer flex items-center gap-1">
+                ${prod.nombre}
+                <i data-lucide="info" class="w-3 h-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+              </div>
+              <div class="absolute z-50 bottom-full left-0 mb-2 px-3 py-2 bg-slate-800 text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-normal max-w-xs border border-blue-400/30">
+                <div class="font-medium">${prod.nombre}</div>
+                <div class="absolute top-full left-4 w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-slate-800"></div>
+              </div>
+            </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
               ${new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP" }).format(parseFloat(prod.precio))}
             </td>
@@ -957,6 +970,10 @@
           } else {
             // Si no hay ordenamiento, renderizar normalmente
             renderizarTabla(productos);
+          }
+
+          if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
           }
 
         } catch (err) {
