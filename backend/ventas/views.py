@@ -1056,15 +1056,13 @@ class SalesChartDataView(APIView):
             # Datos por día para la semana actual en Chile
             start_of_week_chile = now_chile - timedelta(days=now_chile.weekday())
             start_of_week_chile = start_of_week_chile.replace(hour=0, minute=0, second=0, microsecond=0)
-            
+            dias_es = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
             for day in range(7):
                 day_start_chile = start_of_week_chile + timedelta(days=day)
                 day_end_chile = day_start_chile + timedelta(days=1)
-                
                 # Convertir a UTC para la consulta
                 day_start_utc = day_start_chile.astimezone(pytz.UTC)
                 day_end_utc = day_end_chile.astimezone(pytz.UTC)
-                
                 sales = Transaccion.objects.filter(
                     estado='CONFIRMADA',
                     confirmado_en__gte=day_start_utc,
@@ -1072,7 +1070,7 @@ class SalesChartDataView(APIView):
                 )
                 total = sum(t.total_final for t in sales)
                 data.append(float(total))
-                labels.append(day_start_chile.strftime('%a'))
+                labels.append(dias_es[day_start_chile.weekday()])
         
         elif period == 'month':
             # Datos por semana para el mes actual en Chile
